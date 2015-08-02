@@ -87,162 +87,162 @@
     <Component id="467" name="MISC" path="" type="2"/>
   </Components>
   <Files>
-    <File name="usb/usbd_cdc.c" path="../STM32Cube_FW_F1_V1.0.0/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c" type="1"/>
+    <File name="usb/usbd_cdc.c" path="usb/usbd_cdc.c" type="1"/>
     <File name="ub_lib/stm32_servo_output.h" path="example/ub_lib/stm32_servo_output.h" type="1"/>
-    <File name="usb/usbd_ctlreq.c" path="../STM32Cube_FW_F1_V1.0.0/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_rtc_ex.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rtc_ex.h" type="1"/>
+    <File name="usb/usbd_ctlreq.c" path="usb/usbd_ctlreq.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_rtc_ex.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_rtc_ex.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_i2s.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_i2s.c" type="1"/>
     <File name="ub_lib/stm32_servo_input.h" path="example/ub_lib/stm32_servo_input.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_i2s.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_i2s.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_hcd.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_hcd.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_tim_ex.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_tim_ex.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_pcd_ex.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_pcd_ex.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_hcd.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_hcd.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_tim_ex.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_tim_ex.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_pcd_ex.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_pcd_ex.c" type="1"/>
     <File name="wd_lib/usbd_cdc_interface.c" path="example/wd_lib/usbd_cdc_interface.c" type="1"/>
     <File name="ub_lib/stm32_encoder.c" path="example/ub_lib/stm32_encoder.c" type="1"/>
     <File name="cmsis_boot/stm32f103xb.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f103xb.h" type="1"/>
     <File name="cmsis/core_cmFunc.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/CMSIS/Include/core_cmFunc.h" type="1"/>
-    <File name="cmsis_boot/system_stm32f1xx.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/CMSIS/Device/ST/STM32F1xx/Include/system_stm32f1xx.h" type="1"/>
-    <File name="usb/usbd_ioreq.h" path="../STM32Cube_FW_F1_V1.0.0/Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ioreq.h" type="1"/>
+    <File name="usb/usbd_ioreq.h" path="usb/usbd_ioreq.h" type="1"/>
+    <File name="cmsis_boot/system_stm32f1xx.h" path="cmsis_boot/system_stm32f1xx.h" type="1"/>
     <File name="wd_lib/protocol.c" path="example/wd_lib/protocol.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_flash_ex.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_flash_ex.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_irda.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_irda.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_crc.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_crc.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_eth.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_eth.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_iwdg.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_iwdg.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_usart.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_usart.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_dma.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_dma.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_flash_ex.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_flash_ex.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_irda.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_irda.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_eth.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_eth.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_crc.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_crc.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_iwdg.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_iwdg.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_usart.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_usart.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_dma.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_dma.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/legacy/stm32_hal_legacy.h" path="STM32F1xx_HAL_Driver/inc/Legacy/stm32_hal_legacy.h" type="1"/>
     <File name="ub_lib/stm32_servo_output.c" path="example/ub_lib/stm32_servo_output.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/legacy/stm32_hal_legacy.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_dma_ex.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_dma_ex.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_spi.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_spi.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_pccard.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_pccard.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_hcd.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_hcd.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_dma_ex.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_dma_ex.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_pccard.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_pccard.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_spi.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_spi.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_hcd.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_hcd.c" type="1"/>
     <File name="wd_lib/usbd_desc.h" path="example/wd_lib/usbd_desc.h" type="1"/>
     <File name="wd_lib/clock_50Hz.h" path="example/wd_lib/clock_50Hz.h" type="1"/>
     <File name="cmsis_boot/stm32f1xx.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f1xx.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_ll_usb.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_usb.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_def.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_def.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_wwdg.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_wwdg.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_ll_usb.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_ll_usb.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_def.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_def.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_wwdg.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_wwdg.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_ll_fsmc.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_ll_fsmc.h" type="1"/>
     <File name="wd_lib/usbd_cdc_interface.h" path="example/wd_lib/usbd_cdc_interface.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_sd.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_sd.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_ll_fsmc.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_fsmc.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_eth.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_eth.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_gpio.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio.c" type="1"/>
-    <File name="cmsis_boot/system_stm32f1xx.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/CMSIS/Device/ST/STM32F1xx/Source/Templates/system_stm32f1xx.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_eth.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_eth.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_sd.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_sd.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_gpio.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_gpio.c" type="1"/>
     <File name="ub_lib/stm32_uart.c" path="example/ub_lib/stm32_uart.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_adc_ex.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_adc_ex.c" type="1"/>
+    <File name="cmsis_boot/system_stm32f1xx.c" path="cmsis_boot/system_stm32f1xx.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_adc_ex.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_adc_ex.c" type="1"/>
     <File name="ub_lib/stm32_systick.h" path="example/ub_lib/stm32_systick.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_dac.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_dac.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_dac_ex.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_dac_ex.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_dac.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_dac.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_dac_ex.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_dac_ex.h" type="1"/>
     <File name="wd_lib/controller.c" path="example/wd_lib/controller.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_ll_usb.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_ll_usb.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_ll_usb.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_ll_usb.c" type="1"/>
     <File name="cmsis/core_cmInstr.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/CMSIS/Include/core_cmInstr.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_nor.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_nor.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_sram.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_sram.c" type="1"/>
-    <File name="usb/usbd_core.c" path="../STM32Cube_FW_F1_V1.0.0/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_nor.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_nor.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_sram.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_sram.c" type="1"/>
+    <File name="usb/usbd_core.c" path="usb/usbd_core.c" type="1"/>
     <File name="ub_lib" path="" type="2"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_pccard.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pccard.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_crc.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_crc.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_usart.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_usart.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_flash.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_pccard.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_pccard.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_crc.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_crc.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_usart.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_usart.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_flash.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_flash.h" type="1"/>
     <File name="wd_lib/usbd_conf.c" path="example/wd_lib/usbd_conf.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_rtc.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rtc.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_ll_sdmmc.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_ll_sdmmc.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_rtc.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_rtc.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_ll_sdmmc.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_ll_sdmmc.c" type="1"/>
     <File name="STM32F1xx_HAL_Driver/src" path="" type="2"/>
-    <File name="usb/usbd_core.h" path="../STM32Cube_FW_F1_V1.0.0/Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_core.h" type="1"/>
+    <File name="usb/usbd_core.h" path="usb/usbd_core.h" type="1"/>
     <File name="cmsis" path="" type="2"/>
     <File name="ub_lib/stm32_systick.c" path="example/ub_lib/stm32_systick.c" type="1"/>
     <File name="wd_lib/eeprom.h" path="example/wd_lib/eeprom.h" type="1"/>
     <File name="wd_lib/protocol.h" path="example/wd_lib/protocol.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_nand.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_nand.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_nand.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_nand.h" type="1"/>
     <File name="wd_lib/serial_print.h" path="example/wd_lib/serial_print.h" type="1"/>
-    <File name="usb/usbd_ctlreq.h" path="../STM32Cube_FW_F1_V1.0.0/Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ctlreq.h" type="1"/>
+    <File name="usb/usbd_ctlreq.h" path="usb/usbd_ctlreq.h" type="1"/>
     <File name="ub_lib/stm32_encoder.h" path="example/ub_lib/stm32_encoder.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_cortex.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_cortex.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_cortex.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_cortex.c" type="1"/>
     <File name="wd_lib/config.h" path="example/wd_lib/config.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_gpio.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_gpio.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_pcd_ex.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pcd_ex.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_nand.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_nand.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_gpio.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_gpio.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_pcd_ex.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_pcd_ex.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_nand.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_nand.c" type="1"/>
     <File name="wd_lib/controller.h" path="example/wd_lib/controller.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_tim.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_tim.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_tim.h" type="1"/>
     <File name="wd_lib/usbd_conf.h" path="example/wd_lib/usbd_conf.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_conf_template.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_conf_template.h" type="1"/>
     <File name="main.c" path="main.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_conf_template.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_conf_template.h" type="1"/>
-    <File name="usb/usbd_cdc.h" path="../STM32Cube_FW_F1_V1.0.0/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc/usbd_cdc.h" type="1"/>
+    <File name="usb/usbd_cdc.h" path="usb/usbd_cdc.h" type="1"/>
     <File name="wd_lib/stm32_eval_spi_flash.c" path="example/wd_lib/stm32_eval_spi_flash.c" type="1"/>
     <File name="wd_lib/eeprom.c" path="example/wd_lib/eeprom.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_smartcard.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_smartcard.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_tim_ex.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_wwdg.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_wwdg.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal.c" type="1"/>
-    <File name="wd_lib/serial_print.c" path="example/wd_lib/serial_print.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_smartcard.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_smartcard.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_wwdg.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_wwdg.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_tim_ex.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_tim_ex.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal.c" type="1"/>
     <File name="cmsis_boot" path="" type="2"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_rtc.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_rtc.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_gpio_ex.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_gpio_ex.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_ll_fsmc.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_ll_fsmc.c" type="1"/>
-    <File name="cmsis_boot/startup/startup_stm32f103xb.s" path="../STM32Cube_FW_F1_V1.0.0/Drivers/CMSIS/Device/ST/STM32F1xx/Source/Templates/gcc/startup_stm32f103xb.s" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_can_ex.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_can_ex.h" type="1"/>
+    <File name="wd_lib/serial_print.c" path="example/wd_lib/serial_print.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_rtc.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_rtc.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_gpio_ex.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_gpio_ex.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_ll_fsmc.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_ll_fsmc.c" type="1"/>
+    <File name="cmsis_boot/startup/startup_stm32f103xb.s" path="cmsis_boot/startup/startup_stm32f103xb.s" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_can_ex.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_can_ex.h" type="1"/>
     <File name="cmsis_boot/stm32f1xx_hal_conf.h" path="cmsis_boot/stm32f1xx_hal_conf.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_rcc_ex.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rcc_ex.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_rcc_ex.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_rcc_ex.h" type="1"/>
     <File name="cmsis_boot/startup" path="" type="2"/>
     <File name="STM32F1xx_HAL_Driver" path="" type="2"/>
     <File name="wd_lib" path="" type="2"/>
     <File name="stm32f1xx_it.c" path="stm32f1xx_it.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_can.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_can.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_cortex.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_cortex.h" type="1"/>
-    <File name="cmsis_boot/main.h" path="cmsis_boot/main.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_rcc.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rcc.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_cec.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_cec.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_nor.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_nor.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_can.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_can.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_cortex.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_cortex.h" type="1"/>
+    <File name="cmsis_boot/main.h" path="main.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_rcc.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_rcc.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_cec.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_cec.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_nor.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_nor.h" type="1"/>
     <File name="usb" path="" type="2"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_adc.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_adc.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_adc.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_adc.h" type="1"/>
     <File name="wd_lib/stm32_eval_spi_flash.h" path="example/wd_lib/stm32_eval_spi_flash.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_gpio_ex.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_pwr.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_adc.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_adc.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_sram.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_sram.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_spi.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_spi.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_gpio_ex.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_gpio_ex.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_pwr.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_pwr.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_sram.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_sram.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_adc.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_adc.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_spi.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_spi.c" type="1"/>
     <File name="STM32F1xx_HAL_Driver/inc" path="" type="2"/>
-    <File name="usb/usbd_def.h" path="../STM32Cube_FW_F1_V1.0.0/Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_pcd.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_pcd.c" type="1"/>
-    <File name="usb/usbd_ioreq.c" path="../STM32Cube_FW_F1_V1.0.0/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c" type="1"/>
-    <File name="wd_lib/usbd_desc.c" path="example/wd_lib/usbd_desc.c" type="1"/>
+    <File name="usb/usbd_def.h" path="usb/usbd_def.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_pcd.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_pcd.c" type="1"/>
+    <File name="usb/usbd_ioreq.c" path="usb/usbd_ioreq.c" type="1"/>
     <File name="STM32F1xx_HAL_Driver/inc/legacy" path="" type="2"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_msp_template.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_msp_template.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_dac_ex.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_dac_ex.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_dac.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_dac.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_uart.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_uart.c" type="1"/>
+    <File name="wd_lib/usbd_desc.c" path="example/wd_lib/usbd_desc.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_msp_template.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_msp_template.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_dac_ex.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_dac_ex.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_dac.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_dac.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_uart.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_uart.c" type="1"/>
     <File name="cmsis/core_cm3.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/CMSIS/Include/core_cm3.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_sd.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_sd.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_i2s.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_i2s.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_can.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_can.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_tim.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_tim.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_rtc_ex.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_rtc_ex.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_sd.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_sd.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_i2s.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_i2s.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_can.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_can.c" type="1"/>
     <File name="wd_lib/debug.c" path="example/wd_lib/debug.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_rtc_ex.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_rtc_ex.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_tim.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_tim.c" type="1"/>
     <File name="wd_lib/printf2.c" path="example/wd_lib/printf2.c" type="1"/>
     <File name="wd_lib/clock_50Hz.c" path="example/wd_lib/clock_50Hz.c" type="1"/>
     <File name="cmsis_boot/stm32f1xx_it.h" path="cmsis_boot/stm32f1xx_it.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_flash_ex.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_rcc.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_rcc.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_i2c.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_i2c.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_smartcard.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_smartcard.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_rcc.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_rcc.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_flash_ex.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_flash_ex.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_i2c.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_i2c.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_smartcard.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_smartcard.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_flash.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_flash.c" type="1"/>
     <File name="ub_lib/sbus.c" path="example/ub_lib/sbus.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_flash.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_flash.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_adc_ex.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_adc_ex.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_cec.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_cec.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_pwr.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_pwr.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_adc_ex.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_adc_ex.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_cec.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_cec.c" type="1"/>
     <File name="wd_lib/debug.h" path="example/wd_lib/debug.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_ll_sdmmc.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_sdmmc.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_irda.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_irda.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_dma.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_dma.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_uart.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_rcc_ex.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_rcc_ex.c" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_pcd.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pcd.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_iwdg.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_iwdg.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_spi_ex.c" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_spi_ex.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_pwr.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_pwr.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_ll_sdmmc.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_ll_sdmmc.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_irda.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_irda.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_dma.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_dma.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_uart.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_uart.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_rcc_ex.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_rcc_ex.c" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_pcd.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_pcd.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_iwdg.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_iwdg.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_spi_ex.c" path="STM32F1xx_HAL_Driver/src/stm32f1xx_hal_spi_ex.c" type="1"/>
     <File name="ub_lib/sbus.h" path="example/ub_lib/sbus.h" type="1"/>
     <File name="ub_lib/stm32_uart.h" path="example/ub_lib/stm32_uart.h" type="1"/>
-    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_i2c.h" path="../STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_i2c.h" type="1"/>
+    <File name="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_i2c.h" path="STM32F1xx_HAL_Driver/inc/stm32f1xx_hal_i2c.h" type="1"/>
     <File name="ub_lib/stm32_servo_input.c" path="example/ub_lib/stm32_servo_input.c" type="1"/>
   </Files>
 </Project>
