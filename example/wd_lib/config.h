@@ -1,0 +1,35 @@
+#ifndef CONFIG_H_
+#define CONFIG_H_
+
+
+
+#define MAX_ACCELERATION_MOVEMENT    0.2f
+#define MAX_SPEED_MOVEMENT         1000.0f
+#define MAX_ACCELERATION_INIT        0.05f
+#define MAX_SPEED_INIT              4.0f
+#define SERVO_CENTER      1500
+#define SERVO_MIN          900
+#define SERVO_MAX         2100
+#define NEUTRAL_RANGE     20.0f
+
+#define SERVO_ESC    0
+#define SERVO_PITCH  1
+#define SERVO_YAW    2
+#define SERVO_AUX    3
+
+#define RC_VIRTUAL_CHANNEL_1 6
+#define RC_VIRTUAL_CHANNEL_2 7
+#define RC_VIRTUAL_CHANNEL_3 8
+#define RC_VIRTUAL_CHANNEL_4 9
+#define RC_VIRTUAL_CHANNEL_5 10
+#define RC_VIRTUAL_CHANNEL_6 11
+
+#define RC_INPUT_ESC	RC_VIRTUAL_CHANNEL_1
+#define RC_INPUT_YAW	RC_VIRTUAL_CHANNEL_4
+#define RC_INPUT_PITCH	RC_VIRTUAL_CHANNEL_3
+#define RC_INPUT_AUX	RC_VIRTUAL_CHANNEL_6
+
+#define NO_CHANNELS			24
+#define SUM_CHANNEL_START	 1
+
+#endif /* CONFIG_H_ */
