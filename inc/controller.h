@@ -11,47 +11,34 @@ typedef enum {
 	CONTROLLER_RUN 					// full operation
 } CONTROLLER_STATUS_t;
 
-extern int16_t servo[];
-extern int16_t rcData[];
+typedef enum {
+	OPERATIONAL = 0,  			// we can move as freely as we want, limiters enabled
+	PROGRAMMING,		        // reduced speed and ready to set end points via the RC
+	INVALID_RC 					// the starting point, when either no RC signal had been received at all or there is a speed != 0 at the beginning
+} SAFE_MODE_t;
+
+typedef enum {
+	FREE = 0,
+	EMERGENCYBRAKE,
+	ENDPOINTBRAKE
+} CONTROLLER_MONITOR_t;
+
 
 void setServoNeutralRange(uint16_t forward, uint16_t reverse);
 void initController(void);
 void controllercycle(void);
-void setRCData(uint16_t rcsignal1, uint16_t rcsignal2, uint16_t rcsignal3, uint16_t rcsignal4);
-uint16_t getRCDataForChannel(uint8_t channel);
-void setServoValueForChannel(uint8_t channel, uint16_t rcsignal);
 
 void setPIDValues(double, double, double);
 void setPValue(double);
 void setIValue(double);
 void setDValue(double);
-void getPIDValues(double *kp, double *ki, double *kd);
-double getPValue(void);
-double getIValue(void);
-double getDValue(void);
-void setMaxAcceleration(double maxaccel);
-double getMaxAcceleration(void);
-void setMaxAccelerationRCStick(double maxaccel);
-double getMaxAccelerationRCStick(void);
-void setToleratedPositionalErrorLimit(double distance);
-double getToleratedPositionalErrorLimit(void);
-void setMaxAllowedPositionalError(double distance);
-double getMaxAllowedPositionalError(void);
-void setPosStart(double p);
-double getPosStart(void);
-void setPosEnd(double p);
-double getPosEnd(void);
-void setMaxSpeed(double p);
-double getMaxSpeed(void);
-void setTargetPos(double p);
-double getTargetPos(void);
-void setPitch(double p);
-double getPitch(void);
-void setYaw(double p);
-double getYaw(void);
+int32_t getTargetPos(void);
+int32_t getPos(void);
+int32_t getSpeed(void);
+
 void resetThrottle(void);
-double getThrottle(void);
-double getSpeed(void);
-double getPos(void);
+
+uint16_t getProgrammingSwitch(void);
+uint16_t getEndPointSwitch(void);
 
 #endif

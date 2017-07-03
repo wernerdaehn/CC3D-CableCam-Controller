@@ -9,7 +9,7 @@ char printbuf[80];
 void SendString(char * ptr, Endpoints endpoint);
 
 
-void PrintSerial_int(int v, Endpoints endpoint) {
+void PrintSerial_int(int16_t v, Endpoints endpoint) {
 	snprintf(printbuf, sizeof(printbuf), " %d ", v);
 	SendString(printbuf, endpoint);
 }
@@ -21,7 +21,7 @@ void PrintSerial_char(char v, Endpoints endpoint){
 void PrintSerial_string(char * v, Endpoints endpoint){
 	SendString(v, endpoint);
 }
-void PrintSerial_long(long v, Endpoints endpoint){
+void PrintSerial_long(int32_t v, Endpoints endpoint){
 	snprintf(printbuf, sizeof(printbuf), " %ld ", v);
 	SendString(printbuf, endpoint);
 }
@@ -35,7 +35,7 @@ void PrintSerial_double(double v, Endpoints endpoint){
 }
 
 
-void PrintlnSerial_int(int v, Endpoints endpoint) {
+void PrintlnSerial_int(int16_t v, Endpoints endpoint) {
 	snprintf(printbuf, sizeof(printbuf), " %d \r\n", v);
 	SendString(printbuf, endpoint);
 }
@@ -48,7 +48,7 @@ void PrintlnSerial_string(char * v, Endpoints endpoint){
 	SendString(v, endpoint);
 	PrintlnSerial(endpoint);
 }
-void PrintlnSerial_long(long v, Endpoints endpoint){
+void PrintlnSerial_long(int32_t v, Endpoints endpoint){
 	snprintf(printbuf, sizeof(printbuf), " %ld \r\n", v);
 	SendString(printbuf, endpoint);
 }

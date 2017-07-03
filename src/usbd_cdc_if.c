@@ -390,20 +390,8 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
 uint8_t  CDC_TransmitBuffer(uint8_t *ptr, uint32_t len) {
 	uint32_t l;
 	uint32_t rel_pos = bytes_written % APP_TX_DATA_SIZE;
-	uint32_t tick = HAL_GetTick();
 	if (hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED && len < APP_RX_DATA_SIZE) {
 
-		while (bytes_written + len >= bytes_sent + APP_RX_DATA_SIZE) {
-			/*
-			 * wait for the USB bus to send the data
-			 * The USBPeriodElapsed() method is called in 20ms intervals by the systick interrupt
-			 * As the USBPeriodElapsed() counts the bytes_sent upwards even if there is a problem, the condition should be true
-			 * after a view ms. But adding another exit condition just to be sure.
-			 */
-			if (HAL_GetTick() - tick > 1000) {
-				return USBD_FAIL;
-			}
-		}
 		if (rel_pos + len > APP_TX_DATA_SIZE) {
 			l = APP_TX_DATA_SIZE - rel_pos;
 			memcpy(&UserTxBuffer[rel_pos], ptr, l);
@@ -421,11 +409,6 @@ uint8_t  CDC_TransmitString(char *ptr) {
 }
 
 
-/**
- * @brief  TIM period elapsed callback
- * @param  htim: TIM handle
- * @retval None
- */
 void USBPeriodElapsed()
 {
 	uint32_t buffptr = bytes_sent % APP_TX_DATA_SIZE;
@@ -442,9 +425,9 @@ void USBPeriodElapsed()
 			if(USBD_CDC_TransmitPacket(&hUsbDeviceFS) == USBD_OK)
 			{
 			}
+            bytes_sent += buffsize;
 		}
 	}
-	bytes_sent += buffsize;
 }
 
 /* USER CODE END PRIVATE_FUNCTIONS_IMPLEMENTATION */

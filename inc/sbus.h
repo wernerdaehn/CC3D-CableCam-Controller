@@ -5,7 +5,7 @@
 #include "stm32f4xx.h"
 #include "serial_print.h"
 
-#define SBUS_MAX_CHANNEL 18
+#define SBUS_MAX_CHANNEL 16
 #define SBUS_FRAME_SIZE 25
 
 struct sbusFrame_s {
@@ -39,28 +39,32 @@ typedef union {
 
 typedef struct {
 	  uint16_t duty;
-	  uint32_t last_update;
-}servo_t;
+} servo_t;
 
 typedef struct {
 	uint32_t sbusFrameStartTime;
 	uint32_t sbusLastValidFrame;
 	uint32_t counter_sbus_frames;
+	uint32_t counter_sbus_errors;
+	uint32_t counter_sbus_valid_data;
 	uint32_t counter_sbus_frame_errors;
 	uint32_t counter_parity_errors;
 	uint32_t counter_noise_errors;
 	uint32_t counter_frame_errors;
 	uint32_t counter_overrun_errors;
 	servo_t servovalues[SBUS_MAX_CHANNEL];
+	uint8_t channel16;
+	uint8_t channel17;
 	uint8_t signalloss;
 	uint8_t failsafeactive;
 }sbusData_t;
 
+extern sbusData_t sbusdata;
+
 
 void SBUS_IRQHandler(UART_HandleTypeDef *huart);
-uint8_t* getSBUSFrameAddress(void);
-sbusData_t* getSBUSFrame(void);
 void printSBUSChannels(Endpoints endpoint);
-int getDuty(int channel);
+int16_t getDuty(uint8_t channel);
+uint8_t* getSBUSFrameAddress(void);
 
 #endif

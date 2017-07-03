@@ -12,15 +12,15 @@ typedef enum
 } Endpoints;
 
 
-void PrintSerial_int(int v, Endpoints endpoint);
+void PrintSerial_int(int16_t v, Endpoints endpoint);
 void PrintSerial_char(char v, Endpoints endpoint);
 void PrintSerial_string(char * v, Endpoints endpoint);
-void PrintSerial_long(long v, Endpoints endpoint);
+void PrintSerial_long(int32_t v, Endpoints endpoint);
 void PrintSerial_double(double v, Endpoints endpoint);
-void PrintlnSerial_int(int v, Endpoints endpoint);
+void PrintlnSerial_int(int16_t v, Endpoints endpoint);
 void PrintlnSerial_char(char v, Endpoints endpoint);
 void PrintlnSerial_string(char * v, Endpoints endpoint);
-void PrintlnSerial_long(long v, Endpoints endpoint);
+void PrintlnSerial_long(int32_t v, Endpoints endpoint);
 void PrintlnSerial_double(double v, Endpoints endpoint);
 void PrintlnSerial(Endpoints endpoint);
 #endif
