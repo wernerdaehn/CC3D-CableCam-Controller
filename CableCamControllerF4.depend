@@ -519,7 +519,7 @@
 1497518473 c:\users\werne\onedrive\github\cablecamcontrollerf4\inc\clock_50hz.h
 	"stm32f4xx_hal.h"
 
-1499012932 source:c:\users\werne\onedrive\github\cablecamcontrollerf4\src\controller.c
+1499027686 source:c:\users\werne\onedrive\github\cablecamcontrollerf4\src\controller.c
 	"config.h"
 	"protocol.h"
 	"controller.h"
@@ -529,7 +529,7 @@
 
 1497689317 c:\users\werne\onedrive\github\cablecamcontrollerf4\inc\config.h
 
-1499014082 c:\users\werne\onedrive\github\cablecamcontrollerf4\inc\protocol.h
+1502629644 c:\users\werne\onedrive\github\cablecamcontrollerf4\inc\protocol.h
 	"serial_print.h"
 	"controller.h"
 
@@ -539,7 +539,7 @@
 1499002725 c:\users\werne\onedrive\github\cablecamcontrollerf4\inc\controller.h
 	"stm32f4xx.h"
 
-1499013265 source:c:\users\werne\onedrive\github\cablecamcontrollerf4\src\main.c
+1502629916 source:c:\users\werne\onedrive\github\cablecamcontrollerf4\src\main.c
 	"main.h"
 	"stm32f4xx_hal.h"
 	"usb_device.h"
@@ -576,7 +576,7 @@
 	"controller.h"
 	"sbus.h"
 
-1498943328 source:c:\users\werne\onedrive\github\cablecamcontrollerf4\src\sbus.c
+1502629916 source:c:\users\werne\onedrive\github\cablecamcontrollerf4\src\sbus.c
 	"stm32f4xx_hal.h"
 	"clock_50Hz.h"
 	"config.h"
@@ -591,16 +591,17 @@
 
 1497697992 source:c:\users\werne\onedrive\github\cablecamcontrollerf4\src\startup_stm32f4xx.s
 
-1497627867 source:c:\users\werne\onedrive\github\cablecamcontrollerf4\src\stm32f4xx_hal_msp.c
+1502626677 source:c:\users\werne\onedrive\github\cablecamcontrollerf4\src\stm32f4xx_hal_msp.c
 	"stm32f4xx_hal.h"
 
-1497602513 source:c:\users\werne\onedrive\github\cablecamcontrollerf4\src\stm32f4xx_it.c
+1502626697 source:c:\users\werne\onedrive\github\cablecamcontrollerf4\src\stm32f4xx_it.c
 	"stm32f4xx_hal.h"
 	"stm32f4xx.h"
 	"stm32f4xx_it.h"
 	"sbus.h"
+	"sumsignal.h"
 
-1497594898 c:\users\werne\onedrive\github\cablecamcontrollerf4\inc\stm32f4xx_it.h
+1502625965 c:\users\werne\onedrive\github\cablecamcontrollerf4\inc\stm32f4xx_it.h
 
 1497112328 source:c:\users\werne\onedrive\github\cablecamcontrollerf4\src\system_stm32f4xx.c
 	"stm32f4xx.h"
@@ -976,4 +977,10 @@
 
 1497112352 c:\users\werne\onedrive\github\cablecamcontrollerf4\stm32f4xx_hal_driver\inc\stm32f4xx_ll_system.h
 	"stm32f4xx.h"
+
+1502625916 c:\users\werne\onedrive\github\cablecamcontrollerf4\inc\sumsignal.h
+
+1502629916 source:c:\users\werne\onedrive\github\cablecamcontrollerf4\src\sumsignal.c
+	"main.h"
+	"sbus.h"
 

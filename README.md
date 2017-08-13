@@ -1,17 +1,33 @@
 # CC3D-CableCam-Controller
 CC3D and STM Cube based CableCam controller
+MCU used is http://www.st.com/en/microcontrollers/stm32f405rg.html
 
-In order to use the cablecam controller as is, simply download the 
+## Goals
 
-```
-  CC3D CableCam Controller\CC3D CableCam Controller\Debug\bin\CC3D CableCam Controller.hex 
-```
+## Getting started
 
-file to the OpenPilot CC3D board. 
+### Hardware
 
-To flash the firmware there are two options, either using the SWD connector and a ST/Link2 programmer or use the hardware bootloader on UART1.
+### Flashing the firmware
 
-For the first method is quite convenient and recommended, the second requires some prep work
-https://wiki.openpilot.org/display/WIKI/How+to+Flash+Bootloaders+with+an+FTDI+Cable
+### Initial Setup
 
-The source code itself contain all libraries required as a CooCox IDE project.
+### Use
+
+## Detailed Usage
+
+## Development
+
+### Hardware Mapping
+
+* Servo1: Servo Output to the ESC; Connect the ESC to it in order to feed it with valid PPM servo signals; PB0 -> TIM3_CH3
+* Servo2: PB1
+* Servo3: ESC Output via UART; PA3 -> USART2_RX
+* Servo4: ESC Output via UART; PA2 -> USART2_TX
+* Servo5&6: 32Bit Quadruple Encoder used for Hall Sensor input; PA0, PA1 -> TIM5_CH1, TIM5_CH2
+* LED Status: PB5 (Low = On)
+* LED Warn: PB4 (Low = On)
+* MainUSART: Receiver input; In SBus Mode: PA9, PA10 -> USART1_TX, USART1_RX; In SumPPM mode: PA10 -> TIM1_CH3
+
+* SPI1: PA4, PA5, PA6, PA7 for MPU-6000 IMU
+* SPI3: PA15, PC10, PC11, PC12 for Flash 16MBit and optional RF Module

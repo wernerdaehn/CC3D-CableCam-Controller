@@ -29,6 +29,10 @@
 
 #define POS_END_NOT_SET         0x7FFFFFFF
 
+#define RC_INPUT_TYPE_SBUS      0
+#define RC_INPUT_TYPE_SUMPPM    1
+
+
 
 typedef struct {
   char version[11];
@@ -51,6 +55,7 @@ typedef struct {
   double pos_start;
   double pos_end;
   double stick_speed_factor;
+  uint8_t rc_input_type;
 } settings_t;
 
 extern settings_t activesettings;

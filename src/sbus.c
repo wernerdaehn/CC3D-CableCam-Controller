@@ -40,7 +40,7 @@ void setServoValues(void);
 
 static sbusFrame_t sbusFrame;
 
-sbusData_t sbusdata;
+extern sbusData_t sbusdata;
 
 void setServoValues()
 {

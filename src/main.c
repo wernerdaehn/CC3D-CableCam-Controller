@@ -65,17 +65,17 @@ RTC_HandleTypeDef hrtc;
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi3;
 
+TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim5;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
-UART_HandleTypeDef huart3;
 DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_usart2_tx;
-DMA_HandleTypeDef hdma_usart3_rx;
-DMA_HandleTypeDef hdma_usart3_tx;
+
+sbusData_t sbusdata;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -91,9 +91,9 @@ static void MX_DMA_Init(void);
 static void MX_RTC_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_SPI3_Init(void);
+static void MX_TIM1_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_USART1_UART_Init(void);
-static void MX_USART3_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM5_Init(void);
 
@@ -130,36 +130,6 @@ int main(void)
 
     /* USER CODE BEGIN SysInit */
 
-    /* USER CODE END SysInit */
-
-    /* Initialize all configured peripherals */
-    MX_GPIO_Init();
-    MX_DMA_Init();
-    MX_RTC_Init();
-    MX_SPI1_Init();
-    MX_SPI3_Init();
-    MX_TIM3_Init();
-    MX_USART1_UART_Init();
-    MX_USART3_UART_Init();
-    MX_USB_DEVICE_Init();
-    MX_USART2_UART_Init();
-    MX_TIM5_Init();
-
-    /* USER CODE BEGIN 2 */
-
-    /* Disable Half Transfer Interrupt */
-    /* __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT); */
-    HAL_TIM_Encoder_Start(&htim5, TIM_CHANNEL_1 | TIM_CHANNEL_2);
-
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET);
-    /* Turn on interrupt for uart1/sbus */
-    HAL_UART_Receive_IT(&huart1, getSBUSFrameAddress(), SBUS_FRAME_SIZE);
-
-    /* Turn on SBUS Inverter */
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
-
-    initController();
-
     activesettings.esc_direction = 0;
     activesettings.D = 0.0f;
     activesettings.I = 0.0f;
@@ -179,6 +149,44 @@ int main(void)
     activesettings.stick_neutral_range = 30;
     strcpy(activesettings.version, "20170701");
     activesettings.stick_speed_factor = 0.1f;
+
+    activesettings.rc_input_type = RC_INPUT_TYPE_SUMPPM;
+
+
+    /* USER CODE END SysInit */
+
+    /* Initialize all configured peripherals */
+    MX_GPIO_Init();
+    MX_DMA_Init();
+    MX_RTC_Init();
+    MX_SPI1_Init();
+    MX_SPI3_Init();
+    MX_TIM3_Init();
+    MX_USB_DEVICE_Init();
+    MX_USART2_UART_Init();
+    MX_TIM5_Init();
+
+    if (activesettings.rc_input_type == RC_INPUT_TYPE_SUMPPM)
+    {
+        MX_TIM1_Init();
+    }
+    else
+    {
+        MX_USART1_UART_Init();
+    }
+
+    /* USER CODE BEGIN 2 */
+
+    /* Disable Half Transfer Interrupt */
+    /* __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT); */
+    HAL_TIM_Encoder_Start(&htim5, TIM_CHANNEL_1 | TIM_CHANNEL_2);
+
+    /* LED Warn turned off */
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET);
+
+
+    initController();
+
 
     /* USER CODE END 2 */
 
@@ -344,6 +352,41 @@ static void MX_SPI3_Init(void)
 
 }
 
+/* TIM2 init function */
+static void MX_TIM1_Init(void)
+{
+
+	TIM_IC_InitTypeDef     sICConfig;
+
+    htim1.Instance = TIM1;
+    htim1.Init.Prescaler = 72-1;
+    htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+    htim1.Init.Period = 0xFFFFFFFF;
+    htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    htim1.Init.RepetitionCounter = 0;
+    if (HAL_TIM_IC_Init(&htim1) != HAL_OK)
+    {
+        _Error_Handler(__FILE__, __LINE__);
+    }
+
+	sICConfig.ICPolarity  = TIM_ICPOLARITY_RISING;
+	sICConfig.ICSelection = TIM_ICSELECTION_DIRECTTI;
+	sICConfig.ICPrescaler = TIM_ICPSC_DIV1;
+	sICConfig.ICFilter    = 0x00;
+	if(HAL_TIM_IC_ConfigChannel(&htim1, &sICConfig, TIM_CHANNEL_3) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	if(HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_3) != HAL_OK)
+	{
+		Error_Handler();
+	}
+
+    HAL_TIM_MspPostInit(&htim1);
+}
+
+
+
 /* TIM3 init function */
 static void MX_TIM3_Init(void)
 {
@@ -459,24 +502,6 @@ static void MX_USART2_UART_Init(void)
 
 }
 
-/* USART3 init function */
-static void MX_USART3_UART_Init(void)
-{
-
-    huart3.Instance = USART3;
-    huart3.Init.BaudRate = 115200;
-    huart3.Init.WordLength = UART_WORDLENGTH_8B;
-    huart3.Init.StopBits = UART_STOPBITS_1;
-    huart3.Init.Parity = UART_PARITY_NONE;
-    huart3.Init.Mode = UART_MODE_TX_RX;
-    huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-    huart3.Init.OverSampling = UART_OVERSAMPLING_16;
-    if (HAL_UART_Init(&huart3) != HAL_OK)
-    {
-        _Error_Handler(__FILE__, __LINE__);
-    }
-
-}
 
 /**
   * Enable DMA controller clock
@@ -530,12 +555,6 @@ static void MX_GPIO_Init(void)
     /*Configure GPIO pin : PC4 */
     GPIO_InitStruct.Pin = GPIO_PIN_4;
     GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-    /* SBus Inverter */
-    GPIO_InitStruct.Pin = GPIO_PIN_0;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
