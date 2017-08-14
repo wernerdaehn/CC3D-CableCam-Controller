@@ -144,7 +144,6 @@
 		<Unit filename="inc\spi_flash.h" />
 		<Unit filename="inc\stm32f4xx_hal_conf.h" />
 		<Unit filename="inc\stm32f4xx_it.h" />
-		<Unit filename="inc\sumsignal.h" />
 		<Unit filename="inc\system_stm32f4xx.h" />
 		<Unit filename="inc\usb_device.h" />
 		<Unit filename="inc\usbd_cdc_if.h" />
@@ -199,9 +198,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src\stm32f4xx_it.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src\sumsignal.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src\system_stm32f4xx.c">
@@ -572,7 +568,7 @@
 		<Extensions>
 			<code_completion />
 			<debugger>
-				<target_debugging_settings target="Release" active_interface="ST-link">
+				<target_debugging_settings target="Debug" active_interface="ST-link">
 					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="STLinkGDB.exe" description="" dont_start_server="false" backoff_time="1000" options="0" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
 						<family_options family_id="STMicroelectronics">
 							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
@@ -589,7 +585,7 @@
 						</family_options>
 					</debug_interface>
 				</target_debugging_settings>
-				<target_debugging_settings target="Debug" active_interface="ST-link">
+				<target_debugging_settings target="Release" active_interface="ST-link">
 					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="STLinkGDB.exe" description="" dont_start_server="false" backoff_time="1000" options="0" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
 						<family_options family_id="STMicroelectronics">
 							<option opt_id="ID_JTAG_SWD" opt_value="swd" />

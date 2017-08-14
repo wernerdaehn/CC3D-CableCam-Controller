@@ -21,7 +21,7 @@
 			<Cursor1 position="8498" topLine="165" />
 		</Cursor>
 	</File>
-	<File name="inc\controller.h" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="inc\controller.h" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="105" topLine="0" />
 		</Cursor>
@@ -31,7 +31,7 @@
 			<Cursor1 position="3300" topLine="6" />
 		</Cursor>
 	</File>
-	<File name="inc\protocol.h" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="inc\protocol.h" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="2186" topLine="4" />
 		</Cursor>
@@ -46,7 +46,7 @@
 			<Cursor1 position="650" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="inc\spi_flash.h" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="inc\spi_flash.h" open="1" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="3654" topLine="50" />
 		</Cursor>
@@ -66,29 +66,29 @@
 			<Cursor1 position="2376" topLine="40" />
 		</Cursor>
 	</File>
-	<File name="src\controller.c" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\controller.c" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="523" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\eeprom.c" open="1" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\eeprom.c" open="1" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="559" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\main.c" open="1" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\main.c" open="1" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="7777" topLine="138" />
 		</Cursor>
 	</File>
-	<File name="src\protocol.c" open="1" top="1" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\protocol.c" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="23604" topLine="642" />
 		</Cursor>
 	</File>
-	<File name="src\sbus.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\sbus.c" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="10935" topLine="228" />
+			<Cursor1 position="918" topLine="10" />
 		</Cursor>
 	</File>
 	<File name="src\serial_print.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -96,7 +96,7 @@
 			<Cursor1 position="345" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\spi_flash.c" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\spi_flash.c" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="3638" topLine="76" />
 		</Cursor>
@@ -106,7 +106,7 @@
 			<Cursor1 position="0" topLine="24" />
 		</Cursor>
 	</File>
-	<File name="src\stm32f4xx_hal_msp.c" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\stm32f4xx_hal_msp.c" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="5485" topLine="95" />
 		</Cursor>
@@ -161,7 +161,7 @@
 			<Cursor1 position="0" topLine="101" />
 		</Cursor>
 	</File>
-	<File name="STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_spi.h" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_spi.h" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="17466" topLine="54" />
 		</Cursor>
