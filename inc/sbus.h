@@ -57,6 +57,7 @@ typedef struct {
 	uint8_t channel17;
 	uint8_t signalloss;
 	uint8_t failsafeactive;
+	uint8_t receivertype;
 }sbusData_t;
 
 extern sbusData_t sbusdata;
@@ -66,5 +67,6 @@ void SBUS_IRQHandler(UART_HandleTypeDef *huart);
 void printSBUSChannels(Endpoints endpoint);
 int16_t getDuty(uint8_t channel);
 uint8_t* getSBUSFrameAddress(void);
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim);
 
 #endif

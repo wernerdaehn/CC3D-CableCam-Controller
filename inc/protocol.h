@@ -13,6 +13,7 @@
 #define PROTOCOL_MAX_ERROR_DIST   'g'   // 1 float argument
 #define PROTOCOL_HELP		      'h'	// help
 #define PROTOCOL_INPUT_CHANNELS   'i'   // 3 int arguments for speed, pitch, yaw, aux
+#define PROTOCOL_INPUT_SOURCE     'I'   // 3 int arguments for speed, pitch, yaw, aux
 #define PROTOCOL_MODE             'm'
 #define PROTOCOL_NEUTRAL          'n'	// 2 int low microseconds, high microseconds
 #define PROTOCOL_POS              'p'
@@ -28,6 +29,10 @@
 #define MODE_LIMITER_HOLD		4
 
 #define POS_END_NOT_SET         0x7FFFFFFF
+
+#define RECEIVER_TYPE_SUMPPM    0
+#define RECEIVER_TYPE_SBUS      1
+#define RECEIVER_TYPE_SERVO      2
 
 
 typedef struct {
@@ -51,10 +56,16 @@ typedef struct {
   double pos_start;
   double pos_end;
   double stick_speed_factor;
+  uint8_t receivertype;
 } settings_t;
 
 extern settings_t activesettings;
 
+typedef struct {
+  char boottext_eeprom[81];
+} controllerstatus_t;
+
+extern controllerstatus_t controllerstatus;
 
 void initProtocol(void);
 void serialCom(char * buf, Endpoints endpoint);

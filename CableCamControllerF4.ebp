@@ -136,10 +136,12 @@
 		<Unit filename="inc\clock_50Hz.h" />
 		<Unit filename="inc\config.h" />
 		<Unit filename="inc\controller.h" />
+		<Unit filename="inc\eeprom.h" />
 		<Unit filename="inc\main.h" />
 		<Unit filename="inc\protocol.h" />
 		<Unit filename="inc\sbus.h" />
 		<Unit filename="inc\serial_print.h" />
+		<Unit filename="inc\spi_flash.h" />
 		<Unit filename="inc\stm32f4xx_hal_conf.h" />
 		<Unit filename="inc\stm32f4xx_it.h" />
 		<Unit filename="inc\system_stm32f4xx.h" />
@@ -171,6 +173,9 @@
 		<Unit filename="src\controller.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src\eeprom.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src\main.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -181,6 +186,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src\serial_print.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src\spi_flash.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src\startup_stm32f4xx.S">

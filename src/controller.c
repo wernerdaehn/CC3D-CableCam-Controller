@@ -8,7 +8,7 @@
 extern sbusData_t sbusdata;
 
 void calculateQx(void);
-void printControlLoop(int16_t esc_speed, double speed, double brakedistance, CONTROLLER_MONITOR_t monitor, Endpoints endpoint);
+void printControlLoop(int16_t esc_speed, double speed, double brakedistance, CONTROLLER_MONITOR_t monitor, uint16_t esc, Endpoints endpoint);
 void stickCycle(double pos, double brakedistance);
 
 CONTROLLER_MONITOR_t monitor = FREE;
@@ -188,11 +188,6 @@ int16_t getStickPositionRaw()
 }
 
 
-int16_t getStickPosition()
-{
-    return stick_requested_value;
-}
-
 void stickCycle(double pos, double brakedistance)
 {
     int16_t value = getStickPositionRaw();
@@ -341,8 +336,7 @@ void controllercycle()
      * at breaking and here the end point break in particular: In this case the thrust has to be set to zero
      * in order to break as hard as possible whereas the speed output can be gradually reduced to zero.
      */
-    int16_t stickposition = getStickPosition();
-    int16_t esc_output = stickposition;
+    int16_t esc_output = stick_requested_value;
 
     int16_t speed_current = pos_current_old - pos_current;
 
@@ -364,7 +358,7 @@ void controllercycle()
             /*
              * The new target is the old target increased by the stick signal.
              */
-            pos_target += ((double)stickposition) * activesettings.stick_speed_factor;
+            pos_target += ((double)stick_requested_value) * activesettings.stick_speed_factor;
 
             // In OPERATIONAL mode the position including the break distance has to be within the end points, in programming mode you can go past that
             if (safemode == OPERATIONAL)
@@ -414,26 +408,31 @@ void controllercycle()
         {
             // activesettings.mode != MODE_ABSOLUTE_POSITION
 
-            // esc_out = stickposition for speed based ESCs or in case of a classic ESC esc_out = 0 if monitor == ENDPOINTBREAK
+            // esc_out = stick_requested_value for speed based ESCs or in case of a classic ESC esc_out = 0 if monitor == ENDPOINTBREAK
             speed_old = (double) speed_current;
         }
     }
 
+    TIM3->CCR3 = 1500 + esc_output;
 
     pos_current_old = pos_current; // required for the actual speed calculation
 
     if (is1Hz())
     {
-        printControlLoop(stickposition, speed_old, distance_to_stop, monitor, EndPoint_USB);
+        // printControlLoop(stick_requested_value, speed_old, distance_to_stop, monitor, TIM3->CCR3, EndPoint_USB);
     }
 }
 
-void printControlLoop(int16_t input, double speed, double brakedistance, CONTROLLER_MONITOR_t monitor, Endpoints endpoint)
+void printControlLoop(int16_t input, double speed, double brakedistance, CONTROLLER_MONITOR_t monitor, uint16_t esc, Endpoints endpoint)
 {
-    PrintSerial_string("Time: ", endpoint);
+    PrintSerial_string("LastValidFrame: ", endpoint);
     PrintSerial_long(sbusdata.sbusLastValidFrame, endpoint);
-    PrintSerial_string("  Raw: ", endpoint);
+    PrintSerial_string("  Duty: ", endpoint);
     PrintSerial_int(getDuty(activesettings.rc_channel_speed), endpoint);
+    PrintSerial_string("  Raw: ", endpoint);
+    PrintSerial_int(sbusdata.servovalues[activesettings.rc_channel_speed].duty, endpoint);
+    PrintSerial_string("  ESC Out: ", endpoint);
+    PrintSerial_int(esc, endpoint);
     if (safemode == INVALID_RC)
     {
         PrintSerial_string("  INVALID_RC", endpoint);
@@ -450,7 +449,7 @@ void printControlLoop(int16_t input, double speed, double brakedistance, CONTROL
     {
         PrintSerial_string("  ???", endpoint);
     }
-    PrintSerial_string("  Input: ", endpoint);
+    PrintSerial_string("  ESC Input: ", endpoint);
     PrintSerial_int(input, endpoint);
     PrintSerial_string("  Speed: ", endpoint);
     PrintSerial_double(speed, endpoint);
@@ -473,7 +472,6 @@ void printControlLoop(int16_t input, double speed, double brakedistance, CONTROL
     {
         PrintSerial_string("  ???", endpoint);
     }
-
 
     PrintSerial_string("  Pos: ", endpoint);
     PrintlnSerial_long(ENCODER_VALUE, endpoint);

@@ -52,12 +52,12 @@
 #include "controller.h"
 #include "protocol.h"
 
-/* USER CODE BEGIN Includes */
 #include "clock_50Hz.h"
 #include "sbus.h"
 #include "serial_print.h"
 #include "usbd_cdc_if.h"
-/* USER CODE END Includes */
+#include "spi_flash.h"
+#include "eeprom.h"
 
 /* Private variables ---------------------------------------------------------*/
 RTC_HandleTypeDef hrtc;
@@ -65,6 +65,7 @@ RTC_HandleTypeDef hrtc;
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi3;
 
+TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim5;
 
@@ -77,12 +78,9 @@ DMA_HandleTypeDef hdma_usart2_tx;
 DMA_HandleTypeDef hdma_usart3_rx;
 DMA_HandleTypeDef hdma_usart3_tx;
 
-/* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 uint32_t lasttick;
 char buf[APP_TX_BUF_SIZE];
-
-/* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -96,41 +94,21 @@ static void MX_USART1_UART_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM5_Init(void);
+static void MX_TIM1_Init(void);
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
-
-/* USER CODE BEGIN PFP */
-/* Private function prototypes -----------------------------------------------*/
-
-/* USER CODE END PFP */
-
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-
 int main(void)
 {
-
-    /* USER CODE BEGIN 1 */
-
-    /* USER CODE END 1 */
+    settings_t defaultsettings;
 
     /* MCU Configuration----------------------------------------------------------*/
 
     /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
     HAL_Init();
 
-    /* USER CODE BEGIN Init */
-
-    /* USER CODE END Init */
-
     /* Configure the system clock */
     SystemClock_Config();
-
-    /* USER CODE BEGIN SysInit */
-
-    /* USER CODE END SysInit */
 
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
@@ -139,26 +117,33 @@ int main(void)
     MX_SPI1_Init();
     MX_SPI3_Init();
     MX_TIM3_Init();
-    MX_USART1_UART_Init();
     MX_USART3_UART_Init();
     MX_USB_DEVICE_Init();
     MX_USART2_UART_Init();
     MX_TIM5_Init();
-
-    /* USER CODE BEGIN 2 */
 
     /* Disable Half Transfer Interrupt */
     /* __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT); */
     HAL_TIM_Encoder_Start(&htim5, TIM_CHANNEL_1 | TIM_CHANNEL_2);
 
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET);
-    /* Turn on interrupt for uart1/sbus */
-    HAL_UART_Receive_IT(&huart1, getSBUSFrameAddress(), SBUS_FRAME_SIZE);
 
-    /* Turn on SBUS Inverter */
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
+    if (HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3) != HAL_OK)
+    {
+        /* PWM generation Error */
+        Error_Handler();
+    }
+    if (HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4) != HAL_OK)
+    {
+        /* PWM generation Error */
+        Error_Handler();
+    }
 
-    initController();
+    if (eeprom_init() != 0)
+    {
+        /* EEPROM is a wrong chip */
+        Error_Handler();
+    }
 
     activesettings.esc_direction = 0;
     activesettings.D = 0.0f;
@@ -170,7 +155,7 @@ int main(void)
     activesettings.pos_start = (double) -POS_END_NOT_SET;
     activesettings.rc_channel_endpoint = 6;
     activesettings.rc_channel_programming = 5;
-    activesettings.rc_channel_speed = 2;
+    activesettings.rc_channel_speed = 0;
     activesettings.stick_max_accel = 2;
     activesettings.stick_max_accel_safemode = 1;
     activesettings.stick_max_speed = 500;
@@ -179,11 +164,50 @@ int main(void)
     activesettings.stick_neutral_range = 30;
     strcpy(activesettings.version, "20170701");
     activesettings.stick_speed_factor = 0.1f;
+    activesettings.receivertype = RECEIVER_TYPE_SUMPPM;
 
-    /* USER CODE END 2 */
 
-    /* Infinite loop */
-    /* USER CODE BEGIN WHILE */
+    eeprom_read_sector((uint8_t *)&defaultsettings, sizeof(defaultsettings), EEPROM_SECTOR_FOR_SETTINGS);
+    if (strncmp(activesettings.version, defaultsettings.version, sizeof(activesettings.version)) == 0)
+    {
+        // Version is the same
+        memcpy(&activesettings, &defaultsettings, sizeof(defaultsettings));
+        strcpy(controllerstatus.boottext_eeprom, "defaults loaded from eeprom");
+    }
+    else if (strncmp("2015.01.01", defaultsettings.version, sizeof(activesettings.version)) == 0)
+    {
+        // Version stored is older, hence copy the structure and set the previously unknown values to defaults
+        memcpy(&activesettings, &defaultsettings, sizeof(defaultsettings));
+        strcpy(controllerstatus.boottext_eeprom, "defaults loaded from eeprom using version 2015.01.01");
+    }
+    else
+    {
+        strcpy(controllerstatus.boottext_eeprom, "eeprom does not contain valid default - keeping the system defaults");
+    }
+
+    if (activesettings.receivertype == RECEIVER_TYPE_SBUS)
+    {
+        MX_USART1_UART_Init();
+
+        /* Turn on interrupt for uart1/sbus */
+        HAL_UART_Receive_IT(&huart1, getSBUSFrameAddress(), SBUS_FRAME_SIZE);
+
+        /* Turn on SBUS Inverter */
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
+    }
+    else
+    {
+        MX_TIM1_Init();
+
+        /* Turn off SBUS Inverter */
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
+
+        HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_3);
+        HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_4);
+    }
+
+    initController();
+
     while (1)
     {
         if (HAL_GetTick() - lasttick > 20)
@@ -201,21 +225,13 @@ int main(void)
         {
             serialCom(buf, EndPoint_USB);
         }
-
     }
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-
-    /* USER CODE END 3 */
-
 }
 
 /** System Clock Configuration
 */
 void SystemClock_Config(void)
 {
-
     RCC_OscInitTypeDef RCC_OscInitStruct;
     RCC_ClkInitTypeDef RCC_ClkInitStruct;
     RCC_PeriphCLKInitTypeDef PeriphClkInitStruct;
@@ -281,7 +297,6 @@ void SystemClock_Config(void)
 /* RTC init function */
 static void MX_RTC_Init(void)
 {
-
     /**Initialize RTC Only
     */
     hrtc.Instance = RTC;
@@ -301,7 +316,6 @@ static void MX_RTC_Init(void)
 /* SPI1 init function */
 static void MX_SPI1_Init(void)
 {
-
     hspi1.Instance = SPI1;
     hspi1.Init.Mode = SPI_MODE_MASTER;
     hspi1.Init.Direction = SPI_DIRECTION_2LINES;
@@ -318,43 +332,45 @@ static void MX_SPI1_Init(void)
     {
         _Error_Handler(__FILE__, __LINE__);
     }
-
 }
 
 /* SPI3 init function */
 static void MX_SPI3_Init(void)
 {
+    sFLASH_CS_HIGH();
 
     hspi3.Instance = SPI3;
     hspi3.Init.Mode = SPI_MODE_MASTER;
     hspi3.Init.Direction = SPI_DIRECTION_2LINES;
     hspi3.Init.DataSize = SPI_DATASIZE_8BIT;
-    hspi3.Init.CLKPolarity = SPI_POLARITY_LOW;
-    hspi3.Init.CLKPhase = SPI_PHASE_1EDGE;
-    hspi3.Init.NSS = SPI_NSS_HARD_INPUT;
-    hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+    hspi3.Init.CLKPolarity = SPI_POLARITY_HIGH;
+    hspi3.Init.CLKPhase = SPI_PHASE_2EDGE;
+    hspi3.Init.NSS = SPI_NSS_SOFT;
+    hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
     hspi3.Init.FirstBit = SPI_FIRSTBIT_MSB;
     hspi3.Init.TIMode = SPI_TIMODE_DISABLE;
     hspi3.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-    hspi3.Init.CRCPolynomial = 10;
+    hspi3.Init.CRCPolynomial = 7;
     if (HAL_SPI_Init(&hspi3) != HAL_OK)
     {
         _Error_Handler(__FILE__, __LINE__);
     }
 
+    /* SPI block is enabled prior calling SPI transmit/receive functions, in order to get CLK signal properly pulled down.
+         Otherwise, SPI CLK signal is not clean on this board and leads to errors during transfer */
+    __HAL_SPI_ENABLE(&hspi3);
 }
 
 /* TIM3 init function */
 static void MX_TIM3_Init(void)
 {
-
     TIM_MasterConfigTypeDef sMasterConfig;
     TIM_OC_InitTypeDef sConfigOC;
 
     htim3.Instance = TIM3;
-    htim3.Init.Prescaler = 0;
+    htim3.Init.Prescaler = 16-1;
     htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-    htim3.Init.Period = 0;
+    htim3.Init.Period = 20000; // 20ms or 50Hz
     htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
     {
@@ -369,9 +385,12 @@ static void MX_TIM3_Init(void)
     }
 
     sConfigOC.OCMode = TIM_OCMODE_PWM1;
-    sConfigOC.Pulse = 0;
+    sConfigOC.Pulse = 1500;
     sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
     sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+    sConfigOC.OCNPolarity  = TIM_OCNPOLARITY_HIGH;
+    sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+    sConfigOC.OCIdleState  = TIM_OCIDLESTATE_RESET;
     if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
     {
         _Error_Handler(__FILE__, __LINE__);
@@ -383,13 +402,11 @@ static void MX_TIM3_Init(void)
     }
 
     HAL_TIM_MspPostInit(&htim3);
-
 }
 
 /* TIM5 init function */
 static void MX_TIM5_Init(void)
 {
-
     TIM_Encoder_InitTypeDef sConfig;
     TIM_MasterConfigTypeDef sMasterConfig;
 
@@ -418,13 +435,70 @@ static void MX_TIM5_Init(void)
     {
         _Error_Handler(__FILE__, __LINE__);
     }
-
 }
+
+
+/* TIM1 init function */
+static void MX_TIM1_Init(void)
+{
+    TIM_SlaveConfigTypeDef sSlaveConfig;
+    TIM_MasterConfigTypeDef sMasterConfig;
+    TIM_IC_InitTypeDef sConfigIC;
+
+    htim1.Instance = TIM1;
+    htim1.Init.Prescaler = 16-1;
+    htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+    htim1.Init.Period = 0xFFFF;
+    htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    htim1.Init.RepetitionCounter = 0;
+    if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+    {
+        _Error_Handler(__FILE__, __LINE__);
+    }
+
+    if (HAL_TIM_IC_Init(&htim1) != HAL_OK)
+    {
+        _Error_Handler(__FILE__, __LINE__);
+    }
+
+    sSlaveConfig.SlaveMode = TIM_SLAVEMODE_RESET;
+    sSlaveConfig.InputTrigger = TIM_TS_TI2FP2;
+    sSlaveConfig.TriggerPolarity = TIM_TRIGGERPOLARITY_FALLING;
+    sSlaveConfig.TriggerFilter = 0;
+    if (HAL_TIM_SlaveConfigSynchronization(&htim1, &sSlaveConfig) != HAL_OK)
+    {
+        _Error_Handler(__FILE__, __LINE__);
+    }
+
+    sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+    sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+    if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+    {
+        _Error_Handler(__FILE__, __LINE__);
+    }
+
+
+    sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+    sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
+    sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
+    sConfigIC.ICFilter = 0;
+    if (HAL_TIM_IC_ConfigChannel(&htim1, &sConfigIC, TIM_CHANNEL_3) != HAL_OK)
+    {
+        _Error_Handler(__FILE__, __LINE__);
+    }
+
+    sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_FALLING;
+    sConfigIC.ICSelection = TIM_ICSELECTION_INDIRECTTI;
+    if (HAL_TIM_IC_ConfigChannel(&htim1, &sConfigIC, TIM_CHANNEL_4) != HAL_OK)
+    {
+        _Error_Handler(__FILE__, __LINE__);
+    }
+}
+
 
 /* USART1 init function */
 static void MX_USART1_UART_Init(void)
 {
-
     huart1.Instance = USART1;
     huart1.Init.BaudRate = 100000;
     huart1.Init.WordLength = UART_WORDLENGTH_9B;
@@ -437,13 +511,11 @@ static void MX_USART1_UART_Init(void)
     {
         _Error_Handler(__FILE__, __LINE__);
     }
-
 }
 
 /* USART2 init function */
 static void MX_USART2_UART_Init(void)
 {
-
     huart2.Instance = USART2;
     huart2.Init.BaudRate = 115200;
     huart2.Init.WordLength = UART_WORDLENGTH_8B;
@@ -456,13 +528,11 @@ static void MX_USART2_UART_Init(void)
     {
         _Error_Handler(__FILE__, __LINE__);
     }
-
 }
 
 /* USART3 init function */
 static void MX_USART3_UART_Init(void)
 {
-
     huart3.Instance = USART3;
     huart3.Init.BaudRate = 115200;
     huart3.Init.WordLength = UART_WORDLENGTH_8B;
@@ -475,7 +545,6 @@ static void MX_USART3_UART_Init(void)
     {
         _Error_Handler(__FILE__, __LINE__);
     }
-
 }
 
 /**
@@ -503,7 +572,6 @@ static void MX_DMA_Init(void)
     /* DMA2_Stream2_IRQn interrupt configuration */
     HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
-
 }
 
 /** Configure pins as
@@ -515,7 +583,6 @@ static void MX_DMA_Init(void)
 */
 static void MX_GPIO_Init(void)
 {
-
     GPIO_InitTypeDef GPIO_InitStruct;
 
     /* GPIO Ports Clock Enable */
@@ -545,12 +612,7 @@ static void MX_GPIO_Init(void)
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
 }
-
-/* USER CODE BEGIN 4 */
-
-/* USER CODE END 4 */
 
 /**
   * @brief  This function is executed in case of error occurrence.
@@ -559,12 +621,13 @@ static void MX_GPIO_Init(void)
   */
 void _Error_Handler(char * file, int line)
 {
-    /* USER CODE BEGIN Error_Handler_Debug */
-    /* User can add his own implementation to report the HAL error return state */
+    /* In case of an error set both servo outputs to idle */
+    TIM3->CCR3 = 1500;
+    TIM3->CCR4 = 1500;
     while(1)
     {
     }
-    /* USER CODE END Error_Handler_Debug */
+
 }
 
 #ifdef USE_FULL_ASSERT
@@ -578,10 +641,7 @@ void _Error_Handler(char * file, int line)
    */
 void assert_failed(uint8_t* file, uint32_t line)
 {
-    /* USER CODE BEGIN 6 */
-    /* User can add his own implementation to report the file name and line number,
-      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-    /* USER CODE END 6 */
+
 
 }
 
