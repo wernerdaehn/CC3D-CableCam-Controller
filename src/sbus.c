@@ -43,7 +43,7 @@ static sbusFrame_t sbusFrame;
 static int8_t current_virtual_channel = 0;
 static uint16_t lastrising = 0;
 
-sbusData_t sbusdata;
+extern sbusData_t sbusdata;
 
 void setServoValues()
 {
