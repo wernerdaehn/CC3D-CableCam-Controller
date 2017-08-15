@@ -102,11 +102,11 @@ LED Warn | Warn LED on the board | PB4 (Low = On) | GPIO
 MainUSART | Receiver input; In SBus Mode | PA10 | USART1_RX
 MainUSART | Receiver input; In SBus Mode | PA10 | TIM1_CH3
 IMU | SPI for MPU-6000 IMU | PA4 | SPI1_NSS
- | SPI for MPU-6000 IMU | PA5 | SPI1_SCK
- | SPI for MPU-6000 IMU | PA6 | SPI1_MISO
- | SPI for MPU-6000 IMU | PA7 | SPI1_MOSI
+IMU | SPI for MPU-6000 IMU | PA5 | SPI1_SCK
+IMU | SPI for MPU-6000 IMU | PA6 | SPI1_MISO
+IMU | SPI for MPU-6000 IMU | PA7 | SPI1_MOSI
 EEPROM | SPI for Flash 16MBit and optional RF Module (not used) | PA15 | SPI3_NSS
- | SPI for Flash 16MBit and optional RF Module (not used) | PC10 | SPI3_SCK
- | SPI for Flash 16MBit and optional RF Module (not used) | PC11 | SPI3_MISO
- | SPI for Flash 16MBit and optional RF Module (not used) | PC12 | SPI3_MOSI
- | Select for Flash 16MBit | PB3 | GPIO
+EEPROM | SPI for Flash 16MBit and optional RF Module (not used) | PC10 | SPI3_SCK
+EEPROM | SPI for Flash 16MBit and optional RF Module (not used) | PC11 | SPI3_MISO
+EEPROM | SPI for Flash 16MBit and optional RF Module (not used) | PC12 | SPI3_MOSI
+EEPROM | Select for Flash 16MBit | PB3 | GPIO
