@@ -97,8 +97,8 @@ Servo3 | ESC Output via UART | PA3 | USART2_RX
 Servo4 | ESC Output via UART | PA2 | USART2_TX
 Servo5 | 32Bit Quadruple Encoder used for Hall Sensor input | PA0 | TIM5_CH1
 Servo6 | 32Bit Quadruple Encoder used for Hall Sensor input | PA1 | TIM5_CH2
-LED Status | Status LED on the boards | PB5 (Low = On) | GPIO
-LED Warn | Warn LED on the board | PB4 (Low = On) | GPIO
+LED Status | Status LED on the boards (Low = On) | PB5 | GPIO
+LED Warn | Warn LED on the board (Low = On) | PB4 | GPIO
 MainUSART | Receiver input; In SBus Mode | PA10 | USART1_RX
 MainUSART | Receiver input; In SBus Mode | PA10 | TIM1_CH3
 IMU | SPI for MPU-6000 IMU | PA4 | SPI1_NSS
