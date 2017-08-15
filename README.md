@@ -74,7 +74,7 @@ The only important things to make sure are
 To achieve that one of the running wheels has 22 bores of d3x8mm (3mm drill and 8mm deep) and magnets are inserted alternating north/south. The hall sensor does switch on north magnetic fields only and therefore by adding a south orientated magnet between, it is an absolute certainty, the north field strength falls below the required level. 
 In my case the bores are drilled into the skate wheel with a diameter of 60mm, hence the distance between each drill is 8.6mm. So as long as the distance between the two hall sensors is not 17.2mm or multiples thereof, they will not switch on/off at the same time. I aimed for a distance of 8.6mm+50% = 13mm roughly.
 
-_Note: The sensor board PCB is currently redesigned using above guidelines. Maybe a LEDs are added as well as visual indication?_
+_Note: The sensor board PCB is currently redesigned using above guidelines. Maybe LEDs are added as well as visual indication?_
 
 
 ### Flashing the firmware
