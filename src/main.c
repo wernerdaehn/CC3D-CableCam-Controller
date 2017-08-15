@@ -181,6 +181,8 @@ int main(void)
     else if (strncmp("2017", defaultsettings.version, 4) == 0)
     {
         // Version stored is valid but older, hence copy the structure and set the previously unknown values to defaults
+        // Also make set the old version number to the new one
+        strcpy(defaultsettings.version, activesettings.version);
         memcpy(&activesettings, &defaultsettings, sizeof(defaultsettings));
         strcpy(controllerstatus.boottext_eeprom, "defaults loaded from eeprom using an older version");
         // With firmware 20170815 the esc neutral pos and range got added
@@ -656,8 +658,8 @@ static void MX_GPIO_Init(void)
 void _Error_Handler(char * file, int line)
 {
     /* In case of an error set both servo outputs to idle */
-    TIM3->CCR3 = 1500;
-    TIM3->CCR4 = 1500;
+    TIM3->CCR3 = activesettings.esc_neutral_pos;
+    TIM3->CCR4 = activesettings.esc_neutral_pos;
     while(1)
     {
     }

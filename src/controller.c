@@ -165,7 +165,11 @@ int16_t getStickPositionRaw()
 
 void stickCycle(double pos, double brakedistance)
 {
-    int16_t value = getStickPositionRaw();
+    /*
+     * WATCHOUT, while the stick values are all in us, the value, stick_requested_value, esc_out values are all in 0.1us units.
+     * Else the acceleration would not be fine grained enough.
+     */
+    int16_t value = getStickPositionRaw()*10;
 
     // In passthrough mode the returned value is the raw value
     if (activesettings.mode != MODE_PASSTHROUGH)
@@ -500,11 +504,11 @@ void controllercycle()
 
     if (esc_output > 0)
     {
-        TIM3->CCR3 = activesettings.esc_neutral_pos + activesettings.esc_neutral_range + esc_output;
+        TIM3->CCR3 = activesettings.esc_neutral_pos + activesettings.esc_neutral_range + (esc_output/10);
     }
     else if (esc_output < 0)
     {
-        TIM3->CCR3 = activesettings.esc_neutral_pos - activesettings.esc_neutral_range + esc_output;
+        TIM3->CCR3 = activesettings.esc_neutral_pos - activesettings.esc_neutral_range + (esc_output/10);
     }
     else
     {
