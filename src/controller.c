@@ -198,34 +198,12 @@ void stickCycle(double pos, double brakedistance)
                 value = 0;
                 controllerstatus.monitor = ENDPOINTBRAKE;
                 LED_WARN_ON;
-                if (is1Hz())
-                {
-                    PrintSerial_string("pos = ", EndPoint_USB);
-                    PrintSerial_double(pos, EndPoint_USB);
-                    PrintSerial_string(" + ", EndPoint_USB);
-                    PrintSerial_double(brakedistance, EndPoint_USB);
-                    PrintSerial_string(" > ", EndPoint_USB);
-                    PrintSerial_double(activesettings.pos_end, EndPoint_USB);
-                    PrintSerial_string(" and value is ", EndPoint_USB);
-                    PrintlnSerial_int(value, EndPoint_USB);
-                }
             }
             else if (pos - brakedistance <= activesettings.pos_start && value < 0)
             {
                 value = 0;
                 controllerstatus.monitor = ENDPOINTBRAKE;
                 LED_WARN_ON;
-                if (is1Hz())
-                {
-                    PrintSerial_string("pos = ", EndPoint_USB);
-                    PrintSerial_double(pos, EndPoint_USB);
-                    PrintSerial_string(" - ", EndPoint_USB);
-                    PrintSerial_double(brakedistance, EndPoint_USB);
-                    PrintSerial_string(" < ", EndPoint_USB);
-                    PrintSerial_double(activesettings.pos_start, EndPoint_USB);
-                    PrintSerial_string(" and value is ", EndPoint_USB);
-                    PrintlnSerial_int(value, EndPoint_USB);
-                }
             }
             else
             {
@@ -244,33 +222,11 @@ void stickCycle(double pos, double brakedistance)
 
         if (diff > maxaccel)
         {
-            if (is1Hz())
-            {
-                PrintSerial_string("requested accel of ", EndPoint_USB);
-                PrintSerial_int(diff, EndPoint_USB);
-                PrintSerial_string(" limited to ", EndPoint_USB);
-                PrintSerial_int(maxaccel, EndPoint_USB);
-                PrintSerial_string(", requested stick value of ", EndPoint_USB);
-                PrintSerial_int(value, EndPoint_USB);
-                PrintSerial_string(" reset to ", EndPoint_USB);
-                PrintlnSerial_int(stick_requested_value + maxaccel, EndPoint_USB);
-            }
             // Example: last time: 150; now stick: 200 --> diff: 50; max change is 10 per cycle --> new value: 150+10=160 as the limiter kicks in
             value = stick_requested_value + maxaccel;
         }
         else if (diff < -maxaccel)
         {
-            if (is1Hz())
-            {
-                PrintSerial_string("requested accel of ", EndPoint_USB);
-                PrintSerial_int(diff, EndPoint_USB);
-                PrintSerial_string(" limited to ", EndPoint_USB);
-                PrintSerial_int(maxaccel, EndPoint_USB);
-                PrintSerial_string(", requested stick value of ", EndPoint_USB);
-                PrintSerial_int(value, EndPoint_USB);
-                PrintSerial_string(" reset to ", EndPoint_USB);
-                PrintlnSerial_int(stick_requested_value - maxaccel, EndPoint_USB);
-            }
             // Example: last time: 150; now stick: 100 --> diff: -50; max change is 10 per cycle --> new value: 150-10=140 as the limiter kicks in
             value = stick_requested_value - maxaccel;
         }
@@ -281,24 +237,10 @@ void stickCycle(double pos, double brakedistance)
          */
         if (value > maxspeed)
         {
-            if (is1Hz())
-            {
-                PrintSerial_string("speed limit engaged, limiting requested speed of ", EndPoint_USB);
-                PrintSerial_int(value, EndPoint_USB);
-                PrintSerial_string(" to ", EndPoint_USB);
-                PrintlnSerial_int(maxspeed, EndPoint_USB);
-            }
             value = maxspeed;
         }
         else if (value < -maxspeed)
         {
-            if (is1Hz())
-            {
-                PrintSerial_string("speed limit engaged, limiting requested speed of ", EndPoint_USB);
-                PrintSerial_int(value, EndPoint_USB);
-                PrintSerial_string(" to ", EndPoint_USB);
-                PrintlnSerial_int(maxspeed, EndPoint_USB);
-            }
             value = -maxspeed;
         }
     }
