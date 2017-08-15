@@ -38,7 +38,7 @@ In particular the [CC3D Revolution board](http://opwiki.readthedocs.io/en/latest
 
 _Note: The STM32F4 allows very flexible remapping of the pins to different functions, hence what is supposed to be used as output in the CC3D Revo firmware is rather used as input with the CableCam Controller firmware occasionally._
 
-<img src="_images/CC3D_Revolution_Schematics.png" width="100%"/>
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/CC3D_Revolution_Schematics.png"><img src="_images/CC3D_Revolution_Schematics.png" width="100%" /></a>
 
 As said, the board is put between the ESC and the receiver and gets the positional input from the hall sensors in addition.
 
