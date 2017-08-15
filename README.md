@@ -3,6 +3,19 @@ A STM32 based CableCam Controller
 MCU used is [STM32F405RG](http://www.st.com/en/microcontrollers/stm32f405rg.html)
 Board used: Any CC3D Revolution or clone, e.g. F4 Advanced Flight Controller by Bob Forooghi [example board](http://www.getfpv.com/f4-advanced-flight-controller.html)
 
+## Quickstart
+1. Connect the ESC to the Servo1 pins. This will later power the board as well. ESC should be turned off for now.
+1. Connect the receiver (SumPPM or SBus) to the Main USART, the pin called SBus RX1 on above F4 controller
+1. Provide power to the receiver by connecting its Vcc and Gnd to Servo5 Vcc and Gnd
+1. Hall sensor board is powered by Servo6 Vcc and Gnd and its two input signals are connected to Servo5 and Servo6 signal pins
+1. Install the ST provided DfuSe utility from the bottom of [this page](http://www.st.com/en/development-tools/stsw-stm32080.html)
+1. Run the installed DfuSe program
+1. Connect the board to your computer via USB and while doing so, keep the boot button pressed
+1. As this activates the STM32F4 hardware bootloader and no firmware runs, only the orange power LED should be on. If the blue Status LED does blink, the firmware is active. Try again above step.
+1. Download the firmware from this project https://github.com/wernerdaehn/CC3D-CableCam-Controller/blob/master/bin/Debug/CableCamControllerF4.dfu
+1. Flash the firmware following this guide - starting with Step 4: http://kiss.flyduino.net/dwkb/flash-fc-pc/
+1. ...
+
 ## Goals
 The most simple way to control a cablecam is by connecting the RC receiver to the motor controller (=ESC, speed controller) and control it like a RC car.
 But this has multiple limitations the CableCam Controller tries to solve:
@@ -43,7 +56,7 @@ The hall sensor is very simple. The [Allegro Microsystems A1120](http://www.alle
 
 ![Hall Sensor Board](_images/HallSensor_Board.png)
 
-The only important things are to make sure 
+The only important things to make sure are
 1. The hall sensor does switch on and off reliably, meaning the magnetic field has to raise above and fall below the thresholds for sure.
 1. The two hall sensors have a delay between switching on/off as this delay tells the rotation direction. If both would switch on exactly the same time, no rotation direction can be derived.
 
