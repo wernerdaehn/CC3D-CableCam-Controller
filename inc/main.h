@@ -48,19 +48,18 @@
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __MAIN_H
 #define __MAIN_H
-  /* Includes ------------------------------------------------------------------*/
+/* Includes ------------------------------------------------------------------*/
 
-/* USER CODE BEGIN Includes */
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx.h"
 
-/* USER CODE END Includes */
+#define LED_WARN_ON HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_RESET)
+#define LED_WARN_OFF HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET)
+#define LED_WARN_TOGGLE HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4)
 
-/* Private define ------------------------------------------------------------*/
-
-/* USER CODE BEGIN Private defines */
-
-/* USER CODE END Private defines */
+#define LED_STATUS_ON HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET)
+#define LED_STATUS_OFF HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET)
+#define LED_STATUS_TOGGLE HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5)
 
 void _Error_Handler(char *, int);
 

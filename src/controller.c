@@ -11,13 +11,9 @@ void calculateQx(void);
 void printControlLoop(int16_t esc_speed, double speed, double brakedistance, CONTROLLER_MONITOR_t monitor, uint16_t esc, Endpoints endpoint);
 void stickCycle(double pos, double brakedistance);
 
-CONTROLLER_MONITOR_t monitor = FREE;
-
 double speed_old = 0;
 double yalt = 0.0f, ealt = 0.0f, ealt2 = 0.0f;
 
-CONTROLLER_STATUS_t controller_status = CONTROLLER_INIT;
-SAFE_MODE_t safemode = INVALID_RC;
 
 int32_t pos_current_old = 0L;
 double pos_target = 0.0f, pos_target_old = 0.0f;
@@ -87,11 +83,6 @@ void initController(void)
     calculateQx();
 }
 
-SAFE_MODE_t getSafeMode(void)
-{
-    return safemode;
-}
-
 double abs_d(double v)
 {
     if (v<0.0)
@@ -116,7 +107,7 @@ uint16_t getEndPointSwitch()
 
 
 /*
- * getStickPositionRaw() returns the position of the stick considering the neutral range.
+ * getStickPositionRaw() returns the position centered around 0 of the stick considering the neutral range.
  * Everything within the neutral range means a stick position of zero, the first value outside the neutral range would be 1.
  * Examples:
  *   sbus reading: 885; neutral: 870..890 --> return 0;
@@ -124,6 +115,8 @@ uint16_t getEndPointSwitch()
  *
  * Therefore the output is a linear range from min to max with the neutral range eliminated from the value.
  * Also, when the reading is too old, meaning older than 3 seconds, the value is reset to zero as emergency precaution.
+ *
+ * Just to repeat, getDuty() returns a value like 1200 (neutral for SBUS), this function returns +200 then, assuming neutral is set to +1000.
  */
 int16_t getStickPositionRaw()
 {
@@ -141,35 +134,17 @@ int16_t getStickPositionRaw()
          * There is one more case, we got a valid speed signal but the stick is not in neutral. This is considered
          * an invalid signal as well. At startup the speed signal has to be in idle.
          */
-        if (safemode == INVALID_RC && (value > activesettings.stick_neutral_pos + activesettings.stick_neutral_range ||
+        if (controllerstatus.safemode == INVALID_RC && (value > activesettings.stick_neutral_pos + activesettings.stick_neutral_range ||
                                        value < activesettings.stick_neutral_pos - activesettings.stick_neutral_range))
         {
             return 0;
         }
-
-        /*
-         * Okay, so either we are in neutral or in normal operation, hence evaluate the programming switch.
-         * A HIGH value is considered operational, a LOW value, a value of neutral or if the channel is not set at all (value == 0),
-         * then we are in the programming mode with reduced speeds.
-         * Note: All three conditions need to be met to exit the programming mode, hence the logic is placed here.
-         */
-        if (getProgrammingSwitch() > 1200)
-        {
-            safemode = OPERATIONAL;
-        }
-        else
-        {
-            if (safemode != PROGRAMMING)
-            {
-                // We just entered the programing mode, hence wait for the first end point
-                endpointclicks = 0;
-            }
-            safemode = PROGRAMMING;
-        }
     }
 
+    /* Readjust the value by the neutral position */
     value -= activesettings.stick_neutral_pos;
 
+    /* Remove the neutral range */
     if (value > activesettings.stick_neutral_range )
     {
         // above idle is just fine
@@ -191,8 +166,8 @@ int16_t getStickPositionRaw()
 void stickCycle(double pos, double brakedistance)
 {
     int16_t value = getStickPositionRaw();
-    // In passthrough mode the returned value is the raw value
 
+    // In passthrough mode the returned value is the raw value
     if (activesettings.mode != MODE_PASSTHROUGH)
     {
         /*
@@ -201,7 +176,7 @@ void stickCycle(double pos, double brakedistance)
         int16_t maxaccel = activesettings.stick_max_accel;
         int16_t maxspeed = activesettings.stick_max_speed;
 
-        if (safemode != OPERATIONAL)
+        if (controllerstatus.safemode != OPERATIONAL)
         {
             maxaccel = activesettings.stick_max_accel_safemode;
             maxspeed = activesettings.stick_max_speed_safemode;
@@ -209,18 +184,48 @@ void stickCycle(double pos, double brakedistance)
         else if (activesettings.mode != MODE_PASSTHROUGH && activesettings.mode != MODE_LIMITER)
         {
             /*
+             * The current status is OPERATIONAL, hence the endpoints are honored.
+             *
              * If we would overshoot the end points, then ignore the requested value and assume the user wants to stop asap, hence value = 0.
              * Actually, below's maxaccel limiter will make that a smooth speed reduction.
              */
-            if (pos + brakedistance >= activesettings.pos_end && value >= 0)
+            if (pos + brakedistance >= activesettings.pos_end && value > 0)
             {
                 value = 0;
-                monitor = ENDPOINTBRAKE;
+                controllerstatus.monitor = ENDPOINTBRAKE;
+                LED_WARN_ON;
+                if (is1Hz())
+                {
+                    PrintSerial_string("pos = ", EndPoint_USB);
+                    PrintSerial_double(pos, EndPoint_USB);
+                    PrintSerial_string(" + ", EndPoint_USB);
+                    PrintSerial_double(brakedistance, EndPoint_USB);
+                    PrintSerial_string(" > ", EndPoint_USB);
+                    PrintSerial_double(activesettings.pos_end, EndPoint_USB);
+                    PrintSerial_string(" and value is ", EndPoint_USB);
+                    PrintlnSerial_int(value, EndPoint_USB);
+                }
             }
-            else if (pos - brakedistance <= activesettings.pos_end && value <= 0)
+            else if (pos - brakedistance <= activesettings.pos_start && value < 0)
             {
                 value = 0;
-                monitor = ENDPOINTBRAKE;
+                controllerstatus.monitor = ENDPOINTBRAKE;
+                LED_WARN_ON;
+                if (is1Hz())
+                {
+                    PrintSerial_string("pos = ", EndPoint_USB);
+                    PrintSerial_double(pos, EndPoint_USB);
+                    PrintSerial_string(" - ", EndPoint_USB);
+                    PrintSerial_double(brakedistance, EndPoint_USB);
+                    PrintSerial_string(" < ", EndPoint_USB);
+                    PrintSerial_double(activesettings.pos_start, EndPoint_USB);
+                    PrintSerial_string(" and value is ", EndPoint_USB);
+                    PrintlnSerial_int(value, EndPoint_USB);
+                }
+            }
+            else
+            {
+                LED_WARN_OFF;
             }
         }
 
@@ -235,11 +240,33 @@ void stickCycle(double pos, double brakedistance)
 
         if (diff > maxaccel)
         {
+            if (is1Hz())
+            {
+                PrintSerial_string("requested accel of ", EndPoint_USB);
+                PrintSerial_int(diff, EndPoint_USB);
+                PrintSerial_string(" limited to ", EndPoint_USB);
+                PrintSerial_int(maxaccel, EndPoint_USB);
+                PrintSerial_string(", requested stick value of ", EndPoint_USB);
+                PrintSerial_int(value, EndPoint_USB);
+                PrintSerial_string(" reset to ", EndPoint_USB);
+                PrintlnSerial_int(stick_requested_value + maxaccel, EndPoint_USB);
+            }
             // Example: last time: 150; now stick: 200 --> diff: 50; max change is 10 per cycle --> new value: 150+10=160 as the limiter kicks in
             value = stick_requested_value + maxaccel;
         }
         else if (diff < -maxaccel)
         {
+            if (is1Hz())
+            {
+                PrintSerial_string("requested accel of ", EndPoint_USB);
+                PrintSerial_int(diff, EndPoint_USB);
+                PrintSerial_string(" limited to ", EndPoint_USB);
+                PrintSerial_int(maxaccel, EndPoint_USB);
+                PrintSerial_string(", requested stick value of ", EndPoint_USB);
+                PrintSerial_int(value, EndPoint_USB);
+                PrintSerial_string(" reset to ", EndPoint_USB);
+                PrintlnSerial_int(stick_requested_value - maxaccel, EndPoint_USB);
+            }
             // Example: last time: 150; now stick: 100 --> diff: -50; max change is 10 per cycle --> new value: 150-10=140 as the limiter kicks in
             value = stick_requested_value - maxaccel;
         }
@@ -250,18 +277,76 @@ void stickCycle(double pos, double brakedistance)
          */
         if (value > maxspeed)
         {
+            if (is1Hz())
+            {
+                PrintSerial_string("speed limit engaged, limiting requested speed of ", EndPoint_USB);
+                PrintSerial_int(value, EndPoint_USB);
+                PrintSerial_string(" to ", EndPoint_USB);
+                PrintlnSerial_int(maxspeed, EndPoint_USB);
+            }
             value = maxspeed;
         }
         else if (value < -maxspeed)
         {
+            if (is1Hz())
+            {
+                PrintSerial_string("speed limit engaged, limiting requested speed of ", EndPoint_USB);
+                PrintSerial_int(value, EndPoint_USB);
+                PrintSerial_string(" to ", EndPoint_USB);
+                PrintlnSerial_int(maxspeed, EndPoint_USB);
+            }
             value = -maxspeed;
         }
     }
     stick_requested_value = value; // store the current effective stick position as value for the next cycle
 
-    // Switch was raised from LOW to HIGH
+
+
+
+
+
+
+    /*
+     * Evaluate the programming mode switch.
+     *
+     * A HIGH value is considered normal operation
+     * Everything else
+     *                  LOW value
+     *                  value of neutral
+     *                  if the channel is not set at all (value == 0)
+     * is considered the programming mode with reduced speeds.
+     *
+     * The reason for including NEUTRAL as non-operational is because that would indicate this channel is not set properly.
+     */
+    if (getProgrammingSwitch() > 1200)
+    {
+        if (controllerstatus.safemode != OPERATIONAL)
+        {
+            PrintlnSerial_string("Entered OPERATIONAL mode", EndPoint_USB);
+        }
+        controllerstatus.safemode = OPERATIONAL;
+    }
+    else
+    {
+        if (controllerstatus.safemode != PROGRAMMING)
+        {
+            /* We just entered the programing mode, hence wait for the first end point
+             * First endpoint is the first click, Second endpoint the second click.
+             */
+            endpointclicks = 0;
+            PrintlnSerial_string("Entered Endpoint Programming mode", EndPoint_USB);
+        }
+        controllerstatus.safemode = PROGRAMMING;
+    }
+
+
+
+
+    /*
+     * Evaluate the End Point Programming switch
+     */
     uint16_t currentendpointswitch = getEndPointSwitch();
-    if (currentendpointswitch > 1200 && safemode == PROGRAMMING && lastendpointswitch <= 1200 && lastendpointswitch != 0)
+    if (currentendpointswitch > 1200 && controllerstatus.safemode == PROGRAMMING && lastendpointswitch <= 1200 && lastendpointswitch != 0)
     {
         int32_t pos = ENCODER_VALUE;
         if (endpointclicks == 0)
@@ -296,7 +381,7 @@ void resetThrottle()
 // ******** Main Loop *********
 void controllercycle()
 {
-    monitor = FREE; // might be overwritten by stickCycle() so has to come first
+    controllerstatus.monitor = FREE; // might be overwritten by stickCycle() so has to come first
     /*
        We need to work with the average speed, and that is the motor speed and the new speed at max deceleration
 
@@ -361,7 +446,7 @@ void controllercycle()
             pos_target += ((double)stick_requested_value) * activesettings.stick_speed_factor;
 
             // In OPERATIONAL mode the position including the break distance has to be within the end points, in programming mode you can go past that
-            if (safemode == OPERATIONAL)
+            if (controllerstatus.safemode == OPERATIONAL)
             {
                 // Of course the target can never exceed the end points, unless in programming mode
                 if (pos_target > activesettings.pos_end)
@@ -390,7 +475,7 @@ void controllercycle()
                 // The cablecam cannot catchup with the target position --> EMERGENCY BRAKE
                 resetThrottle();
                 esc_output = 0;
-                monitor = EMERGENCYBRAKE;
+                controllerstatus.monitor = EMERGENCYBRAKE;
             }
             else
             {
@@ -413,7 +498,19 @@ void controllercycle()
         }
     }
 
-    TIM3->CCR3 = 1500 + esc_output;
+    if (esc_output > 0)
+    {
+        TIM3->CCR3 = activesettings.esc_neutral_pos + activesettings.esc_neutral_range + esc_output;
+    }
+    else if (esc_output < 0)
+    {
+        TIM3->CCR3 = activesettings.esc_neutral_pos - activesettings.esc_neutral_range + esc_output;
+    }
+    else
+    {
+        TIM3->CCR3 = activesettings.esc_neutral_pos;
+    }
+
 
     pos_current_old = pos_current; // required for the actual speed calculation
 
@@ -433,15 +530,15 @@ void printControlLoop(int16_t input, double speed, double brakedistance, CONTROL
     PrintSerial_int(sbusdata.servovalues[activesettings.rc_channel_speed].duty, endpoint);
     PrintSerial_string("  ESC Out: ", endpoint);
     PrintSerial_int(esc, endpoint);
-    if (safemode == INVALID_RC)
+    if (controllerstatus.safemode == INVALID_RC)
     {
         PrintSerial_string("  INVALID_RC", endpoint);
     }
-    else if (safemode == PROGRAMMING)
+    else if (controllerstatus.safemode == PROGRAMMING)
     {
         PrintSerial_string("  PROGRAMMING", endpoint);
     }
-    else if (safemode == OPERATIONAL)
+    else if (controllerstatus.safemode == OPERATIONAL)
     {
         PrintSerial_string("  OPERATIONAL", endpoint);
     }

@@ -124,9 +124,13 @@ int main(void)
 
     /* Disable Half Transfer Interrupt */
     /* __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT); */
+
+    initProtocol();
+
+
     HAL_TIM_Encoder_Start(&htim5, TIM_CHANNEL_1 | TIM_CHANNEL_2);
 
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET);
+    LED_WARN_OFF;
 
     if (HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3) != HAL_OK)
     {
@@ -162,7 +166,7 @@ int main(void)
     activesettings.stick_max_speed_safemode = 100;
     activesettings.stick_neutral_pos = 992;
     activesettings.stick_neutral_range = 30;
-    strcpy(activesettings.version, "20170701");
+    strcpy(activesettings.version, "20170815");
     activesettings.stick_speed_factor = 0.1f;
     activesettings.receivertype = RECEIVER_TYPE_SUMPPM;
 
@@ -174,11 +178,17 @@ int main(void)
         memcpy(&activesettings, &defaultsettings, sizeof(defaultsettings));
         strcpy(controllerstatus.boottext_eeprom, "defaults loaded from eeprom");
     }
-    else if (strncmp("2015.01.01", defaultsettings.version, sizeof(activesettings.version)) == 0)
+    else if (strncmp("2017", defaultsettings.version, 4) == 0)
     {
-        // Version stored is older, hence copy the structure and set the previously unknown values to defaults
+        // Version stored is valid but older, hence copy the structure and set the previously unknown values to defaults
         memcpy(&activesettings, &defaultsettings, sizeof(defaultsettings));
-        strcpy(controllerstatus.boottext_eeprom, "defaults loaded from eeprom using version 2015.01.01");
+        strcpy(controllerstatus.boottext_eeprom, "defaults loaded from eeprom using an older version");
+        // With firmware 20170815 the esc neutral pos and range got added
+        if (activesettings.esc_neutral_pos == 0)
+        {
+            activesettings.esc_neutral_pos = 1500;
+            activesettings.esc_neutral_range = 30;
+        }
     }
     else
     {
@@ -215,9 +225,33 @@ int main(void)
             lasttick = HAL_GetTick();
             tickCounter();
             USBPeriodElapsed();
-            if (is5Hz())
+            if (is1Hz() && controllerstatus.safemode == OPERATIONAL)
             {
-                HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5);
+                /*
+                 * In operational mode we let the LED toggle slowly, once per second
+                 *
+                 */
+                LED_STATUS_TOGGLE;
+            }
+            if (is5Hz() && controllerstatus.safemode == PROGRAMMING)
+            {
+                /*
+                 * In programming mode we let the LED toggle quickly, 5 times per second
+                 *
+                 */
+                LED_STATUS_TOGGLE;
+            }
+            if (controllerstatus.safemode == INVALID_RC)
+            {
+                /*
+                 * When there is no valid RC signal, the WARN LED is turned on
+                 *
+                 */
+                LED_WARN_ON;
+            }
+            else
+            {
+                LED_WARN_OFF;
             }
             controllercycle();
         }
