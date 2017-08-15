@@ -27,7 +27,7 @@ But this has multiple limitations the CableCam Controller tries to solve:
 
 To achieve that the CableCam controller sits between the receiver and the motor controller and acts as a governour of the receiver input. If for example the user did push the stick forward from neutral to max within a second, the CableCam Controller rather increases the stick position slowly. For speed and positional input the controller is connected to two hall sensors on one of the running wheels.
 
-<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/HallSensor.jpg" target="_blank">
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/HallSensor.jpg">
   <img src="_images/HallSensor.jpg" width="50%"/>
 </a>
 
@@ -40,13 +40,13 @@ In particular the [CC3D Revolution board](http://opwiki.readthedocs.io/en/latest
 
 _Note: The STM32F4 allows very flexible remapping of the pins to different functions, hence what is supposed to be used as output in the CC3D Revo firmware is rather used as input with the CableCam Controller firmware occasionally._
 
-<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/CC3D_Revolution_Schematics.png" target="_blank">
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/CC3D_Revolution_Schematics.png">
   <img src="_images/CC3D_Revolution_Schematics.png" width="100%" />
 </a>
 
 As said, the board is put between the ESC and the receiver and gets the positional input from the hall sensors in addition.
 
-<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/Hardware_Overview.jpg" target="_blank">
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/Hardware_Overview.jpg">
   <img src="_images/Hardware_Overview.jpg" width="50%"/>
 </a>
 
@@ -56,14 +56,14 @@ In other words, as in the normal case the ESC provides power to the receiver, ju
 
 _Note: All types of receivers are connected to the SBus/RX1 pin. The PPM pin is not used yet, not even for PPM receivers. The main reason is to make sure only one receiver can be connected._
 
-<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/Board_with_Cables.jpg" target="_blank">
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/Board_with_Cables.jpg">
   <img src="_images/Board_with_Cables.jpg" width="25%"/>
 </a>
 
 #### Hall sensor
 The hall sensor is very simple. The [Allegro Microsystems A1120](http://www.allegromicro.com/en/Products/Magnetic-Digital-Position-Sensor-ICs/Hall-Effect-Unipolar-Switches/A1120-1-2-5.aspx) sensor connects the output to Gnd if the magnetic field perpenticular to the chip surface exceeds a certain level and opens that switch if it falls below a level (=Open Drain). These two levels are different, hence avoiding noise in case the magnet field is exaclty at the switch level (=Hysteresis). As a result the sensor board can be very simple. Power between 3..24V is provided - hence perfectly suited for the Vcc_unreg provided by the ESC - and a capacitor nearby the chips is needed. The output signal of both is connected directly to the Servo5&6. A pullup resistor is not needed either, the STM32 MCU internal ones are turned on for those two pins.
 
-<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/HallSensor_Board.png" target="_blank">
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/HallSensor_Board.png">
   <img src="_images/HallSensor_Board.png" width="50%"/>
 </a>
 
@@ -89,14 +89,17 @@ _Note: The sensor board PCB is currently redesigned using above guidelines. Mayb
 
 ### Hardware Mapping
 
-* Servo1: Servo Output to the ESC; Connect the ESC to it in order to feed it with valid PPM servo signals; PB0 -> TIM3_CH3
-* Servo2: Servo Output PB1 -> TIM3_CH4 (not used yet)
-* Servo3: ESC Output via UART; PA3 -> USART2_RX
-* Servo4: ESC Output via UART; PA2 -> USART2_TX
-* Servo5&6: 32Bit Quadruple Encoder used for Hall Sensor input; PA0, PA1 -> TIM5_CH1, TIM5_CH2
-* LED Status: PB5 (Low = On)
-* LED Warn: PB4 (Low = On)
-* MainUSART: Receiver input; In SBus Mode: PA9, PA10 -> USART1_TX, USART1_RX; In SumPPM mode: PA10 -> TIM1_CH3
-
-* SPI1: PA4, PA5, PA6, PA7 for MPU-6000 IMU
-* SPI3: PA15, PC10, PC11, PC12 for Flash 16MBit and optional RF Module (not used)
+Connector Pin | Description | MCU Pin | MCU function
+------------- | ----------- | ------- | ------------
+Servo1 | Servo Output to the ESC; Connect the ESC to it in order to feed it with valid PPM servo signals | PB0 | TIM3_CH3
+Servo2 | Servo Output (not used yet) | PB1 | TIM3_CH4 
+Servo3 | ESC Output via UART | PA3 | USART2_RX
+Servo4 | ESC Output via UART | PA2 | USART2_TX
+Servo5 | 32Bit Quadruple Encoder used for Hall Sensor input | PA0 | TIM5_CH1
+Servo6 | 32Bit Quadruple Encoder used for Hall Sensor input | PA1 | TIM5_CH2
+LED Status | Status LED on the boards | PB5 (Low = On) | GPIO
+LED Warn | Warn LED on the board | PB4 (Low = On) | GPIO
+MainUSART | Receiver input; In SBus Mode | PA10 | USART1_RX
+MainUSART | Receiver input; In SBus Mode | PA10 | TIM1_CH3
+SPI1 | SPI for MPU-6000 IMU | PA4, PA5, PA6, PA7 | SPI1
+SPI3 | SPI for Flash 16MBit and optional RF Module (not used) | PA15, PC10, PC11, PC12 | SPI3
