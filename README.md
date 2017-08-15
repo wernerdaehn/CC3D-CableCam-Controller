@@ -27,7 +27,9 @@ But this has multiple limitations the CableCam Controller tries to solve:
 
 To achieve that the CableCam controller sits between the receiver and the motor controller and acts as a governour of the receiver input. If for example the user did push the stick forward from neutral to max within a second, the CableCam Controller rather increases the stick position slowly. For speed and positional input the controller is connected to two hall sensors on one of the running wheels.
 
-<img src="_images/HallSensor.jpg" width="50%"/>
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/HallSensor.jpg" target="_blank">
+  <img src="_images/HallSensor.jpg" width="50%"/>
+</a>
 
 ## Getting started
 
@@ -38,11 +40,15 @@ In particular the [CC3D Revolution board](http://opwiki.readthedocs.io/en/latest
 
 _Note: The STM32F4 allows very flexible remapping of the pins to different functions, hence what is supposed to be used as output in the CC3D Revo firmware is rather used as input with the CableCam Controller firmware occasionally._
 
-<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/CC3D_Revolution_Schematics.png"><img src="_images/CC3D_Revolution_Schematics.png" width="100%" /></a>
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/CC3D_Revolution_Schematics.png" target="_blank">
+  <img src="_images/CC3D_Revolution_Schematics.png" width="100%" />
+</a>
 
 As said, the board is put between the ESC and the receiver and gets the positional input from the hall sensors in addition.
 
-<img src="_images/Hardware_Overview.jpg" width="50%"/>
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/Hardware_Overview.jpg" target="_blank">
+  <img src="_images/Hardware_Overview.jpg" width="50%"/>
+</a>
 
 The board can be powered via two methods, either via USB or via one of the Vcc_unreg pins on the Servo connectors. The USB power is applied to the board electronics only, hence is useful for flashing and configuration but not for powering the receiver. Also USB does not provide enough amps for the receiver. That is the reason the receiver and the hall sensors are not powered by the +5V pin but via the Servo out pins.
 As the hall sensor is connected to Servo5 and Servo6 (order does not matter - can be swapped in the firmware) but needs Vcc and Gnd just once, the Reciver power cables are soldered to Servo5 Vcc and Gnd.
@@ -50,12 +56,16 @@ In other words, as in the normal case the ESC provides power to the receiver, ju
 
 _Note: All types of receivers are connected to the SBus/RX1 pin. The PPM pin is not used yet, not even for PPM receivers. The main reason is to make sure only one receiver can be connected._
 
-<img src="_images/Board_with_Cables.jpg" width="25%"/>
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/Board_with_Cables.jpg" target="_blank">
+  <img src="_images/Board_with_Cables.jpg" width="25%"/>
+</a>
 
 #### Hall sensor
 The hall sensor is very simple. The [Allegro Microsystems A1120](http://www.allegromicro.com/en/Products/Magnetic-Digital-Position-Sensor-ICs/Hall-Effect-Unipolar-Switches/A1120-1-2-5.aspx) sensor connects the output to Gnd if the magnetic field perpenticular to the chip surface exceeds a certain level and opens that switch if it falls below a level (=Open Drain). These two levels are different, hence avoiding noise in case the magnet field is exaclty at the switch level (=Hysteresis). As a result the sensor board can be very simple. Power between 3..24V is provided - hence perfectly suited for the Vcc_unreg provided by the ESC - and a capacitor nearby the chips is needed. The output signal of both is connected directly to the Servo5&6. A pullup resistor is not needed either, the STM32 MCU internal ones are turned on for those two pins.
 
-<img src="_images/HallSensor_Board.png" width="50%"/>
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/HallSensor_Board.png" target="_blank">
+  <img src="_images/HallSensor_Board.png" width="50%"/>
+</a>
 
 The only important things to make sure are
 1. The hall sensor does switch on and off reliably, meaning the magnetic field has to raise above and fall below the thresholds for sure.
