@@ -28,7 +28,7 @@ _Note: The STM32F4 allows very flexible remapping of the pins to different funct
 
 As said, the board is put between the ESC and the receiver and gets the positional input from the hall sensors in addition.
 
-![Connection overview](Hardware_Overview.jpg)
+![Connection overview](_images/Hardware_Overview.jpg)
 
 The board can be powered via two methods, either via USB or via one of the Vcc_unreg pins on the Servo connectors. The USB power is applied to the board electronics only, hence is useful for flashing and configuration but not for powering the receiver. Also USB does not provide enough amps for the receiver. That is the reason the receiver and the hall sensors are not powered by the +5V pin but via the Servo out pins.
 As the hall sensor is connected to Servo5 and Servo6 (order does not matter - can be swapped in the firmware) but needs Vcc and Gnd just once, the Reciver power cables are soldered to Servo5 Vcc and Gnd.
@@ -36,12 +36,12 @@ In other words, as in the normal case the ESC provides power to the receiver, ju
 
 _Note: All types of receivers are connected to the SBus/RX1 pin. The PPM pin is not used yet, not even for PPM receivers. The main reason is to make sure only one receiver can be connected._
 
-![Connection overview](Board_with_Cables.jpg)
+![Connections](_images/Board_with_Cables.jpg)
 
 #### Hall sensor
 The hall sensor is very simple. The [Allegro Microsystems A1120](http://www.allegromicro.com/en/Products/Magnetic-Digital-Position-Sensor-ICs/Hall-Effect-Unipolar-Switches/A1120-1-2-5.aspx) sensor connects the output to Gnd if the magnetic field perpenticular to the chip surface exceeds a certain level and opens that switch if it falls below a level (=Open Drain). These two levels are different, hence avoiding noise in case the magnet field is exaclty at the switch level (=Hysteresis). As a result the sensor board can be very simple. Power between 3..24V is provided - hence perfectly suited for the Vcc_unreg provided by the ESC - and a capacitor nearby the chips is needed. The output signal of both is connected directly to the Servo5&6. A pullup resistor is not needed either, the STM32 MCU internal ones are turned on for those two pins.
 
-![Hall Sensor Board](HallSensor_Board.png)
+![Hall Sensor Board](_images/HallSensor_Board.png)
 
 The only important things are to make sure 
 1. The hall sensor does switch on and off reliably, meaning the magnetic field has to raise above and fall below the thresholds for sure.
