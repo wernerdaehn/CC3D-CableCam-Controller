@@ -1497,7 +1497,7 @@
 1497518473 c:\users\werne\onedrive\github\cc3d-cablecam-controller\inc\clock_50hz.h
 	"stm32f4xx_hal.h"
 
-1502820585 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\controller.c
+1502830309 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\controller.c
 	"config.h"
 	"protocol.h"
 	"controller.h"
@@ -1928,7 +1928,7 @@
 1497112352 c:\users\werne\onedrive\github\cc3d-cablecam-controller\stm32f4xx_hal_driver\inc\stm32f4xx_ll_system.h
 	"stm32f4xx.h"
 
-1502820948 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\main.c
+1502882389 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\main.c
 	"main.h"
 	"stm32f4xx_hal.h"
 	"usb_device.h"

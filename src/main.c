@@ -154,14 +154,14 @@ int main(void)
     activesettings.I = 0.0f;
     activesettings.P = 0.0f;
     activesettings.max_position_error = 100.0f;
-    activesettings.mode = MODE_LIMITER_ENDPOINTS;
+    activesettings.mode = MODE_PASSTHROUGH;
     activesettings.pos_end = (double) POS_END_NOT_SET;
     activesettings.pos_start = (double) -POS_END_NOT_SET;
     activesettings.rc_channel_endpoint = 6;
     activesettings.rc_channel_programming = 5;
     activesettings.rc_channel_speed = 0;
-    activesettings.stick_max_accel = 2;
-    activesettings.stick_max_accel_safemode = 1;
+    activesettings.stick_max_accel = 20;
+    activesettings.stick_max_accel_safemode = 10;
     activesettings.stick_max_speed = 500;
     activesettings.stick_max_speed_safemode = 100;
     activesettings.stick_neutral_pos = 992;
@@ -169,6 +169,9 @@ int main(void)
     strcpy(activesettings.version, "20170815");
     activesettings.stick_speed_factor = 0.1f;
     activesettings.receivertype = RECEIVER_TYPE_SUMPPM;
+
+    activesettings.esc_neutral_pos = 1500;
+    activesettings.esc_neutral_range = 30;
 
 
     eeprom_read_sector((uint8_t *)&defaultsettings, sizeof(defaultsettings), EEPROM_SECTOR_FOR_SETTINGS);

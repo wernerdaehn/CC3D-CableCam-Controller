@@ -268,8 +268,6 @@ void serialCom(char * buf, Endpoints endpoint)
             return;
         }
     }
-    // below should never be reached
-    // writeProtocolError(ERROR_OTHER);
 }
 
 void evaluateCommand(Endpoints endpoint)
@@ -497,7 +495,7 @@ void evaluateCommand(Endpoints endpoint)
          * Note, the protocol does remap channel1 to chan0
          */
         int16_t p[3];
-        argument_index = sscanf(commandline, "%c %hd %hd %hd", &command, &p[0], &p[1], &p[2]);
+        argument_index = sscanf(commandline, "%c %hd %hd %hd", &command, &p[0]+1, &p[1]+1, &p[2]+1);
         if (argument_index == 4)
         {
             if (p[0] > 0 && p[0] <= SBUS_MAX_CHANNEL &&
@@ -518,9 +516,9 @@ void evaluateCommand(Endpoints endpoint)
         else if (argument_index == 1)
         {
             writeProtocolHead(PROTOCOL_INPUT_CHANNELS, endpoint);
-            writeProtocolInt(activesettings.rc_channel_speed, endpoint);
-            writeProtocolInt(activesettings.rc_channel_programming, endpoint);
-            writeProtocolInt(activesettings.rc_channel_endpoint, endpoint);
+            writeProtocolInt(activesettings.rc_channel_speed+1, endpoint);
+            writeProtocolInt(activesettings.rc_channel_programming+1, endpoint);
+            writeProtocolInt(activesettings.rc_channel_endpoint+1, endpoint);
             writeProtocolText("\r\n", endpoint);
 
             int i = 0;
@@ -544,6 +542,9 @@ void evaluateCommand(Endpoints endpoint)
                 }
                 writeProtocolText("\r\n", endpoint);
             }
+            writeProtocolText("current ESC out signal Servo 1 = ", endpoint);
+            writeProtocolInt(TIM3->CCR3, endpoint);
+            writeProtocolText("\r\n", endpoint);
             writeProtocolOK(endpoint);
         }
         else

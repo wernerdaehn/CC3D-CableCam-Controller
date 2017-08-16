@@ -284,9 +284,12 @@ static int8_t CDC_Control_FS  (uint8_t cmd, uint8_t* pbuf, uint16_t length)
   *
   *         @note
   *         This function will block any OUT packet reception on USB endpoint
-  *         untill exiting this function. If you exit this function before transfer
+  *         until exiting this function. If you exit this function before transfer
   *         is complete on CDC interface (ie. using DMA controller) it will result
   *         in receiving more data while previous ones are still not sent.
+  *
+  *         All characters are collected in a ring buffer of size RXBUFFERSIZE and
+  *         if too much data is sent, the flag rxbuffer_overflow is set to 1 as indication.
   *
   * @param  Buf: Buffer of data to be received
   * @param  Len: Number of data received (in bytes)
@@ -324,6 +327,16 @@ static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
 }
 
 
+/** \brief USB_ReceiveString
+ *         Does extract an entire line from the USB buffer using the line terminator
+ *         character \r and/or \n. If there was an overflow, the line is ignored.
+ *
+ *
+ * \param ptr char*
+ * \param maxsize uint16_t
+ * \return uint16_t
+ *
+ */
 uint16_t USB_ReceiveString(char *ptr, uint16_t maxsize) {
 	size_t len;
 	uint16_t rel_string_start_pos;
