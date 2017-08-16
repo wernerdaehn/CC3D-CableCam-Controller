@@ -29,7 +29,7 @@ _Note: All drivers used are included in a standard Windows 10 installation._
 First setup
 1. Currently the board is powered by USB as the ESC is off still. Hence neither the receiver nor the hall sensors work either.
 1. As the board is connected to the computer via USB a new COM port is available to interact with the CableCam Controller.
-1. Validate that by starting the Windows 10 Device Manager and locating the port. <a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/WindowsDeviceManager.jpg"><img src="_images/WindowsDeviceManager.jpg" width="50%"/></a>
+1. Validate that by starting the Windows 10 Device Manager and locating the port. <a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/WindowsDeviceManager.jpg"><img src="_images/WindowsDeviceManager.jpg" width="25%"/></a>
 1. Open a serial terminal in order to talk to the board. The one I use is [putty](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html) as 64Bit install or just the 64Bit exe download.
 1. The the terminal create a new serial connection to the port shown in the devide manager. In putty that means clicking on _serial_ and entering the port like _COM3_. The settings for baud rate etc are irrelevant and can be left the defaults.
 1. To test if everything works properly, a first command can be sent by typing _$h_ for help and confirming the command with the return key.
