@@ -4,17 +4,39 @@ MCU used is [STM32F405RG](http://www.st.com/en/microcontrollers/stm32f405rg.html
 Board used: Any CC3D Revolution or clone, e.g. F4 Advanced Flight Controller by Bob Forooghi [example board](http://www.getfpv.com/f4-advanced-flight-controller.html)
 
 ## Quickstart
+
+Hardware
 1. Connect the ESC to the Servo1 pins. This will later power the board as well. ESC should be turned off for now.
 1. Connect the receiver (SumPPM or SBus) to the Main USART, the pin called SBus RX1 on above F4 controller
 1. Provide power to the receiver by connecting its Vcc and Gnd to Servo5 Vcc and Gnd
 1. Hall sensor board is powered by Servo6 Vcc and Gnd and its two input signals are connected to Servo5 and Servo6 signal pins
+
+Flashing the firmware
+_Note: All drivers used are included in a standard Windows 10 installation._
 1. Install the ST provided DfuSe utility from the bottom of [this page](http://www.st.com/en/development-tools/stsw-stm32080.html)
 1. Run the installed DfuSe program
 1. Connect the board to your computer via USB and while doing so, keep the boot button pressed
 1. As this activates the STM32F4 hardware bootloader and no firmware runs, only the orange power LED should be on. If the blue Status LED does blink, the firmware is active. Try again above step.
 1. Download the firmware from this project https://github.com/wernerdaehn/CC3D-CableCam-Controller/blob/master/bin/Debug/CableCamControllerF4.dfu
-1. Flash the firmware following this guide - starting with Step 4: http://kiss.flyduino.net/dwkb/flash-fc-pc/
-1. ...
+1. At the bottom of the utility, in the _Upgrade or Verify Action_ area, click on _Choose_ and select above's downloaded CableCamControllerF4.dfu file. <a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/dfuse_choose.jpg"><img src="_images/dfuse_choose.jpg" width="10%"/></a>
+1. The DfuSe Utility should show in the top box _STM Device in DFU Mode_. This indicates the board's hardware bootloader is running. 
+1. If it does, the _Upgrade_ button starts putting the firmware onto the board. <a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/dfuse_upgrade.jpg"><img src="_images/dfuse_upgrade.jpg" width="10%"/></a>
+1. The next dialog(s) is to be confirmed with _yes_. We are certain the firmware is for the STM32F405RG chip.
+1. To validate the flashing truly was successful, the _Verify_ action can be triggered to doublecheck.
+1. At the top the button _Leave DFU mode_ does restart the device and as the boot button on the borad is not pressed during startup, it will start normally.
+1. A first indication that everything is normal is when the green status LED on the board does flash with 1Hz.
+
+First setup
+1. Currently the board is powered by USB as the ESC is off still. Hence neither the receiver nor the hall sensors work either.
+1. As the board is connected to the computer via USB a new COM port is available to interact with the CableCam Controller.
+1. Validate that by starting the Windows 10 Device Manager and locating the port. <a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/WindowsDeviceManager.jpg"><img src="_images/WindowsDeviceManager.jpg" width="50%"/></a>
+1. Open a serial terminal in order to talk to the board. The one I use is [putty](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html) as 64Bit install or just the 64Bit exe download.
+1. The the terminal create a new serial connection to the port shown in the devide manager. In putty that means clicking on _serial_ and entering the port like _COM3_. The settings for baud rate etc are irrelevant and can be left the defaults.
+1. To test if everything works properly, a first command can be sent by typing _$h_ for help and confirming the command with the return key.
+1. This should print status information plus a help text in the console.<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/console_help.png"><img src="_images/console_help.png" width="50%"/></a>
+1. The first and most important step is to set the type of receiver. The firmware supports either SBus or SumPPM. The $h command prints the currently active receiver type and using the _$I_ (uppercase "i") the input receiver type can be changed, e.g. from the default SumPPN to SBus via _$I 1_. Then store that value permanently using the _$w_ command and restart the board.
+1. Next step is to validate the receiver input signals. Turn on the ESC to power the receiver and enter the command _$i_. This shows all channels, their current reading from the receiver 
+
 
 ## Goals
 The most simple way to control a cablecam is by connecting the RC receiver to the motor controller (=ESC, speed controller) and control it like a RC car.
