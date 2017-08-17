@@ -475,7 +475,6 @@ void evaluateCommand(Endpoints endpoint)
     }
     case PROTOCOL_EEPROM_WRITE:
     {
-        writeProtocolInt(eeprom_init(), endpoint);
         uint32_t write_errors = eeprom_write_sector_safe((uint8_t*) &activesettings, sizeof(activesettings), EEPROM_SECTOR_FOR_SETTINGS);
         writeProtocolHead(PROTOCOL_EEPROM_WRITE, endpoint);
         if (write_errors == 0)
@@ -594,7 +593,7 @@ void evaluateCommand(Endpoints endpoint)
             if (p[0] > 500 && p[0] < 2000 &&
                     p[1] > 0 && p[1] < 100)
             {
-                writeProtocolHead(PROTOCOL_NEUTRAL, endpoint);
+                writeProtocolHead(PROTOCOL_ESC_NEUTRAL, endpoint);
                 activesettings.esc_neutral_pos = p[0];
                 activesettings.esc_neutral_range = p[1];
                 writeProtocolOK(endpoint);
@@ -606,7 +605,7 @@ void evaluateCommand(Endpoints endpoint)
         }
         else if (argument_index == 1)
         {
-            writeProtocolHead(PROTOCOL_NEUTRAL, endpoint);
+            writeProtocolHead(PROTOCOL_ESC_NEUTRAL, endpoint);
             writeProtocolInt(activesettings.esc_neutral_pos, endpoint);
             writeProtocolInt(activesettings.esc_neutral_range, endpoint);
             writeProtocolOK(endpoint);
