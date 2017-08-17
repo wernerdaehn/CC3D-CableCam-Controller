@@ -16,6 +16,7 @@ void setDValue(double);
 int32_t getTargetPos(void);
 int32_t getPos(void);
 int32_t getSpeed(void);
+int16_t getStick(void);
 
 void resetThrottle(void);
 

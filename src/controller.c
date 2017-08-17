@@ -8,7 +8,7 @@
 extern sbusData_t sbusdata;
 
 void calculateQx(void);
-void printControlLoop(int16_t esc_speed, double speed, double brakedistance, CONTROLLER_MONITOR_t monitor, uint16_t esc, Endpoints endpoint);
+void printControlLoop(int16_t input, double speed, double pos, double brakedistance, double accel, CONTROLLER_MONITOR_t monitor, uint16_t esc, Endpoints endpoint);
 int16_t stickCycle(double pos, double brakedistance);
 
 /*
@@ -75,6 +75,11 @@ int32_t getTargetPos(void)
 int32_t getSpeed(void)
 {
     return speed_old;
+}
+
+int16_t getStick(void)
+{
+    return stick_last_value;
 }
 
 int32_t getPos(void)
@@ -247,12 +252,28 @@ int16_t stickCycle(double pos, double brakedistance)
                 value = 0;
                 controllerstatus.monitor = ENDPOINTBRAKE;
                 LED_WARN_ON;
+                /*
+                 * In case the endpoint itself had been overshot, stop immediately.
+                 */
+                if (pos >= activesettings.pos_end)
+                {
+                    stick_last_value = 0;
+                    return 0;
+                }
             }
             else if (pos - brakedistance <= activesettings.pos_start && value < 0)
             {
                 value = 0;
                 controllerstatus.monitor = ENDPOINTBRAKE;
                 LED_WARN_ON;
+                /*
+                 * In case the endpoint itself had been overshot, stop immediately.
+                 */
+                if (pos <= activesettings.pos_start)
+                {
+                    stick_last_value = 0;
+                    return 0;
+                }
             }
             else
             {
@@ -284,13 +305,13 @@ int16_t stickCycle(double pos, double brakedistance)
          * It is important to calculate the new value based on the acceleration first, then we have the new target speed,
          * now it is limited to an absolute value.
          */
-        if (value > maxspeed)
+        if (value > maxspeed*10)
         {
-            value = maxspeed;
+            value = maxspeed*10;
         }
-        else if (value < -maxspeed)
+        else if (value < -maxspeed*10)
         {
-            value = -maxspeed;
+            value = -maxspeed*10;
         }
     }
     stick_last_value = value; // store the current effective stick position as value for the next cycle
@@ -397,11 +418,26 @@ void controllercycle()
               ..
      */
     int32_t pos_current = ENCODER_VALUE;
-    double accel = ((double)activesettings.stick_max_accel) * activesettings.stick_speed_factor;
-    double distance_to_stop = (abs_d(speed_old) * (abs_d(speed_old)-accel) / 2.0f / accel);
+    double speed_current = abs_d((double) (pos_current_old - pos_current));
     double pos = (double) pos_current;
-    int16_t stick_filtered_value = 0;
 
+    double time_to_stop = abs_d((double) (getStick()/activesettings.stick_max_accel));
+
+    double accel;
+    if (time_to_stop > 1.0f && speed_current > 1.0f)
+    {
+        /*
+         * The acceleration either can be infinite (div by zero) nor zero itself to make the distance_to_stop calculation return 0
+         */
+        accel = speed_current / time_to_stop;
+    }
+    else
+    {
+        accel = 1.0f; // any value other than zero to make the division work
+    }
+
+    double distance_to_stop = speed_current * speed_current / 2.0f / accel;
+    int16_t stick_filtered_value;
 
     if (activesettings.mode == MODE_ABSOLUTE_POSITION)
     {
@@ -420,8 +456,6 @@ void controllercycle()
      * in order to break as hard as possible whereas the speed output can be gradually reduced to zero.
      */
     int16_t esc_output = stick_filtered_value;
-
-    int16_t speed_current = pos_current_old - pos_current;
 
     if (activesettings.mode != MODE_PASSTHROUGH && activesettings.mode != MODE_LIMITER)
     {
@@ -492,7 +526,7 @@ void controllercycle()
             // activesettings.mode != MODE_ABSOLUTE_POSITION
 
             // esc_out = stick_requested_value for speed based ESCs or in case of a classic ESC esc_out = 0 if monitor == ENDPOINTBREAK
-            speed_old = (double) speed_current;
+            speed_old = speed_current;
         }
     }
 
@@ -514,7 +548,7 @@ void controllercycle()
 
     if (is1Hz())
     {
-        // printControlLoop(stick_requested_value, speed_old, distance_to_stop, monitor, TIM3->CCR3, EndPoint_USB);
+        // printControlLoop(stick_filtered_value, speed_current, pos, distance_to_stop, accel, controllerstatus.monitor, TIM3->CCR3, EndPoint_USB);
     }
 }
 
@@ -530,7 +564,7 @@ char * getSafeModeLabel()
     }
 }
 
-void printControlLoop(int16_t input, double speed, double brakedistance, CONTROLLER_MONITOR_t monitor, uint16_t esc, Endpoints endpoint)
+void printControlLoop(int16_t input, double speed, double pos, double brakedistance, double accel, CONTROLLER_MONITOR_t monitor, uint16_t esc, Endpoints endpoint)
 {
     PrintSerial_string("LastValidFrame: ", endpoint);
     PrintSerial_long(sbusdata.sbusLastValidFrame, endpoint);
@@ -546,8 +580,34 @@ void printControlLoop(int16_t input, double speed, double brakedistance, CONTROL
     PrintSerial_int(input, endpoint);
     PrintSerial_string("  Speed: ", endpoint);
     PrintSerial_double(speed, endpoint);
+    PrintSerial_string("  Accel: ", endpoint);
+    PrintSerial_double(accel, endpoint);
     PrintSerial_string("  Brakedistance: ", endpoint);
     PrintSerial_double(brakedistance, endpoint);
+
+    PrintSerial_string("  Calculated stop: ", endpoint);
+    if (input > 0)
+    {
+        if (pos + brakedistance > activesettings.pos_end)
+        {
+            PrintSerial_double(pos + brakedistance, endpoint);
+        }
+        else
+        {
+            PrintSerial_string("         ", endpoint);
+        }
+    }
+    else
+    {
+        if (pos - brakedistance < activesettings.pos_start)
+        {
+            PrintSerial_double(pos - brakedistance, endpoint);
+        }
+        else
+        {
+            PrintSerial_string("         ", endpoint);
+        }
+    }
 
     if (monitor == FREE)
     {
@@ -567,5 +627,5 @@ void printControlLoop(int16_t input, double speed, double brakedistance, CONTROL
     }
 
     PrintSerial_string("  Pos: ", endpoint);
-    PrintlnSerial_long(ENCODER_VALUE, endpoint);
+    PrintlnSerial_double(pos, endpoint);
 }

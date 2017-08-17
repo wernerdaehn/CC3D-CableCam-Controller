@@ -427,6 +427,13 @@ void evaluateCommand(Endpoints endpoint)
         {
             writeProtocolHead(PROTOCOL_SPEED_FACTOR, endpoint);
             writeProtocolDouble(activesettings.stick_speed_factor, endpoint);
+            writeProtocolInt(getSpeed(), endpoint);
+            writeProtocolInt(getStick(), endpoint);
+            if (getSpeed() != 0 && getStick() != 0)
+            {
+                writeProtocolText("Current factor = ", endpoint);
+                writeProtocolDouble(abs_d(((double) getSpeed()) / ((double) getStick())), endpoint);
+            }
             writeProtocolOK(endpoint);
         }
         break;

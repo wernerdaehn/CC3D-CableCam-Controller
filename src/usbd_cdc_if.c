@@ -130,7 +130,7 @@ uint32_t bytes_written = 0;
 /** @defgroup USBD_CDC_IF_Exported_Variables
   * @{
   */
-  extern USBD_HandleTypeDef hUsbDeviceFS;
+extern USBD_HandleTypeDef hUsbDeviceFS;
 /* USER CODE BEGIN EXPORTED_VARIABLES */
 /* USER CODE END EXPORTED_VARIABLES */
 
@@ -155,10 +155,10 @@ static int8_t CDC_Receive_FS  (uint8_t* pbuf, uint32_t *Len);
 
 USBD_CDC_ItfTypeDef USBD_Interface_fops_FS =
 {
-  CDC_Init_FS,
-  CDC_DeInit_FS,
-  CDC_Control_FS,
-  CDC_Receive_FS
+    CDC_Init_FS,
+    CDC_DeInit_FS,
+    CDC_Control_FS,
+    CDC_Receive_FS
 };
 
 /* Private functions ---------------------------------------------------------*/
@@ -170,12 +170,12 @@ USBD_CDC_ItfTypeDef USBD_Interface_fops_FS =
   */
 static int8_t CDC_Init_FS(void)
 {
-  /* USER CODE BEGIN 3 */
-  /* Set Application Buffers */
-  USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, 0);
-  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS);
-  return (USBD_OK);
-  /* USER CODE END 3 */
+    /* USER CODE BEGIN 3 */
+    /* Set Application Buffers */
+    USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, 0);
+    USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS);
+    return (USBD_OK);
+    /* USER CODE END 3 */
 }
 
 /**
@@ -186,9 +186,9 @@ static int8_t CDC_Init_FS(void)
   */
 static int8_t CDC_DeInit_FS(void)
 {
-  /* USER CODE BEGIN 4 */
-  return (USBD_OK);
-  /* USER CODE END 4 */
+    /* USER CODE BEGIN 4 */
+    return (USBD_OK);
+    /* USER CODE END 4 */
 }
 
 /**
@@ -201,80 +201,80 @@ static int8_t CDC_DeInit_FS(void)
   */
 static int8_t CDC_Control_FS  (uint8_t cmd, uint8_t* pbuf, uint16_t length)
 {
-  /* USER CODE BEGIN 5 */
-  switch (cmd)
-  {
-  case CDC_SEND_ENCAPSULATED_COMMAND:
+    /* USER CODE BEGIN 5 */
+    switch (cmd)
+    {
+    case CDC_SEND_ENCAPSULATED_COMMAND:
 
-    break;
+        break;
 
-  case CDC_GET_ENCAPSULATED_RESPONSE:
+    case CDC_GET_ENCAPSULATED_RESPONSE:
 
-    break;
+        break;
 
-  case CDC_SET_COMM_FEATURE:
+    case CDC_SET_COMM_FEATURE:
 
-    break;
+        break;
 
-  case CDC_GET_COMM_FEATURE:
+    case CDC_GET_COMM_FEATURE:
 
-    break;
+        break;
 
-  case CDC_CLEAR_COMM_FEATURE:
+    case CDC_CLEAR_COMM_FEATURE:
 
-    break;
+        break;
 
-  /*******************************************************************************/
-  /* Line Coding Structure                                                       */
-  /*-----------------------------------------------------------------------------*/
-  /* Offset | Field       | Size | Value  | Description                          */
-  /* 0      | dwDTERate   |   4  | Number |Data terminal rate, in bits per second*/
-  /* 4      | bCharFormat |   1  | Number | Stop bits                            */
-  /*                                        0 - 1 Stop bit                       */
-  /*                                        1 - 1.5 Stop bits                    */
-  /*                                        2 - 2 Stop bits                      */
-  /* 5      | bParityType |  1   | Number | Parity                               */
-  /*                                        0 - None                             */
-  /*                                        1 - Odd                              */
-  /*                                        2 - Even                             */
-  /*                                        3 - Mark                             */
-  /*                                        4 - Space                            */
-  /* 6      | bDataBits  |   1   | Number Data bits (5, 6, 7, 8 or 16).          */
-  /*******************************************************************************/
-  case CDC_SET_LINE_CODING:
-		tempbuf[0]=pbuf[0];
-		tempbuf[1]=pbuf[1];
-		tempbuf[2]=pbuf[2];
-		tempbuf[3]=pbuf[3];
-		tempbuf[4]=pbuf[4];
-		tempbuf[5]=pbuf[5];
-		tempbuf[6]=pbuf[6];
-    break;
+        /*******************************************************************************/
+        /* Line Coding Structure                                                       */
+        /*-----------------------------------------------------------------------------*/
+        /* Offset | Field       | Size | Value  | Description                          */
+        /* 0      | dwDTERate   |   4  | Number |Data terminal rate, in bits per second*/
+        /* 4      | bCharFormat |   1  | Number | Stop bits                            */
+        /*                                        0 - 1 Stop bit                       */
+        /*                                        1 - 1.5 Stop bits                    */
+        /*                                        2 - 2 Stop bits                      */
+        /* 5      | bParityType |  1   | Number | Parity                               */
+        /*                                        0 - None                             */
+        /*                                        1 - Odd                              */
+        /*                                        2 - Even                             */
+        /*                                        3 - Mark                             */
+        /*                                        4 - Space                            */
+        /* 6      | bDataBits  |   1   | Number Data bits (5, 6, 7, 8 or 16).          */
+        /*******************************************************************************/
+    case CDC_SET_LINE_CODING:
+        tempbuf[0]=pbuf[0];
+        tempbuf[1]=pbuf[1];
+        tempbuf[2]=pbuf[2];
+        tempbuf[3]=pbuf[3];
+        tempbuf[4]=pbuf[4];
+        tempbuf[5]=pbuf[5];
+        tempbuf[6]=pbuf[6];
+        break;
 
-  case CDC_GET_LINE_CODING:
-		pbuf[0]=tempbuf[0];
-		pbuf[1]=tempbuf[1];
-		pbuf[2]=tempbuf[2];
-		pbuf[3]=tempbuf[3];
-		pbuf[4]=tempbuf[4];
-		pbuf[5]=tempbuf[5];
-		pbuf[6]=tempbuf[6];
-    break;
+    case CDC_GET_LINE_CODING:
+        pbuf[0]=tempbuf[0];
+        pbuf[1]=tempbuf[1];
+        pbuf[2]=tempbuf[2];
+        pbuf[3]=tempbuf[3];
+        pbuf[4]=tempbuf[4];
+        pbuf[5]=tempbuf[5];
+        pbuf[6]=tempbuf[6];
+        break;
 
-  case CDC_SET_CONTROL_LINE_STATE:
+    case CDC_SET_CONTROL_LINE_STATE:
 
-    break;
+        break;
 
-  case CDC_SEND_BREAK:
+    case CDC_SEND_BREAK:
 
-    break;
+        break;
 
-  default:
-    break;
-  }
+    default:
+        break;
+    }
 
-  return (USBD_OK);
-  /* USER CODE END 5 */
+    return (USBD_OK);
+    /* USER CODE END 5 */
 }
 
 /**
@@ -297,33 +297,40 @@ static int8_t CDC_Control_FS  (uint8_t cmd, uint8_t* pbuf, uint16_t length)
   */
 static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
 {
-  /* USER CODE BEGIN 6 */
-	uint32_t len1 = *Len;
-	uint16_t current_pos;
+    /* USER CODE BEGIN 6 */
+    uint32_t len1 = *Len;
+    uint16_t current_pos;
 
-	if (bytes_received + len1 > last_string_start_pos + RXBUFFERSIZE) {
-		if (bytes_received > last_string_start_pos + RXBUFFERSIZE) {
-			// overflow condition
-			rxbuffer_overflow = 1;
-			return USBD_OK;
-		} else {
-			len1 = last_string_start_pos + RXBUFFERSIZE - bytes_received;
-		}
-	}
-	current_pos = bytes_received % RXBUFFERSIZE;
-	if (len1 > RXBUFFERSIZE - current_pos) {
-		memcpy(&rxbuffer[current_pos], Buf, RXBUFFERSIZE - current_pos);
-		memcpy(&rxbuffer[0], &Buf[RXBUFFERSIZE - current_pos], len1 + current_pos - RXBUFFERSIZE);
-	} else {
-		memcpy(&rxbuffer[current_pos], Buf, len1);
-	}
-	bytes_received += len1;
+    if (bytes_received + len1 > last_string_start_pos + RXBUFFERSIZE)
+    {
+        if (bytes_received > last_string_start_pos + RXBUFFERSIZE)
+        {
+            // overflow condition
+            rxbuffer_overflow = 1;
+            return USBD_OK;
+        }
+        else
+        {
+            len1 = last_string_start_pos + RXBUFFERSIZE - bytes_received;
+        }
+    }
+    current_pos = bytes_received % RXBUFFERSIZE;
+    if (len1 > RXBUFFERSIZE - current_pos)
+    {
+        memcpy(&rxbuffer[current_pos], Buf, RXBUFFERSIZE - current_pos);
+        memcpy(&rxbuffer[0], &Buf[RXBUFFERSIZE - current_pos], len1 + current_pos - RXBUFFERSIZE);
+    }
+    else
+    {
+        memcpy(&rxbuffer[current_pos], Buf, len1);
+    }
+    bytes_received += len1;
 
-	/* Prepare for the next reception of data */
-  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBuffer);
-  USBD_CDC_ReceivePacket(&hUsbDeviceFS);
-  return (USBD_OK);
-  /* USER CODE END 6 */
+    /* Prepare for the next reception of data */
+    USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBuffer);
+    USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+    return (USBD_OK);
+    /* USER CODE END 6 */
 }
 
 
@@ -337,39 +344,58 @@ static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
  * \return uint16_t
  *
  */
-uint16_t USB_ReceiveString(char *ptr, uint16_t maxsize) {
-	size_t len;
-	uint16_t rel_string_start_pos;
+uint16_t USB_ReceiveString(char *ptr, uint16_t maxsize)
+{
+    size_t len;
+    uint16_t rel_string_start_pos;
 
-	while (bytes_scanned < bytes_received) {
-		CDC_TransmitBuffer((uint8_t *) &rxbuffer[bytes_scanned % RXBUFFERSIZE], 1); // echo input text
-		if (rxbuffer[bytes_scanned % RXBUFFERSIZE] == '\n' || rxbuffer[bytes_scanned % RXBUFFERSIZE] == '\r') {
-			bytes_scanned++;
-			len = bytes_scanned - last_string_start_pos;
-			if (len <= maxsize) { // in case the string does not fit into the string buffer, it is ignored
-				rel_string_start_pos = last_string_start_pos % RXBUFFERSIZE;
-				if (rel_string_start_pos + len <= RXBUFFERSIZE) {
-					memcpy(ptr, &rxbuffer[rel_string_start_pos], len);
-				} else {
-					memcpy(ptr, &rxbuffer[rel_string_start_pos], RXBUFFERSIZE - rel_string_start_pos);
-					memcpy(&ptr[rel_string_start_pos], &rxbuffer[0], len + rel_string_start_pos - RXBUFFERSIZE);
-				}
-				last_string_start_pos = bytes_scanned; // next string starts here
-				return len;
-			} else {
-				last_string_start_pos = bytes_scanned; // next string starts here
-			}
-		} else {
-			bytes_scanned++;
-		}
-	}
-	// No newline char was found
-	if (rxbuffer_overflow == 1) {
-		bytes_scanned = bytes_received;
-		last_string_start_pos = bytes_received;
-		rxbuffer_overflow = 0;
-	}
-	return 0;
+    while (bytes_scanned < bytes_received)
+    {
+        CDC_TransmitBuffer((uint8_t *) &rxbuffer[bytes_scanned % RXBUFFERSIZE], 1); // echo input text
+        if (rxbuffer[bytes_scanned % RXBUFFERSIZE] == '\n' || rxbuffer[bytes_scanned % RXBUFFERSIZE] == '\r')
+        {
+            bytes_scanned++;
+            len = bytes_scanned - last_string_start_pos;
+            if (len <= maxsize)   // in case the string does not fit into the string buffer, it is ignored
+            {
+                rel_string_start_pos = last_string_start_pos % RXBUFFERSIZE;
+                if (rel_string_start_pos + len <= RXBUFFERSIZE)
+                {
+                    memcpy(ptr, &rxbuffer[rel_string_start_pos], len);
+                }
+                else
+                {
+                    memcpy(ptr, &rxbuffer[rel_string_start_pos], RXBUFFERSIZE - rel_string_start_pos);
+                    memcpy(&ptr[rel_string_start_pos], &rxbuffer[0], len + rel_string_start_pos - RXBUFFERSIZE);
+                }
+                last_string_start_pos = bytes_scanned; // next string starts here
+                return len;
+            }
+            else
+            {
+                last_string_start_pos = bytes_scanned; // next string starts here
+            }
+        }
+        else if (rxbuffer[bytes_scanned % RXBUFFERSIZE] == 0x08) // backspace
+        {
+            if (rxbuffer[(bytes_scanned-1) % RXBUFFERSIZE] != '\r' && rxbuffer[(bytes_scanned-1) % RXBUFFERSIZE] != '\n')
+            {
+                bytes_scanned--;
+            }
+        }
+        else
+        {
+            bytes_scanned++;
+        }
+    }
+    // No newline char was found
+    if (rxbuffer_overflow == 1)
+    {
+        bytes_scanned = bytes_received;
+        last_string_start_pos = bytes_received;
+        rxbuffer_overflow = 0;
+    }
+    return 0;
 }
 
 /**
@@ -385,62 +411,71 @@ uint16_t USB_ReceiveString(char *ptr, uint16_t maxsize) {
   */
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
 {
-  uint8_t result = USBD_OK;
-  /* USER CODE BEGIN 7 */
-  USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceFS.pClassData;
-  if (hcdc->TxState != 0){
-    return USBD_BUSY;
-  }
-  USBD_CDC_SetTxBuffer(&hUsbDeviceFS, Buf, Len);
-  result = USBD_CDC_TransmitPacket(&hUsbDeviceFS);
+    uint8_t result = USBD_OK;
+    /* USER CODE BEGIN 7 */
+    USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceFS.pClassData;
+    if (hcdc->TxState != 0)
+    {
+        return USBD_BUSY;
+    }
+    USBD_CDC_SetTxBuffer(&hUsbDeviceFS, Buf, Len);
+    result = USBD_CDC_TransmitPacket(&hUsbDeviceFS);
 
-	/* USER CODE END 7 */
-	return result;
+    /* USER CODE END 7 */
+    return result;
 
 }
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */
-uint8_t  CDC_TransmitBuffer(uint8_t *ptr, uint32_t len) {
-	uint32_t l;
-	uint32_t rel_pos = bytes_written % APP_TX_DATA_SIZE;
-	if (hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED && len < APP_RX_DATA_SIZE) {
+uint8_t  CDC_TransmitBuffer(uint8_t *ptr, uint32_t len)
+{
+    uint32_t l;
+    uint32_t rel_pos = bytes_written % APP_TX_DATA_SIZE;
+    if (hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED && len < APP_RX_DATA_SIZE)
+    {
 
-		if (rel_pos + len > APP_TX_DATA_SIZE) {
-			l = APP_TX_DATA_SIZE - rel_pos;
-			memcpy(&UserTxBuffer[rel_pos], ptr, l);
-			memcpy(UserTxBuffer, &ptr[l], len - l);
-		} else {
-			memcpy(&UserTxBuffer[rel_pos], ptr, len);
-		}
-		bytes_written += len;
-	}
-	return USBD_OK;
+        if (rel_pos + len > APP_TX_DATA_SIZE)
+        {
+            l = APP_TX_DATA_SIZE - rel_pos;
+            memcpy(&UserTxBuffer[rel_pos], ptr, l);
+            memcpy(UserTxBuffer, &ptr[l], len - l);
+        }
+        else
+        {
+            memcpy(&UserTxBuffer[rel_pos], ptr, len);
+        }
+        bytes_written += len;
+    }
+    return USBD_OK;
 }
 
-uint8_t  CDC_TransmitString(char *ptr) {
-	return CDC_TransmitBuffer((uint8_t *)ptr, strlen(ptr));
+uint8_t  CDC_TransmitString(char *ptr)
+{
+    return CDC_TransmitBuffer((uint8_t *)ptr, strlen(ptr));
 }
 
 
 void USBPeriodElapsed()
 {
-	uint32_t buffptr = bytes_sent % APP_TX_DATA_SIZE;
-	uint32_t buffsize = bytes_written - bytes_sent;
+    uint32_t buffptr = bytes_sent % APP_TX_DATA_SIZE;
+    uint32_t buffsize = bytes_written - bytes_sent;
 
-	if (hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED) {
-		if(bytes_written != bytes_sent)
-		{
-			if (buffptr + buffsize > APP_TX_DATA_SIZE) {
-				buffsize = APP_TX_DATA_SIZE - buffptr;
-			}
-			USBD_CDC_SetTxBuffer(&hUsbDeviceFS, (uint8_t*)&UserTxBuffer[buffptr], buffsize);
+    if (hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED)
+    {
+        if(bytes_written != bytes_sent)
+        {
+            if (buffptr + buffsize > APP_TX_DATA_SIZE)
+            {
+                buffsize = APP_TX_DATA_SIZE - buffptr;
+            }
+            USBD_CDC_SetTxBuffer(&hUsbDeviceFS, (uint8_t*)&UserTxBuffer[buffptr], buffsize);
 
-			if(USBD_CDC_TransmitPacket(&hUsbDeviceFS) == USBD_OK)
-			{
-			}
+            if(USBD_CDC_TransmitPacket(&hUsbDeviceFS) == USBD_OK)
+            {
+            }
             bytes_sent += buffsize;
-		}
-	}
+        }
+    }
 }
 
 /* USER CODE END PRIVATE_FUNCTIONS_IMPLEMENTATION */
