@@ -35,24 +35,47 @@
 #define RECEIVER_TYPE_SBUS      1
 #define RECEIVER_TYPE_SERVO      2
 
-typedef enum {
-	CONTROLLER_INIT = 0,  			// we just did turn on the controller, ESC signal has to be idle
-	CONTROLLER_FIND_END_POS,		// controller allows to slowly travel to the end pos
-	CONTROLLER_RUN 					// full operation
-} CONTROLLER_STATUS_t;
 
+/** \brief Controller-Mode State Machine
+ *
+ * The controller has multiple states, mostly during boot time.
+ * Initially it is set to INVALID_RC, meaning no RC signal was ever read.
+ * Once a signal was received, the state changes to NOT_NEUTRAL_AT_STARTUP in case
+ * the stick is not in neutral. This would usually indicate a misconfiguration, wrong stick, wrong receiver, wrong neutral point etc.
+ * The mode remains at NOT_NEUTRAL_AT_STARTUP until the stick is brought into the neutral range, then
+ * the mode is OPERATIONAL.
+ * Using the programming switch on the RC sender (see $i command) the user toggles between OPERATIONAL and PROGRAMMING.
+ */
 typedef enum {
 	OPERATIONAL = 0,  			// we can move as freely as we want, limiters enabled
 	PROGRAMMING,		        // reduced speed and ready to set end points via the RC
-	INVALID_RC 					// the starting point, when either no RC signal had been received at all or there is a speed != 0 at the beginning
+	INVALID_RC,					// the starting point, when either no RC signal had been received at all or there is a speed != 0 at the beginning
+	NOT_NEUTRAL_AT_STARTUP      // valid readings but the position is not in neutral - print the problem and wait
 } SAFE_MODE_t;
 
+/** \brief Monitoring info how the cablecam can be moved currently
+ *
+ * Normally the CableCam can be moved FREEly, meaning the stick fully controls the cable cam.
+ * If the CableCam-mode is one where the endpoint switches are active and there is the danger to
+ * overshoot the endpoints, the program does engage the brakes and this monitor reflects the state
+ * by setting it to ENDPOINTBRAKE.
+ * In case of an emergency, signal loss, CableCam runs away, software fault,... the ESC is set to neutral
+ * as last operation and the monitor state is EMERGENCYBRAKE.
+ */
 typedef enum {
 	FREE = 0,
 	EMERGENCYBRAKE,
 	ENDPOINTBRAKE
 } CONTROLLER_MONITOR_t;
 
+/** \brief Structure holding all permanent settings
+ *
+ * This structure is mem-copied to EEPROM and read from there at write (command $w)
+ * and to set the defaults at boot time.
+ * In order to preserve the values across firmware versions, it is paramount to
+ * add new fields at the end of the structure and to never remove a field.
+ * Also in the main.c the default values have to be set at two places.
+ */
 typedef struct
 {
     char version[11];
@@ -82,10 +105,15 @@ typedef struct
 
 extern settings_t activesettings;
 
+/** \brief All status and monitoring info is set in this structure to keep them together
+ *
+ * Without this structure the code would have many global variables making it harder to understand the
+ * dependencies. Hence there is a single global variable "controllerstatus" with the various fields for
+ * the various aspects of states.
+ */
 typedef struct
 {
     char boottext_eeprom[81];
-    CONTROLLER_STATUS_t status;
     SAFE_MODE_t safemode;
     CONTROLLER_MONITOR_t monitor;
 } controllerstatus_t;

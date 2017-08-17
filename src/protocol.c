@@ -77,9 +77,6 @@ uint8_t is_ok(uint8_t *btchar_string, uint8_t * btchar_string_length);
 
 void initProtocol()
 {
-    controllerstatus.status = CONTROLLER_INIT;
-    controllerstatus.safemode = INVALID_RC;
-    controllerstatus.monitor = FREE;
 }
 
 void writeProtocolError(uint8_t e, Endpoints endpoint)
@@ -775,18 +772,7 @@ void printHelp(Endpoints endpoint)
     }
 
     PrintSerial_string("Current CableCam operation mode: ", endpoint);
-    switch (controllerstatus.safemode)
-    {
-    case INVALID_RC:
-        PrintlnSerial_string(" INVALID_RC", endpoint);
-        break;
-    case OPERATIONAL:
-        PrintlnSerial_string(" OPERATIONAL", endpoint);
-        break;
-    case PROGRAMMING:
-        PrintlnSerial_string(" PROGRAMMING", endpoint);
-        break;
-    }
+    PrintSerial_string(getSafeModeLabel(), endpoint);
 
     PrintlnSerial(endpoint);
     PrintlnSerial(endpoint);

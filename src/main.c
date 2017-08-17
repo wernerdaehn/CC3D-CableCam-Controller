@@ -246,7 +246,7 @@ int main(void)
                  */
                 LED_STATUS_TOGGLE;
             }
-            if (controllerstatus.safemode == INVALID_RC)
+            if (controllerstatus.safemode == INVALID_RC ||controllerstatus.safemode == NOT_NEUTRAL_AT_STARTUP)
             {
                 /*
                  * When there is no valid RC signal, the WARN LED is turned on

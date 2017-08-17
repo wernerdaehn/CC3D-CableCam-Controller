@@ -22,4 +22,6 @@ void resetThrottle(void);
 uint16_t getProgrammingSwitch(void);
 uint16_t getEndPointSwitch(void);
 
+char * getSafeModeLabel();
+
 #endif
