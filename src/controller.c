@@ -532,11 +532,11 @@ void controllercycle()
 
     if (esc_output > 0)
     {
-        TIM3->CCR3 = activesettings.esc_neutral_pos + activesettings.esc_neutral_range + (esc_output/10);
+        TIM3->CCR3 = activesettings.esc_neutral_pos + activesettings.esc_neutral_range + (esc_output/12);
     }
     else if (esc_output < 0)
     {
-        TIM3->CCR3 = activesettings.esc_neutral_pos - activesettings.esc_neutral_range + (esc_output/10);
+        TIM3->CCR3 = activesettings.esc_neutral_pos - activesettings.esc_neutral_range + (esc_output/12);
     }
     else
     {

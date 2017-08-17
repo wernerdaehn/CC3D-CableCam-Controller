@@ -429,11 +429,6 @@ void evaluateCommand(Endpoints endpoint)
             writeProtocolDouble(activesettings.stick_speed_factor, endpoint);
             writeProtocolInt(getSpeed(), endpoint);
             writeProtocolInt(getStick(), endpoint);
-            if (getSpeed() != 0 && getStick() != 0)
-            {
-                writeProtocolText("Current factor = ", endpoint);
-                writeProtocolDouble(abs_d(((double) getSpeed()) / ((double) getStick())), endpoint);
-            }
             writeProtocolOK(endpoint);
         }
         break;
@@ -450,6 +445,7 @@ void evaluateCommand(Endpoints endpoint)
     {
         int16_t p[2];
         argument_index = sscanf(commandline, "%c %hd %hd", &command, &p[0], &p[1]);
+
         if (argument_index == 3)
         {
             if (p[0] > 0 && p[1] > 0)
@@ -498,7 +494,8 @@ void evaluateCommand(Endpoints endpoint)
          * Note, the protocol does remap channel1 to chan0
          */
         int16_t p[3];
-        argument_index = sscanf(commandline, "%c %hd %hd %hd", &command, &p[0]+1, &p[1]+1, &p[2]+1);
+        argument_index = sscanf(commandline, "%c %hd %hd %hd", &command, &p[0], &p[1], &p[2]);
+
         if (argument_index == 4)
         {
             if (p[0] > 0 && p[0] <= SBUS_MAX_CHANNEL &&
@@ -509,6 +506,9 @@ void evaluateCommand(Endpoints endpoint)
                 activesettings.rc_channel_programming = p[1]-1;
                 activesettings.rc_channel_endpoint = p[2]-1;
                 writeProtocolHead(PROTOCOL_INPUT_CHANNELS, endpoint);
+                writeProtocolInt(activesettings.rc_channel_speed+1, endpoint);
+                writeProtocolInt(activesettings.rc_channel_programming+1, endpoint);
+                writeProtocolInt(activesettings.rc_channel_endpoint+1, endpoint);
                 writeProtocolOK(endpoint);
             }
             else

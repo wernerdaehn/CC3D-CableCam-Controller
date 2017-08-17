@@ -33,7 +33,10 @@ void PrintSerial_double(double v, Endpoints endpoint){
 		SendString(printbuf, endpoint);
 	}
 }
-
+void PrintSerial_hexchar(char v, Endpoints endpoint){
+	snprintf(printbuf, sizeof(printbuf), " %02x", v);
+	SendString(printbuf, endpoint);
+}
 
 void PrintlnSerial_int(int16_t v, Endpoints endpoint) {
 	snprintf(printbuf, sizeof(printbuf), " %d \r\n", v);
@@ -60,6 +63,8 @@ void PrintlnSerial_double(double v, Endpoints endpoint){
 		SendString(printbuf, endpoint);
 	}
 }
+
+
 void PrintlnSerial(Endpoints endpoint){
 	SendString("\r\n", endpoint);
 }
