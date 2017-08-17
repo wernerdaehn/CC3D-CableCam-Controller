@@ -101,6 +101,9 @@ typedef struct
     uint8_t receivertype;
     int16_t esc_neutral_pos;
     int16_t esc_neutral_range;
+    int16_t esc_scale;
+    uint8_t rc_channel_max_accel;
+    uint8_t rc_channel_max_speed;
 } settings_t;
 
 extern settings_t activesettings;
@@ -124,5 +127,9 @@ void initProtocol(void);
 void serialCom(char * buf, Endpoints endpoint);
 void printHelp(Endpoints endpoint);
 void printActiveSettings(Endpoints endpoint);
+
+char * getSafeModeLabel();
+char * getCurrentModeLabel(uint8_t mode);
+
 
 #endif /* PROTOCOL_H_ */

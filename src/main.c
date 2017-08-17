@@ -166,12 +166,17 @@ int main(void)
     activesettings.stick_max_speed_safemode = 100;
     activesettings.stick_neutral_pos = 992;
     activesettings.stick_neutral_range = 30;
-    strcpy(activesettings.version, "20170815");
+    strcpy(activesettings.version, "20170817");
     activesettings.stick_speed_factor = 0.1f;
     activesettings.receivertype = RECEIVER_TYPE_SUMPPM;
 
+    // 20170815
     activesettings.esc_neutral_pos = 1500;
     activesettings.esc_neutral_range = 30;
+
+    // 20170817
+    activesettings.rc_channel_max_accel = 255;
+    activesettings.rc_channel_max_speed = 255;
 
 
     eeprom_read_sector((uint8_t *)&defaultsettings, sizeof(defaultsettings), EEPROM_SECTOR_FOR_SETTINGS);
@@ -181,7 +186,7 @@ int main(void)
         memcpy(&activesettings, &defaultsettings, sizeof(defaultsettings));
         strcpy(controllerstatus.boottext_eeprom, "defaults loaded from eeprom");
     }
-    else if (strncmp("2017", defaultsettings.version, 4) == 0)
+    else if (strncmp("20", defaultsettings.version, 2) == 0)
     {
         // Version stored is valid but older, hence copy the structure and set the previously unknown values to defaults
         // Also make set the old version number to the new one
@@ -193,6 +198,13 @@ int main(void)
         {
             activesettings.esc_neutral_pos = 1500;
             activesettings.esc_neutral_range = 30;
+        }
+
+        // With firmware 20170817 the rc_channel_max_accel and rc_channel_max_speed got added
+        if (activesettings.rc_channel_max_accel == 0)
+        {
+            activesettings.rc_channel_max_accel = 255;
+            activesettings.rc_channel_max_speed = 255;
         }
     }
     else
@@ -209,6 +221,12 @@ int main(void)
 
         /* Turn on SBUS Inverter */
         HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
+
+        /*
+         * The esc_output is based on the SBus signal (+- 800) and hence has to be scaled properly to be in +-700 range.
+         * The formula is 10/12 = 800*10/12 = 667
+         */
+        activesettings.esc_scale = 12;
     }
     else
     {
@@ -219,6 +237,11 @@ int main(void)
 
         HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_3);
         HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_4);
+        /*
+         * The esc_output is based on the SumPPM signal (+-400) and hence has to be scaled properly to be in +-700 range.
+         * The formula is 10/6 = 400*10/6 = 667
+         */
+        activesettings.esc_scale = 6;
     }
 
     initController();

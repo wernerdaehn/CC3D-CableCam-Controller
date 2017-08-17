@@ -493,10 +493,10 @@ void evaluateCommand(Endpoints endpoint)
         /*
          * Note, the protocol does remap channel1 to chan0
          */
-        int16_t p[3];
-        argument_index = sscanf(commandline, "%c %hd %hd %hd", &command, &p[0], &p[1], &p[2]);
+        int16_t p[5];
+        argument_index = sscanf(commandline, "%c %hd %hd %hd %hd %hd", &command, &p[0], &p[1], &p[2], &p[3], &p[4]);
 
-        if (argument_index == 4)
+        if (argument_index >= 4)
         {
             if (p[0] > 0 && p[0] <= SBUS_MAX_CHANNEL &&
                     p[1] > 0 && p[1] <= SBUS_MAX_CHANNEL &&
@@ -509,6 +509,30 @@ void evaluateCommand(Endpoints endpoint)
                 writeProtocolInt(activesettings.rc_channel_speed+1, endpoint);
                 writeProtocolInt(activesettings.rc_channel_programming+1, endpoint);
                 writeProtocolInt(activesettings.rc_channel_endpoint+1, endpoint);
+                if (argument_index >= 5)
+                {
+                    if (p[3] > 0 && p[3] <= SBUS_MAX_CHANNEL)
+                    {
+                        activesettings.rc_channel_max_accel = p[3]-1;
+                        writeProtocolInt(activesettings.rc_channel_max_accel+1, endpoint);
+                    }
+                    else
+                    {
+                        activesettings.rc_channel_max_accel = 255; // not used
+                    }
+                }
+                if (argument_index >= 6)
+                {
+                    if (p[4] > 0 && p[4] <= SBUS_MAX_CHANNEL)
+                    {
+                        activesettings.rc_channel_max_speed = p[4]-1;
+                        writeProtocolInt(activesettings.rc_channel_max_speed+1, endpoint);
+                    }
+                    else
+                    {
+                        activesettings.rc_channel_max_speed = 255; // not used
+                    }
+                }
                 writeProtocolOK(endpoint);
             }
             else
@@ -522,6 +546,8 @@ void evaluateCommand(Endpoints endpoint)
             writeProtocolInt(activesettings.rc_channel_speed+1, endpoint);
             writeProtocolInt(activesettings.rc_channel_programming+1, endpoint);
             writeProtocolInt(activesettings.rc_channel_endpoint+1, endpoint);
+            writeProtocolInt(activesettings.rc_channel_max_accel+1, endpoint);
+            writeProtocolInt(activesettings.rc_channel_max_speed+1, endpoint);
             writeProtocolText("\r\n", endpoint);
 
             int i = 0;
@@ -542,6 +568,14 @@ void evaluateCommand(Endpoints endpoint)
                 else if (i == activesettings.rc_channel_endpoint)
                 {
                     writeProtocolText(" (used as endpoint switch)", endpoint);
+                }
+                else if (i == activesettings.rc_channel_max_accel)
+                {
+                    writeProtocolText(" (used as max acceleration value selector)", endpoint);
+                }
+                else if (i == activesettings.rc_channel_max_speed)
+                {
+                    writeProtocolText(" (used as max speed selector)", endpoint);
                 }
                 writeProtocolText("\r\n", endpoint);
             }
@@ -710,22 +744,7 @@ void evaluateCommand(Endpoints endpoint)
             writeProtocolHead(PROTOCOL_MODE, endpoint);
             writeProtocolInt(activesettings.mode, endpoint);
             writeProtocolText("...", endpoint);
-            if (activesettings.mode == MODE_ABSOLUTE_POSITION)
-            {
-                writeProtocolText("absolute position", endpoint);
-            }
-            else if (activesettings.mode == MODE_LIMITER)
-            {
-                writeProtocolText("passthrough with speed limiter", endpoint);
-            }
-            else if (activesettings.mode == MODE_LIMITER_ENDPOINTS)
-            {
-                writeProtocolText("passthrough with speed limiter & end points", endpoint);
-            }
-            else if (activesettings.mode == MODE_PASSTHROUGH)
-            {
-                writeProtocolText("passthrough", endpoint);
-            }
+            writeProtocolText(getCurrentModeLabel(activesettings.mode), endpoint);
             writeProtocolOK(endpoint);
         }
         break;
@@ -751,22 +770,7 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string(controllerstatus.boottext_eeprom, endpoint);
 
     PrintSerial_string("Current Mode: ", endpoint);
-    if (activesettings.mode == MODE_ABSOLUTE_POSITION)
-    {
-        PrintlnSerial_string("absolute position", endpoint);
-    }
-    else if (activesettings.mode == MODE_LIMITER)
-    {
-        PrintlnSerial_string("passthrough with limiter", endpoint);
-    }
-    else if (activesettings.mode == MODE_LIMITER_ENDPOINTS)
-    {
-        PrintlnSerial_string("passthrough with limiter & end points", endpoint);
-    }
-    else if (activesettings.mode == MODE_PASSTHROUGH)
-    {
-        PrintlnSerial_string("passthrough", endpoint);
-    }
+    PrintlnSerial_string(getCurrentModeLabel(activesettings.mode), endpoint);
 
     PrintSerial_string("Current Receiver: ", endpoint);
     if (activesettings.receivertype == RECEIVER_TYPE_SUMPPM)
@@ -788,27 +792,27 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("Possible commands are", endpoint);
     PrintlnSerial(endpoint);
 
-    PrintlnSerial_string("$1 [<double>]                         set or print Kp for PID controller", endpoint);
-    PrintlnSerial_string("$2 [<double>]                         set or print Ki for PID controller", endpoint);
-    PrintlnSerial_string("$3 [<double>]                         set or print Kd for PID controller", endpoint);
-    PrintlnSerial_string("$a [<int> <int>]                      set or print maximum allowed acceleration in normal and programming mode", endpoint);
-    PrintlnSerial_string("$c [<double> <double> <double>]       set or print all three PID values", endpoint);
-    PrintlnSerial_string("$f [<double>]                         set or print stick-to-hall-speed factor", endpoint);
-    PrintlnSerial_string("$g [<double>]                         set or print the max positional error -> exceeding it causes an emergency stop", endpoint);
-    PrintlnSerial_string("$i [<int> <int> <int>]                set or print input channels for Speed, Programming Switch, Endpoint Switch", endpoint);
-    PrintlnSerial_string("$I [<int>]                            set or print input source 0..SumPPM", endpoint);
-    PrintlnSerial_string("                                                                1..SBus", endpoint);
-    PrintlnSerial_string("$m [<int>]                            set or print the mode 0..positional", endpoint);
-    PrintlnSerial_string("                                                            1..passthrough", endpoint);
-    PrintlnSerial_string("                                                            2..passthrough with speed limits", endpoint);
-    PrintlnSerial_string("                                                            3..passthough with speed limits & end points", endpoint);
-    PrintlnSerial_string("$n [<int> <int>]                      set or print neutral pos and +-range", endpoint);
-    PrintlnSerial_string("$N [<int> <int>]                      set or print neutral pos and +-range", endpoint);
-    PrintlnSerial_string("$p                                    print positions and speed", endpoint);
-    PrintlnSerial_string("$r [<int>]                            set or print rotation direction of the ESC output, either +1 or -1", endpoint);
-    PrintlnSerial_string("$S                                    print all settings", endpoint);
-    PrintlnSerial_string("$v [<int> <int>]                      set or print maximum allowed speed in normal and programming mode", endpoint);
-    PrintlnSerial_string("$w                                    write settings to eeprom", endpoint);
+    PrintlnSerial_string("$1 [<double>]                           set or print Kp for PID controller", endpoint);
+    PrintlnSerial_string("$2 [<double>]                           set or print Ki for PID controller", endpoint);
+    PrintlnSerial_string("$3 [<double>]                           set or print Kd for PID controller", endpoint);
+    PrintlnSerial_string("$a [<int> <int>]                        set or print maximum allowed acceleration in normal and programming mode", endpoint);
+    PrintlnSerial_string("$c [<double> <double> <double>]         set or print all three PID values", endpoint);
+    PrintlnSerial_string("$f [<double>]                           set or print stick-to-hall-speed factor", endpoint);
+    PrintlnSerial_string("$g [<double>]                           set or print the max positional error -> exceeding it causes an emergency stop", endpoint);
+    PrintlnSerial_string("$i [[[<int> <int> <int>] <int>] <int>]  set or print input channels for Speed, Programming Switch, Endpoint Switch, Max Accel, Max Speed", endpoint);
+    PrintlnSerial_string("$I [<int>]                              set or print input source 0..SumPPM", endpoint);
+    PrintlnSerial_string("                                                                  1..SBus", endpoint);
+    PrintlnSerial_string("$m [<int>]                              set or print the mode 0..positional", endpoint);
+    PrintlnSerial_string("                                                              1..passthrough", endpoint);
+    PrintlnSerial_string("                                                              2..passthrough with speed limits", endpoint);
+    PrintlnSerial_string("                                                              3..passthough with speed limits & end points", endpoint);
+    PrintlnSerial_string("$n [<int> <int>]                        set or print neutral pos and +-range", endpoint);
+    PrintlnSerial_string("$N [<int> <int>]                        set or print neutral pos and +-range", endpoint);
+    PrintlnSerial_string("$p                                      print positions and speed", endpoint);
+    PrintlnSerial_string("$r [<int>]                              set or print rotation direction of the ESC output, either +1 or -1", endpoint);
+    PrintlnSerial_string("$S                                      print all settings", endpoint);
+    PrintlnSerial_string("$v [<int> <int>]                        set or print maximum allowed speed in normal and programming mode", endpoint);
+    PrintlnSerial_string("$w                                      write settings to eeprom", endpoint);
     PrintlnSerial(endpoint);
 }
 
@@ -904,18 +908,7 @@ void printActiveSettings(Endpoints endpoint)
     PrintSerial_string("Mode:", endpoint);
     PrintSerial_int(activesettings.mode, endpoint);
     PrintSerial_string("...", endpoint);
-    if (activesettings.mode == MODE_ABSOLUTE_POSITION)
-    {
-        PrintlnSerial_string("absolute position", endpoint);
-    }
-    else if (activesettings.mode == MODE_LIMITER)
-    {
-        PrintlnSerial_string("use limiter", endpoint);
-    }
-    else
-    {
-        PrintlnSerial_string("passthrough", endpoint);
-    }
+    PrintlnSerial_string(getCurrentModeLabel(activesettings.mode), endpoint);
 
     PrintlnSerial(endpoint);
     PrintlnSerial(endpoint);
@@ -936,3 +929,26 @@ uint8_t is_ok(uint8_t *btchar_string, uint8_t * btchar_string_length)
 }
 
 
+char * getSafeModeLabel()
+{
+    switch (controllerstatus.safemode)
+    {
+        case INVALID_RC: return "INVALID_RC";
+        case NOT_NEUTRAL_AT_STARTUP: return "Stick not in Neutral";
+        case PROGRAMMING: return "Endpoint Programming mode";
+        case OPERATIONAL: return "Operational";
+        default: return "???unknown safemode???";
+    }
+}
+
+char * getCurrentModeLabel(uint8_t mode)
+{
+    switch (mode)
+    {
+        case MODE_ABSOLUTE_POSITION: return "absolute position";
+        case MODE_LIMITER: return "passthrough with limiter";
+        case MODE_LIMITER_ENDPOINTS: return "passthrough with limiter & end points";
+        case MODE_PASSTHROUGH: return "passthrough";
+        default : return "????current mode???";
+    }
+}

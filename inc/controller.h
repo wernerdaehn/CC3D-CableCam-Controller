@@ -22,7 +22,8 @@ void resetThrottle(void);
 
 uint16_t getProgrammingSwitch(void);
 uint16_t getEndPointSwitch(void);
+uint16_t getMaxAccelPoti(void);
+uint16_t getMaxSpeedPoti(void);
 
-char * getSafeModeLabel();
 
 #endif

@@ -116,6 +116,15 @@ uint16_t getEndPointSwitch()
     return getDuty(activesettings.rc_channel_endpoint);
 }
 
+uint16_t getMaxAccelPoti()
+{
+    return getDuty(activesettings.rc_channel_max_accel);
+}
+
+uint16_t getMaxSpeedPoti()
+{
+    return getDuty(activesettings.rc_channel_max_speed);
+}
 
 /*
  * getStickPositionRaw() returns the position centered around 0 of the stick considering the neutral range.
@@ -244,12 +253,11 @@ int16_t stickCycle(double pos, double brakedistance)
             /*
              * The current status is OPERATIONAL, hence the endpoints are honored.
              *
-             * If we would overshoot the end points, then ignore the requested value and assume the user wants to stop asap, hence value = 0.
-             * Actually, below's maxaccel limiter will make that a smooth speed reduction.
+             * If we would overshoot the end points, then ignore the requested value and reduce the stick position by max_accel.
              */
             if (pos + brakedistance >= activesettings.pos_end && value > 0)
             {
-                value = 0;
+                value = stick_last_value - maxaccel; // reduce speed at full allowed acceleration
                 controllerstatus.monitor = ENDPOINTBRAKE;
                 LED_WARN_ON;
                 /*
@@ -260,10 +268,22 @@ int16_t stickCycle(double pos, double brakedistance)
                     stick_last_value = 0;
                     return 0;
                 }
+                else if (pos + brakedistance >= activesettings.pos_end + 300.0f)
+                {
+                    /*
+                     * Okay, we are way too fast and will overshoot the end point by 300 steps minimum.
+                     * Hence forget about putting the stick slowly to neutral, rather set a target speed of zero
+                     * to tell the ESC to stop with full force.
+                     * As this might be a temporary situation only, keep decreasing the stick slowly by
+                     * setting stick_last_value = value.
+                     */
+                     stick_last_value = value;
+                     return 0;
+                }
             }
             else if (pos - brakedistance <= activesettings.pos_start && value < 0)
             {
-                value = 0;
+                value = stick_last_value + maxaccel; // reduce reverse speed at full allowed acceleration
                 controllerstatus.monitor = ENDPOINTBRAKE;
                 LED_WARN_ON;
                 /*
@@ -273,6 +293,11 @@ int16_t stickCycle(double pos, double brakedistance)
                 {
                     stick_last_value = 0;
                     return 0;
+                }
+                else if (pos - brakedistance <= activesettings.pos_end - 300.0f)
+                {
+                     stick_last_value = value;
+                     return 0;
                 }
             }
             else
@@ -369,9 +394,17 @@ int16_t stickCycle(double pos, double brakedistance)
         {
             activesettings.pos_start = pos;
             endpointclicks = 1;
+            PrintlnSerial_string("Point 1 set", EndPoint_USB);
         }
         else
         {
+            /*
+             * Subsequent selections of the endpoint just moves the 2nd Endpoint around. Else there
+             * is the danger the user selects point 1 at zero, then travels to 1000 and selects that as endpoint. Then clicks again
+             * and therefore the range is from 1000 to 1000, so no range at all. To avoid that, force to leave the programming mode
+             * temporarily for setting both points again.
+             */
+            PrintlnSerial_string("Point 2 set", EndPoint_USB);
             if (activesettings.pos_start < pos)
             {
                 activesettings.pos_end = pos;
@@ -384,6 +417,24 @@ int16_t stickCycle(double pos, double brakedistance)
         }
     }
     lastendpointswitch = currentendpointswitch; // Needed to identify a raising flank on the tip switch
+
+
+    uint16_t max_accel = getMaxAccelPoti();
+    if (max_accel != 0 && max_accel > activesettings.stick_neutral_pos + activesettings.stick_neutral_range)
+    {
+        /*
+         * (max_accel - neutral) * 10 / esc_scale = 0...700      that would be way too much, should be rather 0..35, so a factor of 20
+         * Hence removing the diff*10/scale/20 = diff/scale/2
+         */
+        activesettings.stick_max_accel = 1 + ((max_accel - activesettings.stick_neutral_pos - activesettings.stick_neutral_range) / activesettings.esc_scale / 2);
+    }
+
+    uint16_t max_speed = getMaxSpeedPoti();
+    if (max_speed != 0 && max_speed > activesettings.stick_neutral_pos + activesettings.stick_neutral_range)
+    {
+       activesettings.stick_max_speed = 1 + ((max_speed - activesettings.stick_neutral_pos - activesettings.stick_neutral_range) * 10 / activesettings.esc_scale);
+    }
+
     return value;
 }
 
@@ -400,22 +451,22 @@ void controllercycle()
 {
     controllerstatus.monitor = FREE; // might be overwritten by stickCycle() so has to come first
     /*
-       We need to work with the average speed, and that is the motor speed and the new speed at max deceleration
-
-       speed_old	accel	new_speed	distance_to_stop		old_pos_target	    new_pos_target	old_pos_target+distance_to_stop
-             100	1		99	        4950	                  0	                 99	     	    4950
-              99	1		98	        4851	                 99	                197	     	    4950
-              98	1		97	        4753	                197	                294	      	    4950
-              97	1		96	        4656	                294	                390	      	    4950
-              96	1		95	        4560	                390	                485	      	    4950
-              95	1		94	        4465	                485	                579	     	    4950
-              94	1		93	        4371	                579	                672	     	    4950
-              93	1		92	        4278	                672	                764				4950
-              92	1		91	        4186	                764	                855				4950
-              91	1		90	        4095	                855	                945				4950
-              ..
-              ..
-              ..
+     * speed = change in position per cycle. Speed is always positive.
+     * speed = abs(pos_old - pos)
+     *
+     * time_to_stop = number of cycles it takes to get the current stick value down to neutral with the given activesettings.stick_max_accel
+     * time_to_stop = abs(getStick()/max_accel)
+     *
+     *
+     * brake_distance = v²/(2*a) = speed²/(2*a)
+     * Problem is, the value of a, the deceleration rate needed is unknown. All we know is the current speed and the stick position.
+     * But we know that the current speed should be zero after time_to_stop cycles, hence we know the required
+     * deceleration in speed-units: a = speed/time_to_Stop
+     *
+     * Hence:
+     * brake_distance = speed²/(2*a) = speed²/(2*speed/time_to_Stop) = speed * time_to_stop / 2
+     *
+     *
      */
     int32_t pos_current = ENCODER_VALUE;
     double speed_current = abs_d((double) (pos_current_old - pos_current));
@@ -423,20 +474,7 @@ void controllercycle()
 
     double time_to_stop = abs_d((double) (getStick()/activesettings.stick_max_accel));
 
-    double accel;
-    if (time_to_stop > 1.0f && speed_current > 1.0f)
-    {
-        /*
-         * The acceleration either can be infinite (div by zero) nor zero itself to make the distance_to_stop calculation return 0
-         */
-        accel = speed_current / time_to_stop;
-    }
-    else
-    {
-        accel = 1.0f; // any value other than zero to make the division work
-    }
-
-    double distance_to_stop = speed_current * speed_current / 2.0f / accel;
+    double distance_to_stop = speed_current * time_to_stop / 2.0f;
     int16_t stick_filtered_value;
 
     if (activesettings.mode == MODE_ABSOLUTE_POSITION)
@@ -532,11 +570,11 @@ void controllercycle()
 
     if (esc_output > 0)
     {
-        TIM3->CCR3 = activesettings.esc_neutral_pos + activesettings.esc_neutral_range + (esc_output/12);
+        TIM3->CCR3 = activesettings.esc_neutral_pos + activesettings.esc_neutral_range + (esc_output/activesettings.esc_scale);
     }
     else if (esc_output < 0)
     {
-        TIM3->CCR3 = activesettings.esc_neutral_pos - activesettings.esc_neutral_range + (esc_output/12);
+        TIM3->CCR3 = activesettings.esc_neutral_pos - activesettings.esc_neutral_range + (esc_output/activesettings.esc_scale);
     }
     else
     {
@@ -549,18 +587,6 @@ void controllercycle()
     if (is1Hz())
     {
         // printControlLoop(stick_filtered_value, speed_current, pos, distance_to_stop, accel, controllerstatus.monitor, TIM3->CCR3, EndPoint_USB);
-    }
-}
-
-char * getSafeModeLabel()
-{
-    switch (controllerstatus.safemode)
-    {
-        case INVALID_RC: return "INVALID_RC";
-        case NOT_NEUTRAL_AT_STARTUP: return "Stick not in Neutral";
-        case PROGRAMMING: return "Endpoint Programming mode";
-        case OPERATIONAL: return "Operational";
-        default: return "???unknown safemode???";
     }
 }
 
