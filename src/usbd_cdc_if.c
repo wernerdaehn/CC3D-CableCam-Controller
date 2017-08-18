@@ -78,7 +78,6 @@
 /* It's up to user to redefine and/or remove those define */
 #define APP_RX_DATA_SIZE  2048
 #define APP_TX_DATA_SIZE  2048
-#define RXBUFFERSIZE	80
 
 /* USER CODE END PRIVATE_DEFINES */
 /**
@@ -98,6 +97,10 @@
 /** @defgroup USBD_CDC_Private_Variables
   * @{
   */
+
+char commandlinebuffer[RXBUFFERSIZE];
+uint16_t commandlinebuffer_pos = 0;
+
 /* Create buffer for reception and transmission           */
 /* It's up to user to redefine and/or remove those define */
 /* Received Data over USB are stored in this buffer       */
@@ -288,7 +291,7 @@ static int8_t CDC_Control_FS  (uint8_t cmd, uint8_t* pbuf, uint16_t length)
   *         is complete on CDC interface (ie. using DMA controller) it will result
   *         in receiving more data while previous ones are still not sent.
   *
-  *         All characters are collected in a ring buffer of size RXBUFFERSIZE and
+  *         All characters are collected in a ring buffer rxbuffer of size RXBUFFERSIZE and
   *         if too much data is sent, the flag rxbuffer_overflow is set to 1 as indication.
   *
   * @param  Buf: Buffer of data to be received
@@ -297,40 +300,69 @@ static int8_t CDC_Control_FS  (uint8_t cmd, uint8_t* pbuf, uint16_t length)
   */
 static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
 {
-    /* USER CODE BEGIN 6 */
     uint32_t len1 = *Len;
     uint16_t current_pos;
 
+    /*
+     * bytes_received, last_string_start_pos, bytes_scanned are all absolute number and
+     * wrapped into the ring buffer using the modulo operation like bytes_received % RXBUFFERSIZE
+     *
+     * The last_string_start_pos is the position of the last \n character, indicating a new command line
+     *
+     *                              received
+                                       |
+     *                                 |<--len1-->|
+     *    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++(rxbuffer)
+     *      |                                |                                |
+     *      | <--------RXBUFFERSIZE--------> | <--------RXBUFFERSIZE--------> | <-...
+     *    last_string
+     */
     if (bytes_received + len1 > last_string_start_pos + RXBUFFERSIZE)
     {
+        /*
+         * The received packet does not fit into the remain space of the ring buffer.
+         * That means data will be lost. But at least try to fit as much of the data into the ring buffer
+         * as possible. Could be a very large packet being received at once and a \n is in the middle?
+         *
+         * Hence test if there is space available at all. If not, this is an overflow, else reduce
+         * the len to what will fit int the remaining space.
+         */
         if (bytes_received > last_string_start_pos + RXBUFFERSIZE)
         {
             // overflow condition
             rxbuffer_overflow = 1;
-            return USBD_OK;
         }
         else
         {
             len1 = last_string_start_pos + RXBUFFERSIZE - bytes_received;
         }
     }
-    current_pos = bytes_received % RXBUFFERSIZE;
-    if (len1 > RXBUFFERSIZE - current_pos)
+    if (rxbuffer_overflow == 0)
     {
-        memcpy(&rxbuffer[current_pos], Buf, RXBUFFERSIZE - current_pos);
-        memcpy(&rxbuffer[0], &Buf[RXBUFFERSIZE - current_pos], len1 + current_pos - RXBUFFERSIZE);
+        /*
+         * Copy the USB packet into the ring buffer.
+         * There are two cases, either the ring buffer runs over the end and the received packet
+         * has to be split into a part stored at the end of the rxbuffer ring buffer and the beginning.
+         *
+         * Or the packet fits into the middle of the ring buffer, hence is just copied there.
+         */
+        current_pos = bytes_received % RXBUFFERSIZE;
+        if (len1 > RXBUFFERSIZE - current_pos)
+        {
+            memcpy(&rxbuffer[current_pos], Buf, RXBUFFERSIZE - current_pos);
+            memcpy(&rxbuffer[0], &Buf[RXBUFFERSIZE - current_pos], len1 + current_pos - RXBUFFERSIZE);
+        }
+        else
+        {
+            memcpy(&rxbuffer[current_pos], Buf, len1);
+        }
+        bytes_received += len1;
     }
-    else
-    {
-        memcpy(&rxbuffer[current_pos], Buf, len1);
-    }
-    bytes_received += len1;
 
     /* Prepare for the next reception of data */
     USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBuffer);
     USBD_CDC_ReceivePacket(&hUsbDeviceFS);
     return (USBD_OK);
-    /* USER CODE END 6 */
 }
 
 
@@ -338,54 +370,64 @@ static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
  *         Does extract an entire line from the USB buffer using the line terminator
  *         character \r and/or \n. If there was an overflow, the line is ignored.
  *
+ * This method is called periodically and tries to catchup with the received USB packets
+ * by scanning from the last scanned position up to the last received character.
  *
- * \param ptr char*
- * \param maxsize uint16_t
- * \return uint16_t
+ * bytes_scanned is the absolute position of the last byte read
+ * bytes_received is the absolute position of the last received byte
+ *
+ * The ring buffer rxbuffer is scanned for \n chars and everything between to \n chars is
+ * copied into a line buffer.
+ * Hence the line buffer starts with the first char after a \n and ends
+ *
+ * \return uint16_t returns 1 in case a line was found
  *
  */
-uint16_t USB_ReceiveString(char *ptr, uint16_t maxsize)
+uint16_t USB_ReceiveString()
 {
-    size_t len;
-    uint16_t rel_string_start_pos;
-
+     /*
+     * Go through all characters and locate the next \n. If one is found
+     * copy the entire text from the start position to the position of the next found \n
+     * character into the commandlinebuffer.
+     */
     while (bytes_scanned < bytes_received)
     {
-        CDC_TransmitBuffer((uint8_t *) &rxbuffer[bytes_scanned % RXBUFFERSIZE], 1); // echo input text
-        if (rxbuffer[bytes_scanned % RXBUFFERSIZE] == '\n' || rxbuffer[bytes_scanned % RXBUFFERSIZE] == '\r')
+        uint8_t c = rxbuffer[bytes_scanned % RXBUFFERSIZE];
+        bytes_scanned++;
+        CDC_TransmitBuffer((uint8_t *) &c, 1); // echo input text
+        if (c == '\n' || c == '\r')
         {
-            bytes_scanned++;
-            len = bytes_scanned - last_string_start_pos;
-            if (len <= maxsize)   // in case the string does not fit into the string buffer, it is ignored
+            last_string_start_pos = bytes_scanned; // next string starts here
+            if (commandlinebuffer_pos < RXBUFFERSIZE-1)   // in case the string does not fit into the commandlinebuffer, the entire line is ignored
             {
-                rel_string_start_pos = last_string_start_pos % RXBUFFERSIZE;
-                if (rel_string_start_pos + len <= RXBUFFERSIZE)
-                {
-                    memcpy(ptr, &rxbuffer[rel_string_start_pos], len);
-                }
-                else
-                {
-                    memcpy(ptr, &rxbuffer[rel_string_start_pos], RXBUFFERSIZE - rel_string_start_pos);
-                    memcpy(&ptr[rel_string_start_pos], &rxbuffer[0], len + rel_string_start_pos - RXBUFFERSIZE);
-                }
-                last_string_start_pos = bytes_scanned; // next string starts here
-                return len;
+                commandlinebuffer[commandlinebuffer_pos++] = c;
+                commandlinebuffer_pos = 0;
+                return 1;
             }
-            else
-            {
-                last_string_start_pos = bytes_scanned; // next string starts here
-            }
+            commandlinebuffer_pos = 0;
         }
-        else if (rxbuffer[bytes_scanned % RXBUFFERSIZE] == 0x08) // backspace
+        else if (c == 0x08) // backspace char
         {
-            if (rxbuffer[(bytes_scanned-1) % RXBUFFERSIZE] != '\r' && rxbuffer[(bytes_scanned-1) % RXBUFFERSIZE] != '\n')
+            /*
+             *                      commandlinebuffer_pos
+             *                               |
+             * ....... 0x65 0x66 0x67 0x68 0x08
+             * User deleted char 0x68, hence instead of moving the commandlinebuffer_pos one ahead, it is
+             * moved backwards by one step.
+             */
+            commandlinebuffer_pos--;
+            if (commandlinebuffer_pos < 0)
             {
-                bytes_scanned--;
+                // Obviously extra backspace chars have to be ignored
+                commandlinebuffer_pos = 0;
             }
         }
         else
         {
-            bytes_scanned++;
+            if (commandlinebuffer_pos < RXBUFFERSIZE)
+            {
+                commandlinebuffer[commandlinebuffer_pos++] = c;
+            }
         }
     }
     // No newline char was found

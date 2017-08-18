@@ -80,7 +80,6 @@ DMA_HandleTypeDef hdma_usart3_tx;
 
 /* Private variables ---------------------------------------------------------*/
 uint32_t lasttick;
-char buf[APP_TX_BUF_SIZE];
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -283,9 +282,9 @@ int main(void)
             }
             controllercycle();
         }
-        if( USB_ReceiveString(buf, APP_TX_BUF_SIZE) > 0 )
+        if( USB_ReceiveString() > 0 )
         {
-            serialCom(buf, EndPoint_USB);
+            serialCom(EndPoint_USB);
         }
     }
 }

@@ -8,15 +8,13 @@
 extern sbusData_t sbusdata;
 
 void calculateQx(void);
-void printControlLoop(int16_t input, double speed, double pos, double brakedistance, double accel, CONTROLLER_MONITOR_t monitor, uint16_t esc, Endpoints endpoint);
+void printControlLoop(int16_t input, double speed, double pos, double brakedistance, CONTROLLER_MONITOR_t monitor, uint16_t esc, Endpoints endpoint);
 int16_t stickCycle(double pos, double brakedistance);
 
 /*
  * Preserve the previous filtered stick value to calculate the acceleration
  */
 int16_t stick_last_value = 0;
-
-double speed_old = 0;
 
 double yalt = 0.0f, ealt = 0.0f, ealt2 = 0.0f;
 
@@ -71,11 +69,6 @@ int32_t getTargetPos(void)
     return pos_target;
 }
 
-
-int32_t getSpeed(void)
-{
-    return speed_old;
-}
 
 int16_t getStick(void)
 {
@@ -294,7 +287,7 @@ int16_t stickCycle(double pos, double brakedistance)
                     stick_last_value = 0;
                     return 0;
                 }
-                else if (pos - brakedistance <= activesettings.pos_end - 300.0f)
+                else if (pos - brakedistance <= activesettings.pos_start - 300.0f)
                 {
                      stick_last_value = value;
                      return 0;
@@ -466,7 +459,17 @@ void controllercycle()
      * Hence:
      * brake_distance = speed²/(2*a) = speed²/(2*speed/time_to_Stop) = speed * time_to_stop / 2
      *
-     *
+     * Or in other words: distance = velocity * time; hence brake_distance = velocity * time / 2
+     *   |
+     * s |--
+     * p |  \
+     * e |   \
+     * e |    \
+     * d |     \
+     *   |      \
+     *   |       \
+     *    ----------------------------------
+     *      time_to_stop
      */
     int32_t pos_current = ENCODER_VALUE;
     double speed_current = abs_d((double) (pos_current_old - pos_current));
@@ -528,7 +531,6 @@ void controllercycle()
                     pos_target = activesettings.pos_start;
                 }
             }
-            speed_old = pos_target - pos_target_old;
             pos_target_old = pos_target;
 
 
@@ -564,7 +566,6 @@ void controllercycle()
             // activesettings.mode != MODE_ABSOLUTE_POSITION
 
             // esc_out = stick_requested_value for speed based ESCs or in case of a classic ESC esc_out = 0 if monitor == ENDPOINTBREAK
-            speed_old = speed_current;
         }
     }
 
@@ -581,16 +582,36 @@ void controllercycle()
         TIM3->CCR3 = activesettings.esc_neutral_pos;
     }
 
+    /*
+     * Log the last CYCLEMONITOR_SAMPLE_COUNT events in memory.
+     * If neither the cablecam moves nor should move (esc_output == 0), then there is nothing interesting to log
+     */
+    if (speed_current != 0.0f || esc_output != 0)
+    {
+        cyclemonitor_t * sample = &controllerstatus.cyclemonitor[controllerstatus.cyclemonitor_position];
+        sample->distance_to_stop = distance_to_stop;
+        sample->esc = TIM3->CCR3;
+        sample->pos = pos;
+        sample->speed = speed_current;
+        sample->stick = getStick();
+        sample->tick = HAL_GetTick();
+        controllerstatus.cyclemonitor_position++;
+        if (controllerstatus.cyclemonitor_position > CYCLEMONITOR_SAMPLE_COUNT)
+        {
+            controllerstatus.cyclemonitor_position = 0;
+        }
+    }
+
 
     pos_current_old = pos_current; // required for the actual speed calculation
 
     if (is1Hz())
     {
-        // printControlLoop(stick_filtered_value, speed_current, pos, distance_to_stop, accel, controllerstatus.monitor, TIM3->CCR3, EndPoint_USB);
+        // printControlLoop(stick_filtered_value, speed_current, pos, distance_to_stop, controllerstatus.monitor, TIM3->CCR3, EndPoint_USB);
     }
 }
 
-void printControlLoop(int16_t input, double speed, double pos, double brakedistance, double accel, CONTROLLER_MONITOR_t monitor, uint16_t esc, Endpoints endpoint)
+void printControlLoop(int16_t input, double speed, double pos, double brakedistance, CONTROLLER_MONITOR_t monitor, uint16_t esc, Endpoints endpoint)
 {
     PrintSerial_string("LastValidFrame: ", endpoint);
     PrintSerial_long(sbusdata.sbusLastValidFrame, endpoint);
@@ -606,8 +627,6 @@ void printControlLoop(int16_t input, double speed, double pos, double brakedista
     PrintSerial_int(input, endpoint);
     PrintSerial_string("  Speed: ", endpoint);
     PrintSerial_double(speed, endpoint);
-    PrintSerial_string("  Accel: ", endpoint);
-    PrintSerial_double(accel, endpoint);
     PrintSerial_string("  Brakedistance: ", endpoint);
     PrintSerial_double(brakedistance, endpoint);
 

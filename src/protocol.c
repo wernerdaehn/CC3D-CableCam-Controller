@@ -10,6 +10,7 @@
 #include "controller.h"
 #include "sbus.h"
 #include "eeprom.h"
+#include "usbd_cdc_if.h"
 
 #define COMMAND_START  '$'
 #define COMMAND_ARGUMENTS 'a'
@@ -60,6 +61,8 @@ controllerstatus_t controllerstatus;
 char commandline[81]; // one extra char for the null termination
 uint8_t commandlinepos = 0;
 
+extern char commandlinebuffer[APP_TX_BUF_SIZE];
+
 extern TIM_HandleTypeDef htim1;
 
 static uint8_t checksum;
@@ -72,6 +75,9 @@ void writeProtocolErrorText(char *, Endpoints endpoint);
 void writeProtocolOK(Endpoints endpoint);
 void writeProtocolInt(int16_t v, Endpoints endpoint);
 void writeProtocolLong(int32_t v, Endpoints endpoint);
+
+void printDebugCycles(Endpoints endpoint);
+
 
 uint8_t is_ok(uint8_t *btchar_string, uint8_t * btchar_string_length);
 
@@ -168,18 +174,18 @@ void writeProtocolLong(int32_t v, Endpoints endpoint)
 
 uint8_t c_state = COMMAND_IDLE;
 
-void serialCom(char * buf, Endpoints endpoint)
+void serialCom(Endpoints endpoint)
 {
     char c;
     uint16_t pos = 0;
 
-    while (pos < APP_TX_BUF_SIZE)
+    while (pos < RXBUFFERSIZE)
     {
-        c = buf[pos++];
+        c = commandlinebuffer[pos++];
 
         if (c == 0)
         {
-            // When the buffer has no more chars, processing is paused
+            // When the buffer has no more chars, processing stopped.
             return;
         }
         else if (c_state == COMMAND_IDLE)
@@ -427,7 +433,6 @@ void evaluateCommand(Endpoints endpoint)
         {
             writeProtocolHead(PROTOCOL_SPEED_FACTOR, endpoint);
             writeProtocolDouble(activesettings.stick_speed_factor, endpoint);
-            writeProtocolInt(getSpeed(), endpoint);
             writeProtocolInt(getStick(), endpoint);
             writeProtocolOK(endpoint);
         }
@@ -438,7 +443,6 @@ void evaluateCommand(Endpoints endpoint)
         writeProtocolLong(activesettings.pos_start, endpoint);
         writeProtocolLong(activesettings.pos_end, endpoint);
         writeProtocolLong(getPos(), endpoint);
-        writeProtocolLong(getSpeed(), endpoint);
         writeProtocolOK(endpoint);
         break;
     case PROTOCOL_MAX_SPEED:
@@ -756,6 +760,11 @@ void evaluateCommand(Endpoints endpoint)
         printActiveSettings(endpoint);
         break;
     }
+    case PROTOCOL_D_CYCLES:
+    {
+        printDebugCycles(endpoint);
+        break;
+    }
     default:  // we do not know how to handle the (valid) message, indicate error MSP $M!
         writeProtocolError(ERROR_UNKNOWN_COMMAND, endpoint);
         break;
@@ -915,6 +924,45 @@ void printActiveSettings(Endpoints endpoint)
     PrintlnSerial(endpoint);
 }
 
+void printDebugCycles(Endpoints endpoint)
+{
+    /*
+     * Oldest values first, if there are any
+     */
+     int16_t last = controllerstatus.cyclemonitor_position;
+    for (int i=last; i < CYCLEMONITOR_SAMPLE_COUNT; i++)
+    {
+        cyclemonitor_t * sample = & controllerstatus.cyclemonitor[i];
+        if (sample->tick != 0)
+        {
+            PrintSerial_long(sample->tick, endpoint);
+            PrintSerial_int(sample->stick, endpoint);
+            PrintSerial_int(sample->esc, endpoint);
+            PrintSerial_double(sample->speed, endpoint);
+            PrintSerial_double(sample->pos, endpoint);
+            PrintlnSerial_double(sample->distance_to_stop, endpoint);
+            if (i % 20 == 0)
+            {
+                USBPeriodElapsed(); // it is too much data, we need to flush once a while
+            }
+        }
+    }
+
+    for (int i=0; i<last; i++)
+    {
+        cyclemonitor_t * sample = & controllerstatus.cyclemonitor[i];
+        PrintSerial_long(sample->tick, endpoint);
+        PrintSerial_int(sample->stick, endpoint);
+        PrintSerial_int(sample->esc, endpoint);
+        PrintSerial_double(sample->speed, endpoint);
+        PrintSerial_double(sample->pos, endpoint);
+        PrintlnSerial_double(sample->distance_to_stop, endpoint);
+        if (i % 20 == 0)
+        {
+            USBPeriodElapsed(); // it is too much data, we need to flush once a while
+        }
+    }
+}
 
 uint8_t is_ok(uint8_t *btchar_string, uint8_t * btchar_string_length)
 {
