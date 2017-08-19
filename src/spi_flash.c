@@ -61,39 +61,40 @@ uint8_t command[4];
  * @param  SectorAddr: address of the sector to erase.
  * @retval None
  */
-void sFLASH_EraseSector(uint32_t SectorAddr) {
-	/*!< Send write enable instruction */
-	sFLASH_WriteEnable();
+void sFLASH_EraseSector(uint32_t SectorAddr)
+{
+    /*!< Send write enable instruction */
+    sFLASH_WriteEnable();
 
-	command[0] = sFLASH_CMD_SE;
-	command[1] = (SectorAddr & 0xFF0000) >> 16;
-	command[2] = (SectorAddr & 0xFF00) >> 8;
-	command[3] = SectorAddr & 0xFF;
+    command[0] = sFLASH_CMD_SE;
+    command[1] = (SectorAddr & 0xFF0000) >> 16;
+    command[2] = (SectorAddr & 0xFF00) >> 8;
+    command[3] = SectorAddr & 0xFF;
 
-	/*!< Sector Erase */
-	/*!< Select the FLASH: Chip Select low */
-	sFLASH_CS_LOW();
-	/*!< Send Sector Erase instruction */
-	switch(HAL_SPI_Transmit(&hspi3, &command[0], 4, 5000))
-	{
-	case HAL_TIMEOUT:
-		/* A Timeout Occur ______________________________________________________*/
-		/* Call Timeout Handler */
-		return;
-		break;
-		/* An Error Occur ______________________________________________________ */
-	case HAL_ERROR:
-		/* Call Timeout Handler */
-		return;
-		break;
-	default:
-		break;
-	}
-	/*!< Deselect the FLASH: Chip Select high */
-	sFLASH_CS_HIGH();
+    /*!< Sector Erase */
+    /*!< Select the FLASH: Chip Select low */
+    sFLASH_CS_LOW();
+    /*!< Send Sector Erase instruction */
+    switch(HAL_SPI_Transmit(&hspi3, &command[0], 4, 5000))
+    {
+    case HAL_TIMEOUT:
+        /* A Timeout Occur ______________________________________________________*/
+        /* Call Timeout Handler */
+        return;
+        break;
+        /* An Error Occur ______________________________________________________ */
+    case HAL_ERROR:
+        /* Call Timeout Handler */
+        return;
+        break;
+    default:
+        break;
+    }
+    /*!< Deselect the FLASH: Chip Select high */
+    sFLASH_CS_HIGH();
 
-	/*!< Wait the end of Flash writing */
-	sFLASH_WaitForWriteEnd();
+    /*!< Wait the end of Flash writing */
+    sFLASH_WaitForWriteEnd();
 }
 
 /**
@@ -101,36 +102,37 @@ void sFLASH_EraseSector(uint32_t SectorAddr) {
  * @param  None
  * @retval None
  */
-void sFLASH_EraseBulk(void) {
-	/*!< Send write enable instruction */
-	sFLASH_WriteEnable();
+void sFLASH_EraseBulk(void)
+{
+    /*!< Send write enable instruction */
+    sFLASH_WriteEnable();
 
-	/*!< Bulk Erase */
-	/*!< Select the FLASH: Chip Select low */
-	sFLASH_CS_LOW();
-	/*!< Send Bulk Erase instruction  */
-	command[0] = sFLASH_CMD_BE;
-	switch(HAL_SPI_Transmit(&hspi3, &command[0], 1, 5000))
-	{
-	case HAL_TIMEOUT:
-		/* A Timeout Occur ______________________________________________________*/
-		/* Call Timeout Handler */
-		return;
-		break;
-		/* An Error Occur ______________________________________________________ */
-	case HAL_ERROR:
-		/* Call Timeout Handler */
-		return;
-		break;
-	default:
-		break;
-	}
+    /*!< Bulk Erase */
+    /*!< Select the FLASH: Chip Select low */
+    sFLASH_CS_LOW();
+    /*!< Send Bulk Erase instruction  */
+    command[0] = sFLASH_CMD_BE;
+    switch(HAL_SPI_Transmit(&hspi3, &command[0], 1, 5000))
+    {
+    case HAL_TIMEOUT:
+        /* A Timeout Occur ______________________________________________________*/
+        /* Call Timeout Handler */
+        return;
+        break;
+        /* An Error Occur ______________________________________________________ */
+    case HAL_ERROR:
+        /* Call Timeout Handler */
+        return;
+        break;
+    default:
+        break;
+    }
 
-	/*!< Deselect the FLASH: Chip Select high */
-	sFLASH_CS_HIGH();
+    /*!< Deselect the FLASH: Chip Select high */
+    sFLASH_CS_HIGH();
 
-	/*!< Wait the end of Flash writing */
-	sFLASH_WaitForWriteEnd();
+    /*!< Wait the end of Flash writing */
+    sFLASH_WaitForWriteEnd();
 }
 
 /**
@@ -144,59 +146,60 @@ void sFLASH_EraseBulk(void) {
  *         or less than "sFLASH_PAGESIZE" value.
  * @retval None
  */
-void sFLASH_WritePage(uint8_t* pBuffer, uint32_t WriteAddr,	uint16_t NumByteToWrite) {
+void sFLASH_WritePage(uint8_t* pBuffer, uint32_t WriteAddr,	uint16_t NumByteToWrite)
+{
 
-	/*!< Enable the write access to the FLASH */
-	sFLASH_WriteEnable();
+    /*!< Enable the write access to the FLASH */
+    sFLASH_WriteEnable();
 
-	/*!< Send "Write to Memory " instruction */
-	command[0] = sFLASH_CMD_WRITE;
-	command[1] = (WriteAddr & 0xFF0000) >> 16;
-	command[2] = (WriteAddr & 0xFF00) >> 8;
-	command[3] = WriteAddr & 0xFF;
+    /*!< Send "Write to Memory " instruction */
+    command[0] = sFLASH_CMD_WRITE;
+    command[1] = (WriteAddr & 0xFF0000) >> 16;
+    command[2] = (WriteAddr & 0xFF00) >> 8;
+    command[3] = WriteAddr & 0xFF;
 
-	/*!< Select the FLASH: Chip Select low */
-	sFLASH_CS_LOW();
-	/*!< Send Sector Erase instruction */
-	switch(HAL_SPI_Transmit(&hspi3, &command[0], 4, 5000))
-	{
-	case HAL_TIMEOUT:
-		/* A Timeout Occur ______________________________________________________*/
-		/* Call Timeout Handler */
-		return;
-		break;
-		/* An Error Occur ______________________________________________________ */
-	case HAL_ERROR:
-		/* Call Timeout Handler */
-		return;
-		break;
-	default:
-		break;
-	}
+    /*!< Select the FLASH: Chip Select low */
+    sFLASH_CS_LOW();
+    /*!< Send Sector Erase instruction */
+    switch(HAL_SPI_Transmit(&hspi3, &command[0], 4, 5000))
+    {
+    case HAL_TIMEOUT:
+        /* A Timeout Occur ______________________________________________________*/
+        /* Call Timeout Handler */
+        return;
+        break;
+        /* An Error Occur ______________________________________________________ */
+    case HAL_ERROR:
+        /* Call Timeout Handler */
+        return;
+        break;
+    default:
+        break;
+    }
 
-	/*!< while there is data to be written on the FLASH */
-	switch(HAL_SPI_Transmit(&hspi3, pBuffer, NumByteToWrite, 5000))
-	{
-	case HAL_TIMEOUT:
-		/* A Timeout Occur ______________________________________________________*/
-		/* Call Timeout Handler */
-		return;
-		break;
-		/* An Error Occur ______________________________________________________ */
-	case HAL_ERROR:
-		/* Call Timeout Handler */
-		return;
-		break;
-	default:
-		break;
-	}
+    /*!< while there is data to be written on the FLASH */
+    switch(HAL_SPI_Transmit(&hspi3, pBuffer, NumByteToWrite, 5000))
+    {
+    case HAL_TIMEOUT:
+        /* A Timeout Occur ______________________________________________________*/
+        /* Call Timeout Handler */
+        return;
+        break;
+        /* An Error Occur ______________________________________________________ */
+    case HAL_ERROR:
+        /* Call Timeout Handler */
+        return;
+        break;
+    default:
+        break;
+    }
 
 
-	/*!< Deselect the FLASH: Chip Select high */
-	sFLASH_CS_HIGH();
+    /*!< Deselect the FLASH: Chip Select high */
+    sFLASH_CS_HIGH();
 
-	/*!< Wait the end of Flash writing */
-	sFLASH_WaitForWriteEnd();
+    /*!< Wait the end of Flash writing */
+    sFLASH_WaitForWriteEnd();
 }
 
 /**
@@ -208,66 +211,75 @@ void sFLASH_WritePage(uint8_t* pBuffer, uint32_t WriteAddr,	uint16_t NumByteToWr
  * @param  NumByteToWrite: number of bytes to write to the FLASH.
  * @retval None
  */
-void sFLASH_WriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint32_t NumByteToWrite) {
-	uint32_t NumOfPage = 0, NumOfSingle = 0, Addr = 0, count = 0, temp = 0;
+void sFLASH_WriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint32_t NumByteToWrite)
+{
+    uint32_t NumOfPage = 0, NumOfSingle = 0, Addr = 0, count = 0, temp = 0;
 
-	Addr = WriteAddr % sFLASH_SPI_PAGESIZE;
-	count = sFLASH_SPI_PAGESIZE - Addr;
-	NumOfPage = NumByteToWrite / sFLASH_SPI_PAGESIZE;
-	NumOfSingle = NumByteToWrite % sFLASH_SPI_PAGESIZE;
+    Addr = WriteAddr % sFLASH_SPI_PAGESIZE;
+    count = sFLASH_SPI_PAGESIZE - Addr;
+    NumOfPage = NumByteToWrite / sFLASH_SPI_PAGESIZE;
+    NumOfSingle = NumByteToWrite % sFLASH_SPI_PAGESIZE;
 
-	if (Addr == 0) /*!< WriteAddr is sFLASH_PAGESIZE aligned  */
-	{
-		if (NumOfPage == 0) /*!< NumByteToWrite < sFLASH_PAGESIZE */
-		{
-			sFLASH_WritePage(pBuffer, WriteAddr, NumByteToWrite);
-		} else /*!< NumByteToWrite > sFLASH_PAGESIZE */
-		{
-			while (NumOfPage--) {
-				sFLASH_WritePage(pBuffer, WriteAddr, sFLASH_SPI_PAGESIZE);
-				WriteAddr += sFLASH_SPI_PAGESIZE;
-				pBuffer += sFLASH_SPI_PAGESIZE;
-			}
+    if (Addr == 0) /*!< WriteAddr is sFLASH_PAGESIZE aligned  */
+    {
+        if (NumOfPage == 0) /*!< NumByteToWrite < sFLASH_PAGESIZE */
+        {
+            sFLASH_WritePage(pBuffer, WriteAddr, NumByteToWrite);
+        }
+        else   /*!< NumByteToWrite > sFLASH_PAGESIZE */
+        {
+            while (NumOfPage--)
+            {
+                sFLASH_WritePage(pBuffer, WriteAddr, sFLASH_SPI_PAGESIZE);
+                WriteAddr += sFLASH_SPI_PAGESIZE;
+                pBuffer += sFLASH_SPI_PAGESIZE;
+            }
 
-			sFLASH_WritePage(pBuffer, WriteAddr, NumOfSingle);
-		}
-	} else /*!< WriteAddr is not sFLASH_PAGESIZE aligned  */
-	{
-		if (NumOfPage == 0) /*!< NumByteToWrite < sFLASH_PAGESIZE */
-		{
-			if (NumOfSingle > count) /*!< (NumByteToWrite + WriteAddr) > sFLASH_PAGESIZE */
-			{
-				temp = NumOfSingle - count;
+            sFLASH_WritePage(pBuffer, WriteAddr, NumOfSingle);
+        }
+    }
+    else   /*!< WriteAddr is not sFLASH_PAGESIZE aligned  */
+    {
+        if (NumOfPage == 0) /*!< NumByteToWrite < sFLASH_PAGESIZE */
+        {
+            if (NumOfSingle > count) /*!< (NumByteToWrite + WriteAddr) > sFLASH_PAGESIZE */
+            {
+                temp = NumOfSingle - count;
 
-				sFLASH_WritePage(pBuffer, WriteAddr, count);
-				WriteAddr += count;
-				pBuffer += count;
+                sFLASH_WritePage(pBuffer, WriteAddr, count);
+                WriteAddr += count;
+                pBuffer += count;
 
-				sFLASH_WritePage(pBuffer, WriteAddr, temp);
-			} else {
-				sFLASH_WritePage(pBuffer, WriteAddr, NumByteToWrite);
-			}
-		} else /*!< NumByteToWrite > sFLASH_PAGESIZE */
-		{
-			NumByteToWrite -= count;
-			NumOfPage = NumByteToWrite / sFLASH_SPI_PAGESIZE;
-			NumOfSingle = NumByteToWrite % sFLASH_SPI_PAGESIZE;
+                sFLASH_WritePage(pBuffer, WriteAddr, temp);
+            }
+            else
+            {
+                sFLASH_WritePage(pBuffer, WriteAddr, NumByteToWrite);
+            }
+        }
+        else   /*!< NumByteToWrite > sFLASH_PAGESIZE */
+        {
+            NumByteToWrite -= count;
+            NumOfPage = NumByteToWrite / sFLASH_SPI_PAGESIZE;
+            NumOfSingle = NumByteToWrite % sFLASH_SPI_PAGESIZE;
 
-			sFLASH_WritePage(pBuffer, WriteAddr, count);
-			WriteAddr += count;
-			pBuffer += count;
+            sFLASH_WritePage(pBuffer, WriteAddr, count);
+            WriteAddr += count;
+            pBuffer += count;
 
-			while (NumOfPage--) {
-				sFLASH_WritePage(pBuffer, WriteAddr, sFLASH_SPI_PAGESIZE);
-				WriteAddr += sFLASH_SPI_PAGESIZE;
-				pBuffer += sFLASH_SPI_PAGESIZE;
-			}
+            while (NumOfPage--)
+            {
+                sFLASH_WritePage(pBuffer, WriteAddr, sFLASH_SPI_PAGESIZE);
+                WriteAddr += sFLASH_SPI_PAGESIZE;
+                pBuffer += sFLASH_SPI_PAGESIZE;
+            }
 
-			if (NumOfSingle != 0) {
-				sFLASH_WritePage(pBuffer, WriteAddr, NumOfSingle);
-			}
-		}
-	}
+            if (NumOfSingle != 0)
+            {
+                sFLASH_WritePage(pBuffer, WriteAddr, NumOfSingle);
+            }
+        }
+    }
 }
 
 
@@ -278,64 +290,66 @@ void sFLASH_WriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint32_t NumByteTo
  * @param  NumByteToRead: number of bytes to read from the FLASH.
  * @retval returns the number of bytes that are different, zero if all bytes are correct
  */
-uint32_t sFLASH_VerifyWrite(uint8_t* pBuffer, uint32_t ReadAddr, uint32_t NumByteToRead) {
-	uint32_t count_errors = 0;
-	uint8_t byteinflash;
+uint32_t sFLASH_VerifyWrite(uint8_t* pBuffer, uint32_t ReadAddr, uint32_t NumByteToRead)
+{
+    uint32_t count_errors = 0;
+    uint8_t byteinflash;
 
-	command[0] = sFLASH_CMD_READ;
-	command[1] = (ReadAddr & 0xFF0000) >> 16;
-	command[2] = (ReadAddr & 0xFF00) >> 8;
-	command[3] = ReadAddr & 0xFF;
+    command[0] = sFLASH_CMD_READ;
+    command[1] = (ReadAddr & 0xFF0000) >> 16;
+    command[2] = (ReadAddr & 0xFF00) >> 8;
+    command[3] = ReadAddr & 0xFF;
 
-	/*!< Select the FLASH: Chip Select low */
-	sFLASH_CS_LOW();
-	/*!< Send Sector Erase instruction */
-	switch(HAL_SPI_Transmit(&hspi3, &command[0], 4, 5000))
-	{
-	case HAL_TIMEOUT:
-		/* A Timeout Occur ______________________________________________________*/
-		/* Call Timeout Handler */
-		return 1;
-		break;
-		/* An Error Occur ______________________________________________________ */
-	case HAL_ERROR:
-		/* Call Timeout Handler */
-		return 1;
-		break;
-	default:
-		break;
-	}
+    /*!< Select the FLASH: Chip Select low */
+    sFLASH_CS_LOW();
+    /*!< Send Sector Erase instruction */
+    switch(HAL_SPI_Transmit(&hspi3, &command[0], 4, 5000))
+    {
+    case HAL_TIMEOUT:
+        /* A Timeout Occur ______________________________________________________*/
+        /* Call Timeout Handler */
+        return 1;
+        break;
+        /* An Error Occur ______________________________________________________ */
+    case HAL_ERROR:
+        /* Call Timeout Handler */
+        return 1;
+        break;
+    default:
+        break;
+    }
 
-	command[0] = sFLASH_DUMMY_BYTE;
-	while (NumByteToRead--) /*!< while there is data to be read */
-	{
-		/*!< Read a byte from the FLASH */
+    command[0] = sFLASH_DUMMY_BYTE;
+    while (NumByteToRead--) /*!< while there is data to be read */
+    {
+        /*!< Read a byte from the FLASH */
 
-		switch(HAL_SPI_TransmitReceive(&hspi3, &command[0], &byteinflash, 1, 5000))
-		{
-		case HAL_TIMEOUT:
-			/* A Timeout Occur ______________________________________________________*/
-			/* Call Timeout Handler */
-			return 1;
-			break;
-			/* An Error Occur ______________________________________________________ */
-		case HAL_ERROR:
-			/* Call Timeout Handler */
-			return 1;
-			break;
-		default:
-			break;
-		}
-		if (*pBuffer != byteinflash) {
-			count_errors++;
-		}
-		/*!< Point to the next location where the byte read will be saved */
-		pBuffer++;
-	}
+        switch(HAL_SPI_TransmitReceive(&hspi3, &command[0], &byteinflash, 1, 5000))
+        {
+        case HAL_TIMEOUT:
+            /* A Timeout Occur ______________________________________________________*/
+            /* Call Timeout Handler */
+            return 1;
+            break;
+            /* An Error Occur ______________________________________________________ */
+        case HAL_ERROR:
+            /* Call Timeout Handler */
+            return 1;
+            break;
+        default:
+            break;
+        }
+        if (*pBuffer != byteinflash)
+        {
+            count_errors++;
+        }
+        /*!< Point to the next location where the byte read will be saved */
+        pBuffer++;
+    }
 
-	/*!< Deselect the FLASH: Chip Select high */
-	sFLASH_CS_HIGH();
-	return count_errors;
+    /*!< Deselect the FLASH: Chip Select high */
+    sFLASH_CS_HIGH();
+    return count_errors;
 }
 
 /**
@@ -345,59 +359,60 @@ uint32_t sFLASH_VerifyWrite(uint8_t* pBuffer, uint32_t ReadAddr, uint32_t NumByt
  * @param  NumByteToRead: number of bytes to read from the FLASH.
  * @retval None
  */
-void sFLASH_ReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr,	uint32_t NumByteToRead) {
+void sFLASH_ReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr,	uint32_t NumByteToRead)
+{
 
-	/*!< Send "Read from Memory " instruction */
+    /*!< Send "Read from Memory " instruction */
 
-	command[0] = sFLASH_CMD_READ;
-	command[1] = (ReadAddr & 0xFF0000) >> 16;
-	command[2] = (ReadAddr & 0xFF00) >> 8;
-	command[3] = ReadAddr & 0xFF;
+    command[0] = sFLASH_CMD_READ;
+    command[1] = (ReadAddr & 0xFF0000) >> 16;
+    command[2] = (ReadAddr & 0xFF00) >> 8;
+    command[3] = ReadAddr & 0xFF;
 
-	/*!< Select the FLASH: Chip Select low */
-	sFLASH_CS_LOW();
-	/*!< Send Sector Erase instruction */
-	switch(HAL_SPI_Transmit(&hspi3, &command[0], 4, 5000))
-	{
-	case HAL_TIMEOUT:
-		/* A Timeout Occur ______________________________________________________*/
-		/* Call Timeout Handler */
-		return;
-		break;
-		/* An Error Occur ______________________________________________________ */
-	case HAL_ERROR:
-		/* Call Timeout Handler */
-		return;
-		break;
-	default:
-		break;
-	}
+    /*!< Select the FLASH: Chip Select low */
+    sFLASH_CS_LOW();
+    /*!< Send Sector Erase instruction */
+    switch(HAL_SPI_Transmit(&hspi3, &command[0], 4, 5000))
+    {
+    case HAL_TIMEOUT:
+        /* A Timeout Occur ______________________________________________________*/
+        /* Call Timeout Handler */
+        return;
+        break;
+        /* An Error Occur ______________________________________________________ */
+    case HAL_ERROR:
+        /* Call Timeout Handler */
+        return;
+        break;
+    default:
+        break;
+    }
 
-	command[0] = sFLASH_DUMMY_BYTE;
-	while (NumByteToRead--) /*!< while there is data to be read */
-	{
-		/*!< Read a byte from the FLASH */
-		switch(HAL_SPI_TransmitReceive(&hspi3, &command[0], pBuffer, 1, 5000))
-		{
-		case HAL_TIMEOUT:
-			/* A Timeout Occur ______________________________________________________*/
-			/* Call Timeout Handler */
-			return;
-			break;
-			/* An Error Occur ______________________________________________________ */
-		case HAL_ERROR:
-			/* Call Timeout Handler */
-			return;
-			break;
-		default:
-			break;
-		}
-		/*!< Point to the next location where the byte read will be saved */
-		pBuffer++;
-	}
+    command[0] = sFLASH_DUMMY_BYTE;
+    while (NumByteToRead--) /*!< while there is data to be read */
+    {
+        /*!< Read a byte from the FLASH */
+        switch(HAL_SPI_TransmitReceive(&hspi3, &command[0], pBuffer, 1, 5000))
+        {
+        case HAL_TIMEOUT:
+            /* A Timeout Occur ______________________________________________________*/
+            /* Call Timeout Handler */
+            return;
+            break;
+            /* An Error Occur ______________________________________________________ */
+        case HAL_ERROR:
+            /* Call Timeout Handler */
+            return;
+            break;
+        default:
+            break;
+        }
+        /*!< Point to the next location where the byte read will be saved */
+        pBuffer++;
+    }
 
-	/*!< Deselect the FLASH: Chip Select high */
-	sFLASH_CS_HIGH();
+    /*!< Deselect the FLASH: Chip Select high */
+    sFLASH_CS_HIGH();
 }
 
 /**
@@ -405,62 +420,63 @@ void sFLASH_ReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr,	uint32_t NumByteToRe
  * @param  None
  * @retval FLASH identification
  */
-uint32_t sFLASH_ReadID(void) {
-	uint32_t Temp = 0, Temp0 = 0, Temp1 = 0, Temp2 = 0;
-	uint8_t idsequence[3];
+uint32_t sFLASH_ReadID(void)
+{
+    uint32_t Temp = 0, Temp0 = 0, Temp1 = 0, Temp2 = 0;
+    uint8_t idsequence[3];
 
-	/*!< Select the FLASH: Chip Select low */
-	sFLASH_CS_LOW();
+    /*!< Select the FLASH: Chip Select low */
+    sFLASH_CS_LOW();
 
-	/*!< Send "RDID " instruction */
-	command[0] = 0x9F;
-	switch(HAL_SPI_Transmit(&hspi3, &command[0], 1, 5000))
-	{
-	case HAL_TIMEOUT:
-		/* A Timeout Occur ______________________________________________________*/
-		/* Call Timeout Handler */
-		return 1;
-		break;
-		/* An Error Occur ______________________________________________________ */
-	case HAL_ERROR:
-		/* Call Timeout Handler */
-		return 1;
-		break;
-	default:
-		break;
-	}
+    /*!< Send "RDID " instruction */
+    command[0] = 0x9F;
+    switch(HAL_SPI_Transmit(&hspi3, &command[0], 1, 5000))
+    {
+    case HAL_TIMEOUT:
+        /* A Timeout Occur ______________________________________________________*/
+        /* Call Timeout Handler */
+        return 1;
+        break;
+        /* An Error Occur ______________________________________________________ */
+    case HAL_ERROR:
+        /* Call Timeout Handler */
+        return 1;
+        break;
+    default:
+        break;
+    }
 
-	command[0] = sFLASH_DUMMY_BYTE;
-	command[1] = sFLASH_DUMMY_BYTE;
-	command[2] = sFLASH_DUMMY_BYTE;
+    command[0] = sFLASH_DUMMY_BYTE;
+    command[1] = sFLASH_DUMMY_BYTE;
+    command[2] = sFLASH_DUMMY_BYTE;
 
-	/*!< Read a byte from the FLASH */
-	switch(HAL_SPI_TransmitReceive(&hspi3, &command[0], &idsequence[0], 3, 5000))
-	{
-	case HAL_TIMEOUT:
-		/* A Timeout Occur ______________________________________________________*/
-		/* Call Timeout Handler */
-		return 1;
-		break;
-		/* An Error Occur ______________________________________________________ */
-	case HAL_ERROR:
-		/* Call Timeout Handler */
-		return 1;
-		break;
-	default:
-		break;
-	}
+    /*!< Read a byte from the FLASH */
+    switch(HAL_SPI_TransmitReceive(&hspi3, &command[0], &idsequence[0], 3, 5000))
+    {
+    case HAL_TIMEOUT:
+        /* A Timeout Occur ______________________________________________________*/
+        /* Call Timeout Handler */
+        return 1;
+        break;
+        /* An Error Occur ______________________________________________________ */
+    case HAL_ERROR:
+        /* Call Timeout Handler */
+        return 1;
+        break;
+    default:
+        break;
+    }
 
-	/*!< Deselect the FLASH: Chip Select high */
-	sFLASH_CS_HIGH();
+    /*!< Deselect the FLASH: Chip Select high */
+    sFLASH_CS_HIGH();
 
-	Temp0 = idsequence[0];
-	Temp1 = idsequence[1];
-	Temp2 = idsequence[2];
+    Temp0 = idsequence[0];
+    Temp1 = idsequence[1];
+    Temp2 = idsequence[2];
 
-	Temp = (Temp0 << 16) | (Temp1 << 8) | Temp2;
+    Temp = (Temp0 << 16) | (Temp1 << 8) | Temp2;
 
-	return Temp;
+    return Temp;
 }
 
 
@@ -470,30 +486,31 @@ uint32_t sFLASH_ReadID(void) {
  * @param  None
  * @retval None
  */
-void sFLASH_WriteEnable(void) {
-	/*!< Select the FLASH: Chip Select low */
-	sFLASH_CS_LOW();
+void sFLASH_WriteEnable(void)
+{
+    /*!< Select the FLASH: Chip Select low */
+    sFLASH_CS_LOW();
 
-	/*!< Send "Write Enable" instruction */
-	command[0] = sFLASH_CMD_WREN;
-	switch(HAL_SPI_Transmit(&hspi3, &command[0], 1, 5000))
-	{
-	case HAL_TIMEOUT:
-		/* A Timeout Occur ______________________________________________________*/
-		/* Call Timeout Handler */
-		return;
-		break;
-		/* An Error Occur ______________________________________________________ */
-	case HAL_ERROR:
-		/* Call Timeout Handler */
-		return;
-		break;
-	default:
-		break;
-	}
+    /*!< Send "Write Enable" instruction */
+    command[0] = sFLASH_CMD_WREN;
+    switch(HAL_SPI_Transmit(&hspi3, &command[0], 1, 5000))
+    {
+    case HAL_TIMEOUT:
+        /* A Timeout Occur ______________________________________________________*/
+        /* Call Timeout Handler */
+        return;
+        break;
+        /* An Error Occur ______________________________________________________ */
+    case HAL_ERROR:
+        /* Call Timeout Handler */
+        return;
+        break;
+    default:
+        break;
+    }
 
-	/*!< Deselect the FLASH: Chip Select high */
-	sFLASH_CS_HIGH();
+    /*!< Deselect the FLASH: Chip Select high */
+    sFLASH_CS_HIGH();
 }
 
 /**
@@ -502,53 +519,57 @@ void sFLASH_WriteEnable(void) {
  * @param  None
  * @retval None
  */
-void sFLASH_WaitForWriteEnd(void) {
-	uint8_t flashstatus = 0;
+void sFLASH_WaitForWriteEnd(void)
+{
+    uint8_t flashstatus = 0;
 
-	/*!< Select the FLASH: Chip Select low */sFLASH_CS_LOW();
+    /*!< Select the FLASH: Chip Select low */
+    sFLASH_CS_LOW();
 
-	/*!< Send "Read Status Register" instruction */
-	command[0] = sFLASH_CMD_RDSR;
-	switch(HAL_SPI_Transmit(&hspi3, &command[0], 1, 5000))
-	{
-	case HAL_TIMEOUT:
-		/* A Timeout Occur ______________________________________________________*/
-		/* Call Timeout Handler */
-		return;
-		break;
-		/* An Error Occur ______________________________________________________ */
-	case HAL_ERROR:
-		/* Call Timeout Handler */
-		return;
-		break;
-	default:
-		break;
-	}
+    /*!< Send "Read Status Register" instruction */
+    command[0] = sFLASH_CMD_RDSR;
+    switch(HAL_SPI_Transmit(&hspi3, &command[0], 1, 5000))
+    {
+    case HAL_TIMEOUT:
+        /* A Timeout Occur ______________________________________________________*/
+        /* Call Timeout Handler */
+        return;
+        break;
+        /* An Error Occur ______________________________________________________ */
+    case HAL_ERROR:
+        /* Call Timeout Handler */
+        return;
+        break;
+    default:
+        break;
+    }
 
-	command[0] = sFLASH_DUMMY_BYTE;
+    command[0] = sFLASH_DUMMY_BYTE;
 
-	/*!< Loop as long as the memory is busy with a write cycle */
-	do {
-		/*!< Send a dummy byte to generate the clock needed by the FLASH
-		 and put the value of the status register in FLASH_Status variable */
-		switch(HAL_SPI_TransmitReceive(&hspi3, &command[0], &flashstatus, 1, 5000))
-		{
-		case HAL_TIMEOUT:
-			/* A Timeout Occur ______________________________________________________*/
-			/* Call Timeout Handler */
-			return;
-			break;
-			/* An Error Occur ______________________________________________________ */
-		case HAL_ERROR:
-			/* Call Timeout Handler */
-			return;
-			break;
-		default:
-			break;
-		}
+    /*!< Loop as long as the memory is busy with a write cycle */
+    do
+    {
+        /*!< Send a dummy byte to generate the clock needed by the FLASH
+         and put the value of the status register in FLASH_Status variable */
+        switch(HAL_SPI_TransmitReceive(&hspi3, &command[0], &flashstatus, 1, 5000))
+        {
+        case HAL_TIMEOUT:
+            /* A Timeout Occur ______________________________________________________*/
+            /* Call Timeout Handler */
+            return;
+            break;
+            /* An Error Occur ______________________________________________________ */
+        case HAL_ERROR:
+            /* Call Timeout Handler */
+            return;
+            break;
+        default:
+            break;
+        }
 
-	} while ((flashstatus & sFLASH_WIP_FLAG) == SET); /* Write in progress */
+    }
+    while ((flashstatus & sFLASH_WIP_FLAG) == SET);   /* Write in progress */
 
-	/*!< Deselect the FLASH: Chip Select high */
-	sFLASH_CS_HIGH();
+    /*!< Deselect the FLASH: Chip Select high */
+    sFLASH_CS_HIGH();
 }

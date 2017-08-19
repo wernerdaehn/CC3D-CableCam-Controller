@@ -247,10 +247,16 @@ int main(void)
 
     while (1)
     {
+        /*
+         * HAL_GetTick() returns the hardware system time value in ms.
+         * Every time 20 ms have passed, the clock50Hz gets increased by one
+         * and hence provides a stable information for slow frequency operations.
+         */
         if (HAL_GetTick() - lasttick > 20)
         {
             lasttick = HAL_GetTick();
             tickCounter();
+
             USBPeriodElapsed();
             if (is1Hz() && controllerstatus.safemode == OPERATIONAL)
             {

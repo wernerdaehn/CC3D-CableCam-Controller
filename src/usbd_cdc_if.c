@@ -385,11 +385,11 @@ static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
  */
 uint16_t USB_ReceiveString()
 {
-     /*
-     * Go through all characters and locate the next \n. If one is found
-     * copy the entire text from the start position to the position of the next found \n
-     * character into the commandlinebuffer.
-     */
+    /*
+    * Go through all characters and locate the next \n. If one is found
+    * copy the entire text from the start position to the position of the next found \n
+    * character into the commandlinebuffer.
+    */
     while (bytes_scanned < bytes_received)
     {
         uint8_t c = rxbuffer[bytes_scanned % RXBUFFERSIZE];

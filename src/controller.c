@@ -356,7 +356,7 @@ int16_t stickCycle(double pos, double brakedistance)
     {
         if (controllerstatus.safemode != OPERATIONAL)
         {
-            PrintlnSerial_string("Entered OPERATIONAL mode", EndPoint_USB);
+            PrintlnSerial_string("Entered OPERATIONAL mode", EndPoint_All);
         }
         controllerstatus.safemode = OPERATIONAL;
     }
@@ -368,7 +368,7 @@ int16_t stickCycle(double pos, double brakedistance)
              * First endpoint is the first click, Second endpoint the second click.
              */
             endpointclicks = 0;
-            PrintlnSerial_string("Entered Endpoint Programming mode", EndPoint_USB);
+            PrintlnSerial_string("Entered Endpoint Programming mode", EndPoint_All);
         }
         controllerstatus.safemode = PROGRAMMING;
     }
@@ -387,7 +387,7 @@ int16_t stickCycle(double pos, double brakedistance)
         {
             activesettings.pos_start = pos;
             endpointclicks = 1;
-            PrintlnSerial_string("Point 1 set", EndPoint_USB);
+            PrintlnSerial_string("Point 1 set", EndPoint_All);
         }
         else
         {
@@ -397,7 +397,7 @@ int16_t stickCycle(double pos, double brakedistance)
              * and therefore the range is from 1000 to 1000, so no range at all. To avoid that, force to leave the programming mode
              * temporarily for setting both points again.
              */
-            PrintlnSerial_string("Point 2 set", EndPoint_USB);
+            PrintlnSerial_string("Point 2 set", EndPoint_All);
             if (activesettings.pos_start < pos)
             {
                 activesettings.pos_end = pos;

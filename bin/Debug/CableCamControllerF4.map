@@ -16138,7 +16138,7 @@ OUTPUT(bin\Debug\CableCamControllerF4.elf elf32-littlearm)
  .debug_macro   0x0002576c      0x354 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_uart.o
  .debug_macro   0x00025ac0      0x353 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_ll_usb.o
 
-.debug_line     0x00000000    0x13eb0
+.debug_line     0x00000000    0x13eb6
  .debug_line    0x00000000      0x910 obj\debug\middlewares\st\stm32_usb_device_library\class\cdc\src\usbd_cdc.o
  .debug_line    0x00000910      0x928 obj\debug\middlewares\st\stm32_usb_device_library\core\src\usbd_core.o
  .debug_line    0x00001238      0x982 obj\debug\middlewares\st\stm32_usb_device_library\core\src\usbd_ctlreq.o
@@ -16146,33 +16146,33 @@ OUTPUT(bin\Debug\CableCamControllerF4.elf elf32-littlearm)
  .debug_line    0x0000237d      0x6b1 obj\debug\src\clock_50hz.o
  .debug_line    0x00002a2e      0x931 obj\debug\src\controller.o
  .debug_line    0x0000335f      0x6ce obj\debug\src\eeprom.o
- .debug_line    0x00003a2d      0x9f9 obj\debug\src\main.o
- .debug_line    0x00004426      0xc98 obj\debug\src\protocol.o
- .debug_line    0x000050be      0x7cf obj\debug\src\sbus.o
- .debug_line    0x0000588d      0x878 obj\debug\src\serial_print.o
- .debug_line    0x00006105      0x7f7 obj\debug\src\spi_flash.o
- .debug_line    0x000068fc       0xcc obj\debug\src\startup_stm32f4xx.o
- .debug_line    0x000069c8      0x80a obj\debug\src\stm32f4xx_hal_msp.o
- .debug_line    0x000071d2      0x7dc obj\debug\src\stm32f4xx_it.o
- .debug_line    0x000079ae      0x2d8 obj\debug\src\system_stm32f4xx.o
- .debug_line    0x00007c86      0x794 obj\debug\src\usb_device.o
- .debug_line    0x0000841a      0x872 obj\debug\src\usbd_cdc_if.o
- .debug_line    0x00008c8c      0x9cd obj\debug\src\usbd_conf.o
- .debug_line    0x00009659      0x7a5 obj\debug\src\usbd_desc.o
- .debug_line    0x00009dfe      0x828 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal.o
- .debug_line    0x0000a626      0x988 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_cortex.o
- .debug_line    0x0000afae      0x93d obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_dma.o
- .debug_line    0x0000b8eb      0x850 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_gpio.o
- .debug_line    0x0000c13b      0xbac obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_pcd.o
- .debug_line    0x0000cce7      0x6ad obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_pcd_ex.o
- .debug_line    0x0000d394      0x991 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_rcc.o
- .debug_line    0x0000dd25      0x766 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_rcc_ex.o
- .debug_line    0x0000e48b      0xa02 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_rtc.o
- .debug_line    0x0000ee8d      0xfd9 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_spi.o
- .debug_line    0x0000fe66     0x1807 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_tim.o
- .debug_line    0x0001166d      0xc0e obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_tim_ex.o
- .debug_line    0x0001227b      0xf53 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_uart.o
- .debug_line    0x000131ce      0xce2 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_ll_usb.o
+ .debug_line    0x00003a2d      0x9fb obj\debug\src\main.o
+ .debug_line    0x00004428      0xc98 obj\debug\src\protocol.o
+ .debug_line    0x000050c0      0x7cf obj\debug\src\sbus.o
+ .debug_line    0x0000588f      0x87b obj\debug\src\serial_print.o
+ .debug_line    0x0000610a      0x7f8 obj\debug\src\spi_flash.o
+ .debug_line    0x00006902       0xcc obj\debug\src\startup_stm32f4xx.o
+ .debug_line    0x000069ce      0x80a obj\debug\src\stm32f4xx_hal_msp.o
+ .debug_line    0x000071d8      0x7dc obj\debug\src\stm32f4xx_it.o
+ .debug_line    0x000079b4      0x2d8 obj\debug\src\system_stm32f4xx.o
+ .debug_line    0x00007c8c      0x794 obj\debug\src\usb_device.o
+ .debug_line    0x00008420      0x872 obj\debug\src\usbd_cdc_if.o
+ .debug_line    0x00008c92      0x9cd obj\debug\src\usbd_conf.o
+ .debug_line    0x0000965f      0x7a5 obj\debug\src\usbd_desc.o
+ .debug_line    0x00009e04      0x828 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal.o
+ .debug_line    0x0000a62c      0x988 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_cortex.o
+ .debug_line    0x0000afb4      0x93d obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_dma.o
+ .debug_line    0x0000b8f1      0x850 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_gpio.o
+ .debug_line    0x0000c141      0xbac obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_pcd.o
+ .debug_line    0x0000cced      0x6ad obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_pcd_ex.o
+ .debug_line    0x0000d39a      0x991 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_rcc.o
+ .debug_line    0x0000dd2b      0x766 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_rcc_ex.o
+ .debug_line    0x0000e491      0xa02 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_rtc.o
+ .debug_line    0x0000ee93      0xfd9 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_spi.o
+ .debug_line    0x0000fe6c     0x1807 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_tim.o
+ .debug_line    0x00011673      0xc0e obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_tim_ex.o
+ .debug_line    0x00012281      0xf53 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_hal_uart.o
+ .debug_line    0x000131d4      0xce2 obj\debug\stm32f4xx_hal_driver\src\stm32f4xx_ll_usb.o
 
 .debug_str      0x00000000    0xc5627
  .debug_str     0x00000000    0xbd569 obj\debug\middlewares\st\stm32_usb_device_library\class\cdc\src\usbd_cdc.o
