@@ -17,6 +17,8 @@ Board used: Any CC3D Revolution or clone, e.g. F4 Advanced Flight Controller by 
   <img src="_images/Hardware_Overview.jpg" height="100px"/>
 </a>
 
+
+
 **Flashing the firmware**
 
 _Note: All drivers used are included in a standard Windows 10 installation._
@@ -26,29 +28,31 @@ _Note: All drivers used are included in a standard Windows 10 installation._
 1. As this activates the STM32F4 hardware bootloader and no firmware runs, only the red Power LED should be on. If the green Status LED does blink, the firmware is active. Try again above step.
 1. Download the firmware from this project https://github.com/wernerdaehn/CC3D-CableCam-Controller/blob/master/bin/Debug/CableCamControllerF4.dfu
 1. At the bottom of the utility, in the _Upgrade or Verify Action_ area, click on _Choose_ and select above's downloaded CableCamControllerF4.dfu file. 
-<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/dfuse_choose.jpg"><img src="_images/dfuse_choose.jpg" height="100px"/></a>
+<br/><a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/dfuse_choose.jpg"><img src="_images/dfuse_choose.jpg" height="100px"/></a>
 1. The DfuSe Utility should show in the top box the text _STM Device in DFU Mode_. This indicates the board's hardware bootloader is running. 
 1. If it does, the _Upgrade_ button copies the firmware onto the board. 
-<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/dfuse_upgrade.jpg"><img src="_images/dfuse_upgrade.jpg" height="100px"/></a>
+<br/><a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/dfuse_upgrade.jpg"><img src="_images/dfuse_upgrade.jpg" height="100px"/></a>
 1. The next dialog(s) is to be confirmed with _yes_. We are certain the firmware is for the STM32F405RG chip.
 1. To validate the flashing truly was successful, the _Verify_ action can be triggered, just to doublecheck.
 1. At the top, the button _Leave DFU mode_, does restart the device and as the boot button on the board is not pressed during startup, it will boot the firmware.
 1. A first indication that everything is normal is when the yellow Status LED on the board does flash with 1Hz.
+
+
 
 **First setup**
 
 1. Currently the board is powered by USB, as the **ESC is off still**. Hence neither the receiver nor the hall sensors work.
 1. As the board is connected to the computer via USB a new COM port is available to interact with the CableCam Controller.
 1. Validate that by starting the Windows 10 Device Manager and locating the port. 
-<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/WindowsDeviceManager.jpg"><img src="_images/WindowsDeviceManager.jpg" height="100px"/></a>
+<br/><a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/WindowsDeviceManager.jpg"><img src="_images/WindowsDeviceManager.jpg" height="100px"/></a>
 1. Open a serial terminal in order to talk to the board. The one I use is [putty](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html) as 64Bit install or just the 64Bit exe download.
 1. In the terminal create a new serial connection to the port shown in the devide manager. In putty that means clicking on _serial_ and entering the port like _COM3_. The settings for baud rate etc are irrelevant and can be left the defaults.
 1. To test if everything works properly, a first command can be sent by typing _$h_ for help and confirming the command with the return key.
 1. This should print status information plus a help text in the console.
-<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/console_help.png"><img src="_images/console_help.png" height="100px"/></a>
+<br/><a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/console_help.png"><img src="_images/console_help.png" height="100px"/></a>
 1. The first and most important step is to set the type of receiver. The firmware supports either SBus or SumPPM. The $h command prints the currently active receiver type and using the _$I_ (uppercase "i") the input receiver type can be changed, e.g. from the default SumPPM to SBus via _$I 1_. Then store that value permanently using the _$w_ command and restart the board by disconnecting the USB cable and reconnecting.
 1. Next step is to validate the receiver input signals. Turn on the ESC to power the receiver and enter the command _$i_. This shows all channels, their current reading from the receiver and which channel is used for what function. The CC3D Revo is designed to use USB while it is powered from an external source like the ESC.
-<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/console_input_config.png"><img src="_images/console_input_config.png" height="100px"/></a>
+<br/><a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/console_input_config.png"><img src="_images/console_input_config.png" height="100px"/></a>
 1. Setup the RC sender to assign the various inputs to channels. The functions used are
     1. Speed Input: In my case I control the camera with the left stick, moving the right stick forward/backwards should move the CableCam. This is channel 3 on my sender.
     1. Programming Switch: In order to set endpoints, a switch on the RC is flipped. This does enter or leave the end point programming mode. In my case the RC sender Switch SF is mapped to channel 6. 
@@ -60,6 +64,8 @@ _Note: All drivers used are included in a standard Windows 10 installation._
 1. With _$w_ these settings are stored permantly. 
 1. Apply speed via the RC sender and check if the motor starts. If it does not, the defaults for other settings in the controller do not match your setup and need to be tested - see the troubleshooting section below.
 1. Execute the command _$p_. This prints out the current two end points and the current position. When the wheel with the Hall Sensor is turning, the position reading should be different with each _$p_ call. This does proof the Hall sensors are working properly.
+
+
 
 **ESC setup**
 
@@ -111,7 +117,7 @@ The default neutral point of the ESC output is 1500, which is standard. So there
 * There is a long delay when moving the stick until the motor starts
 
 This is likely a combination of the acceleration limit and the ESC output neutral range _$N_.
-To visualize this, imagine the folling situation:
+To visualize this, imagine the following situation:
 
 <a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/neutral_range.png"><img src="_images/neutral_range.png"/></a>
 
