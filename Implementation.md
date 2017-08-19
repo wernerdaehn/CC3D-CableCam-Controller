@@ -138,7 +138,7 @@ Just to repeat: Every setting starting with _$1_ and below has no effect, except
 When driving an RC car, applying full thrust instantly is fun, as the wheels start spinning, dirt flying through the air. For the CableCam not so much. Here a constant acceleration is more important. Therefore the CableCam Controller has in ramp built in.
 As long as th user stay within the acceleration and speed limit, he has full control. But if he exceeds the acceleration by e.g. pushing the stick forward too quickly, the stick movement is limited to the maximum allowed acceleration. 
 
-![ramp](https://github.com/wernerdaehn/CC3D-CableCam-Controller/tree/master/_images/ramp.png)
+![ramp](_images/ramp.png)
 
 
 ### Endpoint limiter
