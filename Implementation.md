@@ -97,6 +97,8 @@ Command | Description
 ------- | -----------
 _$a_ | Shows the two acceleration values, the first is the max acceleration in operational mode, the second in programming mode
 _$a int int_ | sets the two acceleration values. Default is _$a 20 10_
+_$g_ | Print the maximum positional error before going into an emergency brake. In case moving the stick slowly towards neutral does not apply enough brake power and hence the endpoint will be overshot by more than this value, the ESC output is reset to neutral forcefully. Thus applying the maximum brake power the ESC can apply. Default is 100 Hall sensor steps.
+_$g int_ | Set the max error.
 _$i_ | Print the the current channel assignments and a overview of all channels with their current values as received from the RC receiver. A value of 0 means no valid data received.
 _$i int int int int int_ | Assign the input channels to functions in the order of speed, programmng switch, endpoint button, max acceleration dial, max speed dial. A value of 256 for the last two is allowed in order to disable those.
 _$I_ | shows which type of receiver signal is expected
@@ -112,6 +114,8 @@ _$n int int_ | set the neutral point to the first value and the range to the sec
 _$N_ | Prints the neutral point and range of the ESC output pwm signal. 
 _$N int int_ | sets the neutral point and range. The default _$N 1500 30_ creates a pwm signal with a puls width of 1500us in idle and to create movement overcomes the neutral range of the ESC by starting with 1530 (or 1470 for reverse). This should match the defaults of the ESC but ESC calibration is adviced. The better these values match the ESC, the faster the response times at start.
 _$p_ | Print the low endpoint, the high endpoint and the current position. 
+_$r_ | Print the rotation direction, clockwise (+1) or ccw (-1). This is important information one the cablecam did overshoot the endpoint. Then the controller allows driving back into the allowed range but not further outside. But which direction 
+_$r int_ | Sets the rotation direction.
 _$S_ | Print a summary of all settings.
 _$v_ | Print the max value the speed input signal is allowed range between the neutral point. With the neutral point at 992 and a speed limit of 800, the full SBus range of 192 to 1792 can be used. With a value of 400, everything above 50% thrust on the stick is limited to 50% max thrust. Note that this value controls the stick and hence is dependant on the type of input receiver.
 _$v int int_ | Sets the max speed for the operational mode and the programming mode. The idea is to limit the max speed when setting the endpoints as a safety precaution. Default is _$v 500 100_.
@@ -126,9 +130,6 @@ _$c_ | Print all three components of the PID loop.
 _$c double double double_ | Sets all three components of the PID loop at once.
 _$f_ | Print the stick-to-hall-sensor-speed factor for positional control. In case of _$m 0_ the stick does no longer control the ESC value directly, instead it moves the target position. Hence it needs to know the conversion factor from stick level to velocity.
 _$f double_ | Sets the stick-to-hall-sensor-speed factor. A value of the default 0.01 means that the target position is increased by 500 steps per second if the stick has a value of 100. 
-_$r_ | Print the rotation direction, clockwise (+1) or ccw (-1). This is important in position mode only, as there the PID loop has to follow the target position and needs the direction hence. Would be bad if the PID loop finds it is 10 steps behind, increases the thrust therefore but all it does is going even faster in the wron direction. In that case this value needs to be changed.
-_$r int_ | Sets the rotation direction for positional mode.
-_$g_ | Print the maximum positional error before going into an emergency brake. Because of a misconfiguration of the PID values or the rotation direction, the PID loop might create wrong ESC outputs. Whatever happens, if the positional error (CableCam actual position versus target position) exceeds the default 100, the ESC output is set to neutral immediately.
 
 Just to repeat: Every setting starting with _$1_ and below has no effect, except for the positional mode _$m 0_. And this mode should not be used for now.
 
