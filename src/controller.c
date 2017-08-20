@@ -25,6 +25,12 @@ double pos_target = 0.0f, pos_target_old = 0.0f;
 uint8_t endpointclicks = 0;
 uint16_t lastendpointswitch = 0;
 
+/*
+ * To get the motor direction, we need to know if the stick was moved forward or reverse.
+ * This value is the sum(stickpositions) where stickposition is centered around zero.
+ */
+int32_t stickintegral = 0;
+
 #define Ta  0.02
 
 double Q0, Q1, Q2;
@@ -225,7 +231,9 @@ int16_t stickCycle(double pos, double brakedistance)
      * WATCHOUT, while the stick values are all in us, the value, stick_requested_value, esc_out values are all in 0.1us units.
      * Else the acceleration would not be fine grained enough.
      */
-    int16_t value = getStickPositionRaw()*10;
+    int16_t tmp = getStickPositionRaw();
+    stickintegral += tmp;
+    int16_t value = tmp*10;
 
     // In passthrough mode the returned value is the raw value
     if (activesettings.mode != MODE_PASSTHROUGH)
@@ -248,7 +256,39 @@ int16_t stickCycle(double pos, double brakedistance)
              *
              * If we would overshoot the end points, then ignore the requested value and reduce the stick position by max_accel.
              */
-            if (pos + brakedistance >= activesettings.pos_end && value > 0)
+
+
+            /*
+             * The pos_start has to be smaller than pos_end always. This is checked in the end_point set logic.
+             * However there is a cases where this might not be so:
+             * Start and end point had been set but then only the start point is moved.
+             */
+            if (activesettings.pos_start > activesettings.pos_end)
+            {
+                double tmp = activesettings.pos_start;
+                activesettings.pos_start = activesettings.pos_end;
+                activesettings.pos_end = tmp;
+            }
+
+            /*
+             * One problem is the direction. Once the endpoint was overshot, a stick position driving the cablecam even further over
+             * the limit is not allowed. But driving it back between start and end point is fine. But what value of the stick
+             * is further over the limit? activesettings.esc_direction tells that.
+             *
+             * Case 1: start pos_start = 0, stick forward drove cablecam to pos_end +3000. Hence esc_direction = +1
+             *         Condition: if value > 0 && pos+brakedistance <= pos_end.
+             *                Or: if value > 0 && pos+brakedistance <= pos_end.
+             * Case 2: start pos_start = 0, stick forward drove cablecam to pos_end -3000. Hence esc_direction = -1.
+             *         Condition: if value < 0 && pos+brakedistance <= pos_end.
+             *                Or: if -value > 0 && pos+brakedistance <= pos_end.
+             * Case 3: start pos_start = 0, stick reverse drove cablecam to pos_end +3000. Hence esc_direction = -1.
+             *         Condition: if value < 0 && pos+brakedistance <= pos_end.
+             *                Or: if -value > 0 && pos+brakedistance <= pos_end.
+             * Case 4: start pos_start = 0, stick reverse drove cablecam to pos_end -3000. Hence esc_direction = +1.
+             *         Condition: if value > 0 && pos+brakedistance <= pos_end.
+             *                Or: if value > 0 && pos+brakedistance <= pos_end.
+             */
+            if (pos + brakedistance >= activesettings.pos_end && value * ((int16_t) activesettings.esc_direction) > 0)
             {
                 value = stick_last_value - maxaccel; // reduce speed at full allowed acceleration
                 controllerstatus.monitor = ENDPOINTBRAKE;
@@ -261,7 +301,7 @@ int16_t stickCycle(double pos, double brakedistance)
                     stick_last_value = 0;
                     return 0;
                 }
-                else if (pos + brakedistance >= activesettings.pos_end + 300.0f)
+                else if (pos + brakedistance >= activesettings.pos_end + activesettings.max_position_error)
                 {
                     /*
                      * Okay, we are way too fast and will overshoot the end point by 300 steps minimum.
@@ -274,7 +314,7 @@ int16_t stickCycle(double pos, double brakedistance)
                      return 0;
                 }
             }
-            else if (pos - brakedistance <= activesettings.pos_start && value < 0)
+            else if (pos - brakedistance <= activesettings.pos_start && value * ((int16_t) activesettings.esc_direction) < 0)
             {
                 value = stick_last_value + maxaccel; // reduce reverse speed at full allowed acceleration
                 controllerstatus.monitor = ENDPOINTBRAKE;
@@ -287,7 +327,7 @@ int16_t stickCycle(double pos, double brakedistance)
                     stick_last_value = 0;
                     return 0;
                 }
-                else if (pos - brakedistance <= activesettings.pos_start - 300.0f)
+                else if (pos - brakedistance <= activesettings.pos_start - activesettings.max_position_error)
                 {
                      stick_last_value = value;
                      return 0;
@@ -428,6 +468,38 @@ int16_t stickCycle(double pos, double brakedistance)
        activesettings.stick_max_speed = 1 + ((max_speed - activesettings.stick_neutral_pos - activesettings.stick_neutral_range) * 10 / activesettings.esc_scale);
     }
 
+    /*
+     * Normally the esc_direction is set. But to help the configuration, the default is guessed.
+     * Note that this is not exact science. The cablecam might roll downhill and the user does hold against constantly.
+     * In this case, this guess would be wrong.
+     */
+    if (activesettings.esc_direction == 0)
+    {
+        if (pos > 500 || pos < -500)
+        {
+            /*
+             * At start the stickintegral was set to zero. So if the integral and the position ran into the same direction
+             * then the motor direction is normal, meaning a positive stick value causes pos to increase.
+             * In case they run against each other, the esc_direction is -1.
+             *
+             * This is important information in the limit logic, as we allow the stick to move out of a limit but not further
+             * overshoot the limit.
+             *
+             * Only if pos is near zero because it did not move much, this logic might return wrong data.
+             *
+             * The reason this logic is executed
+             */
+            if ((stickintegral > 0 && pos > 0) || (stickintegral < 0 && pos < 0))
+            {
+                activesettings.esc_direction = +1;
+            }
+            else
+            {
+                activesettings.esc_direction = -1;
+            }
+        }
+    }
+
     return value;
 }
 
@@ -554,7 +626,14 @@ void controllercycle()
 
                 y = yalt + Q0*e + Q1*ealt + Q2*ealt2;         // PID loop calculation
 
-                esc_output = (int16_t) y;
+                if (activesettings.esc_direction == 1)
+                {
+                    esc_output = (int16_t) y;
+                }
+                else
+                {
+                    esc_output = (int16_t) -y;
+                }
 
                 ealt2 = ealt;
                 ealt = e;

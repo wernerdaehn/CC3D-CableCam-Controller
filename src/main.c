@@ -166,7 +166,7 @@ int main(void)
     activesettings.stick_neutral_pos = 992;
     activesettings.stick_neutral_range = 30;
     strcpy(activesettings.version, "20170817");
-    activesettings.stick_speed_factor = 0.1f;
+    activesettings.stick_speed_factor = 0.01f;
     activesettings.receivertype = RECEIVER_TYPE_SUMPPM;
 
     // 20170815

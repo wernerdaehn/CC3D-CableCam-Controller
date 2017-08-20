@@ -286,9 +286,16 @@ void evaluateCommand(Endpoints endpoint)
         argument_index = sscanf(commandline, "%c %lf", &command, &kp);
         if (argument_index == 2)
         {
-            setPValue(kp);
-            writeProtocolHead(PROTOCOL_P, endpoint);
-            writeProtocolOK(endpoint);
+            if (kp >= 0.0f)
+            {
+                setPValue(kp);
+                writeProtocolHead(PROTOCOL_P, endpoint);
+                writeProtocolOK(endpoint);
+            }
+            else
+            {
+                writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+            }
         }
         else
         {
@@ -304,9 +311,16 @@ void evaluateCommand(Endpoints endpoint)
         argument_index = sscanf(commandline, "%c %lf", &command, &ki);
         if (argument_index == 2)
         {
-            setIValue(ki);
-            writeProtocolHead(PROTOCOL_I, endpoint);
-            writeProtocolOK(endpoint);
+            if (ki >= 0.0f)
+            {
+                setPValue(ki);
+                writeProtocolHead(PROTOCOL_I, endpoint);
+                writeProtocolOK(endpoint);
+            }
+            else
+            {
+                writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+            }
         }
         else
         {
@@ -322,9 +336,16 @@ void evaluateCommand(Endpoints endpoint)
         argument_index = sscanf(commandline, "%c %lf", &command, &kd);
         if (argument_index == 2)
         {
-            setDValue(kd);
-            writeProtocolHead(PROTOCOL_D, endpoint);
-            writeProtocolOK(endpoint);
+            if (kd >= 0.0f)
+            {
+                setPValue(kd);
+                writeProtocolHead(PROTOCOL_D, endpoint);
+                writeProtocolOK(endpoint);
+            }
+            else
+            {
+                writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+            }
         }
         else
         {
@@ -343,11 +364,18 @@ void evaluateCommand(Endpoints endpoint)
         argument_index = sscanf(commandline, "%c %lf %lf %lf", &command, &kp, &ki, &kd);
         if (argument_index == 4)
         {
-            setPValue(kp);
-            setIValue(ki);
-            setDValue(kd);
-            writeProtocolHead(PROTOCOL_PID, endpoint);
-            writeProtocolOK(endpoint);
+            if (kp >= 0.0f && ki >= 0.0f && kd >= 0.0f)
+            {
+                setPValue(kp);
+                setIValue(ki);
+                setDValue(kd);
+                writeProtocolHead(PROTOCOL_PID, endpoint);
+                writeProtocolOK(endpoint);
+            }
+            else
+            {
+                writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+            }
         }
         else if (argument_index == 1)
         {
@@ -396,13 +424,13 @@ void evaluateCommand(Endpoints endpoint)
     }
     case PROTOCOL_MAX_ERROR_DIST:
     {
-        int16_t p;
-        argument_index = sscanf(commandline, "%c %hd", &command, &p);
+        double d;
+        argument_index = sscanf(commandline, "%c %lf", &command, &d);
         if (argument_index == 2)
         {
-            if (p > 0)
+            if (d > 0.0f)
             {
-                activesettings.max_position_error = p;
+                activesettings.max_position_error = d;
                 writeProtocolHead(PROTOCOL_MAX_ERROR_DIST, endpoint);
                 writeProtocolOK(endpoint);
             }
@@ -483,7 +511,7 @@ void evaluateCommand(Endpoints endpoint)
         writeProtocolHead(PROTOCOL_EEPROM_WRITE, endpoint);
         if (write_errors == 0)
         {
-            writeProtocolText("Settings saved successfully", endpoint);
+            writeProtocolText("\r\nSettings saved successfully", endpoint);
             writeProtocolOK(endpoint);
         }
         else
@@ -504,7 +532,8 @@ void evaluateCommand(Endpoints endpoint)
         {
             if (p[0] > 0 && p[0] <= SBUS_MAX_CHANNEL &&
                     p[1] > 0 && p[1] <= SBUS_MAX_CHANNEL &&
-                    p[2] > 0 && p[2] <= SBUS_MAX_CHANNEL)
+                    p[2] > 0 && p[2] <= SBUS_MAX_CHANNEL &&
+                    p[0] != p[1] && p[0] != p[2] && p[1] != p[2])
             {
                 activesettings.rc_channel_speed = p[0]-1;
                 activesettings.rc_channel_programming = p[1]-1;
@@ -664,7 +693,7 @@ void evaluateCommand(Endpoints endpoint)
         argument_index = sscanf(commandline, "%c %hd", &command, &p);
         if (argument_index == 2)
         {
-            if (p == 1 || p == -1)
+            if (p == 1 || p == -1 || p == 0)
             {
                 writeProtocolHead(PROTOCOL_ROTATION_DIR, endpoint);
                 activesettings.esc_direction = p;
@@ -712,13 +741,15 @@ void evaluateCommand(Endpoints endpoint)
             writeProtocolInt(activesettings.receivertype, endpoint);
             if (activesettings.receivertype == RECEIVER_TYPE_SUMPPM)
             {
-                writeProtocolText("(Receiver is of type Sum-PPM)", endpoint);
+                writeProtocolText("(Receiver is of type Sum-PPM) ", endpoint);
             }
             else
             {
-                writeProtocolText("(Receiver is of type SBus)", endpoint);
+                writeProtocolText("(Receiver is of type SBus) ", endpoint);
             }
+            writeProtocolText("\r\nStoring all settings to eeprom\r\nReboot device to make the new receiver type active.\r\n", endpoint);
             writeProtocolOK(endpoint);
+            evaluateCommand(PROTOCOL_EEPROM_WRITE);
         }
         break;
     }
@@ -781,10 +812,10 @@ void printHelp(Endpoints endpoint)
     PrintSerial_string("Current Mode: ", endpoint);
     PrintlnSerial_string(getCurrentModeLabel(activesettings.mode), endpoint);
 
-    PrintSerial_string("Current Receiver: ", endpoint);
+    PrintSerial_string("Current Receiver type: ", endpoint);
     if (activesettings.receivertype == RECEIVER_TYPE_SUMPPM)
     {
-        PrintlnSerial_string(" Sum-PPM", endpoint);
+        PrintlnSerial_string("Sum-PPM", endpoint);
     }
     else
     {
@@ -801,12 +832,7 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("Possible commands are", endpoint);
     PrintlnSerial(endpoint);
 
-    PrintlnSerial_string("$1 [<double>]                           set or print Kp for PID controller", endpoint);
-    PrintlnSerial_string("$2 [<double>]                           set or print Ki for PID controller", endpoint);
-    PrintlnSerial_string("$3 [<double>]                           set or print Kd for PID controller", endpoint);
     PrintlnSerial_string("$a [<int> <int>]                        set or print maximum allowed acceleration in normal and programming mode", endpoint);
-    PrintlnSerial_string("$c [<double> <double> <double>]         set or print all three PID values", endpoint);
-    PrintlnSerial_string("$f [<double>]                           set or print stick-to-hall-speed factor", endpoint);
     PrintlnSerial_string("$g [<double>]                           set or print the max positional error -> exceeding it causes an emergency stop", endpoint);
     PrintlnSerial_string("$i [[[<int> <int> <int>] <int>] <int>]  set or print input channels for Speed, Programming Switch, Endpoint Switch, Max Accel, Max Speed", endpoint);
     PrintlnSerial_string("$I [<int>]                              set or print input source 0..SumPPM", endpoint);
@@ -815,13 +841,20 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("                                                              1..passthrough", endpoint);
     PrintlnSerial_string("                                                              2..passthrough with speed limits", endpoint);
     PrintlnSerial_string("                                                              3..passthough with speed limits & end points", endpoint);
-    PrintlnSerial_string("$n [<int> <int>]                        set or print neutral pos and +-range", endpoint);
-    PrintlnSerial_string("$N [<int> <int>]                        set or print neutral pos and +-range", endpoint);
+    PrintlnSerial_string("$n [<int> <int>]                        set or print receiver neutral pos and +-range", endpoint);
+    PrintlnSerial_string("$N [<int> <int>]                        set or print ESC output neutral pos and +-range", endpoint);
     PrintlnSerial_string("$p                                      print positions and speed", endpoint);
     PrintlnSerial_string("$r [<int>]                              set or print rotation direction of the ESC output, either +1 or -1", endpoint);
     PrintlnSerial_string("$S                                      print all settings", endpoint);
     PrintlnSerial_string("$v [<int> <int>]                        set or print maximum allowed speed in normal and programming mode", endpoint);
     PrintlnSerial_string("$w                                      write settings to eeprom", endpoint);
+
+    PrintlnSerial(endpoint);
+    PrintlnSerial_string("$1 [<double>]                           set or print Kp for PID controller", endpoint);
+    PrintlnSerial_string("$2 [<double>]                           set or print Ki for PID controller", endpoint);
+    PrintlnSerial_string("$3 [<double>]                           set or print Kd for PID controller", endpoint);
+    PrintlnSerial_string("$c [<double> <double> <double>]         set or print all three PID values", endpoint);
+    PrintlnSerial_string("$f [<double>]                           set or print stick-to-hall-speed factor", endpoint);
     PrintlnSerial(endpoint);
 }
 
@@ -834,87 +867,127 @@ void printActiveSettings(Endpoints endpoint)
     PrintlnSerial(endpoint);
     PrintlnSerial(endpoint);
 
-    PrintSerial_string("Version of the firmware: ", endpoint);
+    PrintSerial_string("Version of the stored settings: ", endpoint);
     PrintlnSerial_string(activesettings.version, endpoint);
     PrintlnSerial(endpoint);
     PrintlnSerial(endpoint);
 
 
 
-    PrintlnSerial_string("Initially the begin/endpositions are not set.", endpoint);
-    PrintlnSerial_string("The point where the controller was turned on is the zero begin position, then drive forward or backward to", endpoint);
-    PrintlnSerial_string("the end position and wait there for 30 seconds motionless. Minimum distance is 1000 steps.", endpoint);
-    PrintlnSerial_string("After that time, the begin and start position is defined and the controller will stay inside those limits.", endpoint);
-    PrintlnSerial_string("see $b and $e commands to manually set those.", endpoint);
-    PrintlnSerial(endpoint);
-    PrintSerial_string("Current status:", endpoint);
-    if (controllerstatus.safemode != OPERATIONAL)
+    PrintlnSerial_string("Currently the endpoint limits are configured as ", endpoint);
+    int32_t pos = ENCODER_VALUE;
+
+    if (activesettings.pos_start > activesettings.pos_end)
     {
-        PrintlnSerial_string("Begin/endposition not set", endpoint);
+        /* start is always smaller than end anyway but below prints rely on that, hence doublecheck. */
+        int32_t tmp = activesettings.pos_start;
+        activesettings.pos_start = activesettings.pos_end;
+        activesettings.pos_end = tmp;
     }
-    else if (activesettings.pos_start < activesettings.pos_end )
+
+    if (pos < activesettings.pos_start)
     {
-        PrintSerial_double(activesettings.pos_start, endpoint);
-        PrintSerial_string("....to....", endpoint);
-        PrintSerial_double(activesettings.pos_end, endpoint);
-        PrintlnSerial(endpoint);
+        PrintSerial_long(pos, endpoint);
+        PrintSerial_string("--- ", endpoint);
+    }
+    PrintSerial_int(activesettings.pos_start, endpoint);
+    PrintSerial_string(" <--------- ", endpoint);
+    if (activesettings.pos_start <= pos && pos <= activesettings.pos_end)
+    {
+        PrintSerial_long(pos, endpoint);
+    }
+    PrintSerial_string(" ---------> ", endpoint);
+    PrintSerial_int(activesettings.pos_end, endpoint);
+    if (pos > activesettings.pos_end)
+    {
+        PrintSerial_string("--- ", endpoint);
+        PrintSerial_long(pos, endpoint);
+    }
+    PrintlnSerial(endpoint);
+    PrintlnSerial(endpoint);
+    PrintlnSerial(endpoint);
+
+
+    PrintlnSerial_string("Neutral position and range of the RC:", endpoint);
+    PrintSerial_string("Neutral point:", endpoint);
+    PrintSerial_int(activesettings.stick_neutral_pos, endpoint);
+    PrintSerial_string(" +-", endpoint);
+    PrintlnSerial_int(activesettings.stick_neutral_range, endpoint);
+    PrintlnSerial(endpoint);
+    PrintlnSerial(endpoint);
+
+
+    PrintlnSerial_string("Ramp filter:", endpoint);
+    PrintSerial_string("  Operational mode ", endpoint);
+    if (controllerstatus.safemode == OPERATIONAL)
+    {
+        PrintlnSerial_string("(active)", endpoint);
     }
     else
     {
-        PrintSerial_double(activesettings.pos_end, endpoint);
-        PrintSerial_string("....to....", endpoint);
-        PrintSerial_double(activesettings.pos_start, endpoint);
         PrintlnSerial(endpoint);
     }
+    if (activesettings.mode != MODE_LIMITER && activesettings.mode != MODE_LIMITER_ENDPOINTS && activesettings.mode != MODE_ABSOLUTE_POSITION)
+    {
+        PrintSerial_string("Current mode ", endpoint);
+        PrintSerial_string(getSafeModeLabel(), endpoint);
+        PrintlnSerial_string(" does not use the accel and speed limits", endpoint);
+    }
+    PrintSerial_string("  Limit stick value changes to max ", endpoint);
+    PrintSerial_int(activesettings.stick_max_accel, endpoint);
+    PrintSerial_string(" * 5 per second", endpoint);
+    PrintSerial_string(" and the max value is +-", endpoint);
+    PrintSerial_int(activesettings.stick_max_speed, endpoint);
+    PrintlnSerial_string(" around its neutral range", endpoint);
+    PrintlnSerial(endpoint);
+
+    PrintSerial_string("  Programming mode ", endpoint);
+    if (controllerstatus.safemode == PROGRAMMING)
+    {
+        PrintlnSerial_string("(active)", endpoint);
+    }
+    else
+    {
+        PrintlnSerial(endpoint);
+    }
+    PrintSerial_string("  Limit stick value changes to max ", endpoint);
+    PrintSerial_int(activesettings.stick_max_accel_safemode, endpoint);
+    PrintSerial_string(" * 5 per second", endpoint);
+    PrintSerial_string(" and the max value is +-", endpoint);
+    PrintSerial_int(activesettings.stick_max_speed_safemode, endpoint);
+    PrintlnSerial_string(" around its neutral range", endpoint);
     PrintlnSerial(endpoint);
     PrintlnSerial(endpoint);
 
 
-
-    PrintlnSerial_string("With the RC speed input the target position is controlled, not the motor ESC directly. Then there is a PID", endpoint);
-    PrintlnSerial_string("control loop whose goal is to reach that point precisely and smoothly. For that the P, I and D coefficients", endpoint);
-    PrintlnSerial_string("need to be adjusted carefully.", endpoint);
+    PrintlnSerial_string("ESC output signal is generated around the neutral position with range", endpoint);
     PrintlnSerial(endpoint);
-    PrintSerial_string("PID coefficients: P=", endpoint);
-    PrintSerial_double(activesettings.P, endpoint);
-    PrintSerial_string("    I=", endpoint);
-    PrintSerial_double(activesettings.I, endpoint);
-    PrintSerial_string("    D=", endpoint);
-    PrintSerial_double(activesettings.D, endpoint);
-    PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
-
-
-
-
-    PrintlnSerial_string("Neutral position and range of the RC", endpoint);
-    PrintlnSerial(endpoint);
-    PrintSerial_string("Neutral range pos:", endpoint);
-    PrintSerial_int(activesettings.stick_neutral_pos, endpoint);
+    PrintSerial_string("Neutral point:", endpoint);
+    PrintSerial_int(activesettings.esc_neutral_pos, endpoint);
     PrintSerial_string(" +-", endpoint);
-    PrintSerial_int(activesettings.stick_neutral_range, endpoint);
-    PrintlnSerial(endpoint);
+    PrintlnSerial_int(activesettings.esc_neutral_range, endpoint);
     PrintlnSerial(endpoint);
     PrintlnSerial(endpoint);
 
 
-
-
-    PrintlnSerial_string("The sensor direction and the motor direction might not be the same. The result would be that the controller", endpoint);
-    PrintlnSerial_string("finds it has to drive 100 steps forward, hence does increase the power and the next moment it has to drive", endpoint);
-    PrintlnSerial_string("120step. The more power the more steps it needs to correct. Obviously it should have driven to reverse instead.", endpoint);
-    PrintlnSerial(endpoint);
-    PrintSerial_string("Motor/ESC direction:", endpoint);
+    PrintlnSerial_string("The sensor direction and the motor direction might not be the same. If the CableCam", endpoint);
+    PrintlnSerial_string("overshot the end point, pulling the stick in reverse direction to get the CableCam back between", endpoint);
+    PrintlnSerial_string("the end points should be allowed, moving it further out should not. But which direction is it?", endpoint);
+    PrintSerial_string("  Motor/ESC direction:", endpoint);
     PrintSerial_int(activesettings.esc_direction, endpoint);
+    switch (activesettings.esc_direction)
+    {
+        case 1: PrintSerial_string("(positive stick = hall sensor counts up)", endpoint); break;
+        case -1: PrintSerial_string("(positive stick = hall sensor counts down)", endpoint); break;
+        default: PrintSerial_string("(not yet decided, drive to pos>500 on a horizontal rope to set it automatically)", endpoint); break;
+    }
     PrintlnSerial(endpoint);
     PrintlnSerial(endpoint);
     PrintlnSerial(endpoint);
 
 
     PrintlnSerial_string("The controller mode.", endpoint);
-    PrintlnSerial(endpoint);
-    PrintSerial_string("Mode:", endpoint);
+    PrintSerial_string("  Mode", endpoint);
     PrintSerial_int(activesettings.mode, endpoint);
     PrintSerial_string("...", endpoint);
     PrintlnSerial_string(getCurrentModeLabel(activesettings.mode), endpoint);
