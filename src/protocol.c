@@ -885,19 +885,20 @@ void printActiveSettings(Endpoints endpoint)
         activesettings.pos_end = tmp;
     }
 
+    PrintSerial_string(" ", endpoint);
     if (pos < activesettings.pos_start)
     {
         PrintSerial_long(pos, endpoint);
         PrintSerial_string("--- ", endpoint);
     }
-    PrintSerial_int(activesettings.pos_start, endpoint);
+    PrintSerial_long((int32_t) activesettings.pos_start, endpoint);
     PrintSerial_string(" <--------- ", endpoint);
     if (activesettings.pos_start <= pos && pos <= activesettings.pos_end)
     {
         PrintSerial_long(pos, endpoint);
     }
     PrintSerial_string(" ---------> ", endpoint);
-    PrintSerial_int(activesettings.pos_end, endpoint);
+    PrintSerial_long((int32_t) activesettings.pos_end, endpoint);
     if (pos > activesettings.pos_end)
     {
         PrintSerial_string("--- ", endpoint);
@@ -909,7 +910,7 @@ void printActiveSettings(Endpoints endpoint)
 
 
     PrintlnSerial_string("Neutral position and range of the RC:", endpoint);
-    PrintSerial_string("Neutral point:", endpoint);
+    PrintSerial_string("  Neutral point:", endpoint);
     PrintSerial_int(activesettings.stick_neutral_pos, endpoint);
     PrintSerial_string(" +-", endpoint);
     PrintlnSerial_int(activesettings.stick_neutral_range, endpoint);
@@ -933,9 +934,9 @@ void printActiveSettings(Endpoints endpoint)
         PrintSerial_string(getSafeModeLabel(), endpoint);
         PrintlnSerial_string(" does not use the accel and speed limits", endpoint);
     }
-    PrintSerial_string("  Limit stick value changes to max ", endpoint);
+    PrintSerial_string("  Limit stick value changes to ", endpoint);
     PrintSerial_int(activesettings.stick_max_accel, endpoint);
-    PrintSerial_string(" * 5 per second", endpoint);
+    PrintSerial_string("* 5 every second at max", endpoint);
     PrintSerial_string(" and the max value is +-", endpoint);
     PrintSerial_int(activesettings.stick_max_speed, endpoint);
     PrintlnSerial_string(" around its neutral range", endpoint);
@@ -950,9 +951,9 @@ void printActiveSettings(Endpoints endpoint)
     {
         PrintlnSerial(endpoint);
     }
-    PrintSerial_string("  Limit stick value changes to max ", endpoint);
+    PrintSerial_string("  Limit stick value changes to ", endpoint);
     PrintSerial_int(activesettings.stick_max_accel_safemode, endpoint);
-    PrintSerial_string(" * 5 per second", endpoint);
+    PrintSerial_string(" * 5 every second at max", endpoint);
     PrintSerial_string(" and the max value is +-", endpoint);
     PrintSerial_int(activesettings.stick_max_speed_safemode, endpoint);
     PrintlnSerial_string(" around its neutral range", endpoint);
@@ -961,8 +962,7 @@ void printActiveSettings(Endpoints endpoint)
 
 
     PrintlnSerial_string("ESC output signal is generated around the neutral position with range", endpoint);
-    PrintlnSerial(endpoint);
-    PrintSerial_string("Neutral point:", endpoint);
+    PrintSerial_string("  Neutral point:", endpoint);
     PrintSerial_int(activesettings.esc_neutral_pos, endpoint);
     PrintSerial_string(" +-", endpoint);
     PrintlnSerial_int(activesettings.esc_neutral_range, endpoint);

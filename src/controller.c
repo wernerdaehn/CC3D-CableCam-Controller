@@ -235,6 +235,8 @@ int16_t stickCycle(double pos, double brakedistance)
     stickintegral += tmp;
     int16_t value = tmp*10;
 
+    int32_t speed = ENCODER_VALUE - pos_current_old; // When the current pos is greater than the previous, speed is positive
+
     // In passthrough mode the returned value is the raw value
     if (activesettings.mode != MODE_PASSTHROUGH)
     {
@@ -249,7 +251,43 @@ int16_t stickCycle(double pos, double brakedistance)
             maxaccel = activesettings.stick_max_accel_safemode;
             maxspeed = activesettings.stick_max_speed_safemode;
         }
-        else if (activesettings.mode != MODE_PASSTHROUGH && activesettings.mode != MODE_LIMITER)
+
+        int16_t diff = value - stick_last_value;
+
+        /*
+         * No matter what the stick value says, the speed is limited to the max range.
+         * It is important this comes before the the acceleration limiter as it might be the case
+         * the user switched to programming mode running at full speed. This should include the slow
+         * decel as well.
+         */
+
+        if (diff > maxaccel)
+        {
+            // Example: last time: 150; now stick: 200 --> diff: 50; max change is 10 per cycle --> new value: 150+10=160 as the limiter kicks in
+            value = stick_last_value + maxaccel;
+        }
+        else if (diff < -maxaccel)
+        {
+            // Example: last time: 150; now stick: 100 --> diff: -50; max change is 10 per cycle --> new value: 150-10=140 as the limiter kicks in
+            value = stick_last_value - maxaccel;
+        }
+
+        /*
+         * It is important to calculate the new value based on the acceleration first, then we have the new target speed,
+         * now it is limited to an absolute value.
+         */
+        if (value > maxspeed*10)
+        {
+            value = maxspeed*10;
+        }
+        else if (value < -maxspeed*10)
+        {
+            value = -maxspeed*10;
+        }
+
+
+
+        if (controllerstatus.safemode == OPERATIONAL && activesettings.mode != MODE_PASSTHROUGH && activesettings.mode != MODE_LIMITER)
         {
             /*
              * The current status is OPERATIONAL, hence the endpoints are honored.
@@ -287,90 +325,105 @@ int16_t stickCycle(double pos, double brakedistance)
              * Case 4: start pos_start = 0, stick reverse drove cablecam to pos_end -3000. Hence esc_direction = +1.
              *         Condition: if value > 0 && pos+brakedistance <= pos_end.
              *                Or: if value > 0 && pos+brakedistance <= pos_end.
+             *
+             *
              */
-            if (pos + brakedistance >= activesettings.pos_end && value * ((int16_t) activesettings.esc_direction) > 0)
+            if (pos + brakedistance >= activesettings.pos_end)
             {
-                value = stick_last_value - maxaccel; // reduce speed at full allowed acceleration
-                controllerstatus.monitor = ENDPOINTBRAKE;
-                LED_WARN_ON;
                 /*
-                 * In case the endpoint itself had been overshot, stop immediately.
+                 * In case the CableCam will overshoot the end point reduce the speed to zero.
+                 * Only if the stick is in the reverse direction already, accept the value. Else you cannot maneuver
+                 * back into the safe zone.
                  */
-                if (pos >= activesettings.pos_end)
+                if (((int16_t) activesettings.esc_direction) * value > 0)
                 {
-                    stick_last_value = 0;
-                    return 0;
+                    value = stick_last_value - (maxaccel * ((int16_t) activesettings.esc_direction)); // reduce speed at full allowed acceleration
+                    if (value * ((int16_t) activesettings.esc_direction) < 0) // watch out to not get into reverse.
+                    {
+                        value = 0;
+                    }
+                    controllerstatus.monitor = ENDPOINTBRAKE;
+                    LED_WARN_ON;
+                    /*
+                     * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
+                     */
+                    if (pos >= activesettings.pos_end)
+                    {
+                        stick_last_value = 0;
+                        return 0;
+                    }
                 }
-                else if (pos + brakedistance >= activesettings.pos_end + activesettings.max_position_error)
+                else
+                {
+                    controllerstatus.monitor = FREE;
+                    LED_WARN_OFF;
+                }
+
+                /*
+                 * Failsafe: No matter what the user did going way over the endpoint at speed causes this function to return a speed=0 request.
+                 */
+                if (pos + brakedistance >= activesettings.pos_end + activesettings.max_position_error && speed > 0)
                 {
                     /*
-                     * Okay, we are way too fast and will overshoot the end point by 300 steps minimum.
-                     * Hence forget about putting the stick slowly to neutral, rather set a target speed of zero
-                     * to tell the ESC to stop with full force.
-                     * As this might be a temporary situation only, keep decreasing the stick slowly by
-                     * setting stick_last_value = value.
+                     * We are in danger to overshoot the end point by max_position_error because we are moving with a speed > 0 towards
+                     * the end point. Hence kick in the emergency brake.
                      */
-                     stick_last_value = value;
-                     return 0;
-                }
-            }
-            else if (pos - brakedistance <= activesettings.pos_start && value * ((int16_t) activesettings.esc_direction) < 0)
-            {
-                value = stick_last_value + maxaccel; // reduce reverse speed at full allowed acceleration
-                controllerstatus.monitor = ENDPOINTBRAKE;
-                LED_WARN_ON;
-                /*
-                 * In case the endpoint itself had been overshot, stop immediately.
-                 */
-                if (pos <= activesettings.pos_start)
-                {
-                    stick_last_value = 0;
+                    controllerstatus.monitor = EMERGENCYBRAKE;
+                    LED_WARN_ON;
+                    stick_last_value = value;
                     return 0;
                 }
-                else if (pos - brakedistance <= activesettings.pos_start - activesettings.max_position_error)
+            }
+
+
+            if (pos - brakedistance <= activesettings.pos_start)
+            {
+                /*
+                 * In case the CableCam will overshoot the start point reduce the speed to zero.
+                 * Only if the stick is in the reverse direction already, accept the value. Else you cannot maneuver
+                 * back into the safe zone.
+                 */
+                if (((int16_t) activesettings.esc_direction) * value < 0)
                 {
-                     stick_last_value = value;
-                     return 0;
+                    value = stick_last_value + (maxaccel * ((int16_t) activesettings.esc_direction)); // reduce speed at full allowed acceleration
+                    if (value * ((int16_t) activesettings.esc_direction) > 0) // watch out to not get into reverse.
+                    {
+                        value = 0;
+                    }
+                    controllerstatus.monitor = ENDPOINTBRAKE;
+                    LED_WARN_ON;
+                    /*
+                     * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
+                     */
+                    if (pos <= activesettings.pos_start)
+                    {
+                        stick_last_value = 0;
+                        return 0;
+                    }
+                }
+                else
+                {
+                    controllerstatus.monitor = FREE;
+                    LED_WARN_OFF;
+                }
+
+                /*
+                 * Failsafe: No matter what the user did going way over the endpoint at speed causes this function to return a speed=0 request.
+                 */
+                if (pos - brakedistance <= activesettings.pos_start - activesettings.max_position_error && speed < 0)
+                {
+                    /*
+                     * We are in danger to overshoot the end point by max_position_error because we are moving with a speed > 0 towards
+                     * the end point. Hence kick in the emergency brake.
+                     */
+                    controllerstatus.monitor = EMERGENCYBRAKE;
+                    LED_WARN_ON;
+                    stick_last_value = value;
+                    return 0;
                 }
             }
-            else
-            {
-                LED_WARN_OFF;
-            }
         }
 
-        int16_t diff = value - stick_last_value;
-
-        /*
-         * No matter what the stick value says, the speed is limited to the max range.
-         * It is important this comes before the the acceleration limiter as it might be the case
-         * the user switched to programming mode running at full speed. This should include the slow
-         * decel as well.
-         */
-
-        if (diff > maxaccel)
-        {
-            // Example: last time: 150; now stick: 200 --> diff: 50; max change is 10 per cycle --> new value: 150+10=160 as the limiter kicks in
-            value = stick_last_value + maxaccel;
-        }
-        else if (diff < -maxaccel)
-        {
-            // Example: last time: 150; now stick: 100 --> diff: -50; max change is 10 per cycle --> new value: 150-10=140 as the limiter kicks in
-            value = stick_last_value - maxaccel;
-        }
-
-        /*
-         * It is important to calculate the new value based on the acceleration first, then we have the new target speed,
-         * now it is limited to an absolute value.
-         */
-        if (value > maxspeed*10)
-        {
-            value = maxspeed*10;
-        }
-        else if (value < -maxspeed*10)
-        {
-            value = -maxspeed*10;
-        }
     }
     stick_last_value = value; // store the current effective stick position as value for the next cycle
 
