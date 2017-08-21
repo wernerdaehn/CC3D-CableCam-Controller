@@ -5,6 +5,10 @@
 MCU used is [STM32F405RG](http://www.st.com/en/microcontrollers/stm32f405rg.html)
 Board used: Any CC3D Revolution or clone, e.g. F4 Advanced Flight Controller by Bob Forooghi [example board](http://www.getfpv.com/f4-advanced-flight-controller.html)
 
+[![Using the CableCam Controller](_images/Using_the_CableCam_Controller_YouTube_Video.jpg)](https://youtu.be/M1JVqWaG6Yg "Using the CableCam Controller")
+
+https://www.youtube.com/watch?v=M1JVqWaG6Yg
+
 ## (Quick)start
 
 **Hardware**
