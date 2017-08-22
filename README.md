@@ -139,4 +139,4 @@ Solution is to align the neutral point. The probably best way for that is to cal
 
 ## Implementation Details
 
-https://github.com/wernerdaehn/CC3D-CableCam-Controller/blob/master/Implementation.MD
+https://github.com/wernerdaehn/CC3D-CableCam-Controller/blob/master/Implementation.md
