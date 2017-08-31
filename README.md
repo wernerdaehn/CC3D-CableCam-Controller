@@ -2,7 +2,7 @@
 
 **A CableCam Controller to allow smooth movements and automatic braking near the end points of the rope.**
 
-MCU used is [STM32F405RG](http://www.st.com/en/microcontrollers/stm32f405rg.html)
+MCU used is [STM32F405RG](http://www.st.com/en/microcontrollers/stm32f405rg.html) <BR/>
 Board used: Any CC3D Revolution or clone, e.g. F4 Advanced Flight Controller by Bob Forooghi [example board](http://www.getfpv.com/f4-advanced-flight-controller.html)
 
 [![Using the CableCam Controller](_images/Using_the_CableCam_Controller_YouTube_Video.jpg)](https://youtu.be/M1JVqWaG6Yg "Using the CableCam Controller")
