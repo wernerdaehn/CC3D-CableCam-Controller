@@ -313,7 +313,7 @@ void evaluateCommand(Endpoints endpoint)
         {
             if (ki >= 0.0f)
             {
-                setPValue(ki);
+                setIValue(ki);
                 writeProtocolHead(PROTOCOL_I, endpoint);
                 writeProtocolOK(endpoint);
             }
@@ -338,7 +338,7 @@ void evaluateCommand(Endpoints endpoint)
         {
             if (kd >= 0.0f)
             {
-                setPValue(kd);
+                setDValue(kd);
                 writeProtocolHead(PROTOCOL_D, endpoint);
                 writeProtocolOK(endpoint);
             }
@@ -471,6 +471,10 @@ void evaluateCommand(Endpoints endpoint)
         writeProtocolLong(activesettings.pos_start, endpoint);
         writeProtocolLong(activesettings.pos_end, endpoint);
         writeProtocolLong(getPos(), endpoint);
+        if (activesettings.mode == MODE_ABSOLUTE_POSITION)
+        {
+            writeProtocolLong(getTargetPos(), endpoint);
+        }
         writeProtocolOK(endpoint);
         break;
     case PROTOCOL_MAX_SPEED:
@@ -767,6 +771,7 @@ void evaluateCommand(Endpoints endpoint)
                 writeProtocolHead(PROTOCOL_MODE, endpoint);
                 activesettings.mode = p;
                 resetThrottle();
+                resetPosTarget();
                 writeProtocolOK(endpoint);
             }
             else
@@ -843,7 +848,7 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("                                                              3..passthough with speed limits & end points", endpoint);
     PrintlnSerial_string("$n [<int> <int>]                        set or print receiver neutral pos and +-range", endpoint);
     PrintlnSerial_string("$N [<int> <int>]                        set or print ESC output neutral pos and +-range", endpoint);
-    PrintlnSerial_string("$p                                      print positions and speed", endpoint);
+    PrintlnSerial_string("$p                                      print positions", endpoint);
     PrintlnSerial_string("$r [<int>]                              set or print rotation direction of the ESC output, either +1 or -1", endpoint);
     PrintlnSerial_string("$S                                      print all settings", endpoint);
     PrintlnSerial_string("$v [<int> <int>]                        set or print maximum allowed speed in normal and programming mode", endpoint);
@@ -872,7 +877,21 @@ void printActiveSettings(Endpoints endpoint)
     PrintlnSerial(endpoint);
     PrintlnSerial(endpoint);
 
-
+    PrintSerial_string("Controller status: ", endpoint);
+    switch (controllerstatus.monitor)
+    {
+    case EMERGENCYBRAKE:
+        PrintlnSerial_string("Emergency brake on", endpoint);
+        break;
+    case FREE:
+        PrintlnSerial_string("Free running", endpoint);
+        break;
+    case ENDPOINTBRAKE:
+        PrintlnSerial_string("Endpoint brake on", endpoint);
+        break;
+    }
+    PrintlnSerial(endpoint);
+    PrintlnSerial(endpoint);
 
     PrintlnSerial_string("Currently the endpoint limits are configured as ", endpoint);
     int32_t pos = ENCODER_VALUE;

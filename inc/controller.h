@@ -18,6 +18,7 @@ int32_t getPos(void);
 int16_t getStick(void);
 
 void resetThrottle(void);
+void resetPosTarget(void);
 
 uint16_t getProgrammingSwitch(void);
 uint16_t getEndPointSwitch(void);

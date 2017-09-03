@@ -7,8 +7,8 @@
 
 extern sbusData_t sbusdata;
 
-void calculateQx(void);
 void printControlLoop(int16_t input, double speed, double pos, double brakedistance, CONTROLLER_MONITOR_t monitor, uint16_t esc, Endpoints endpoint);
+void printPIDMonitor(double e, double y, Endpoints endpoint);
 int16_t stickCycle(double pos, double brakedistance);
 
 /*
@@ -16,7 +16,7 @@ int16_t stickCycle(double pos, double brakedistance);
  */
 int16_t stick_last_value = 0;
 
-double yalt = 0.0f, ealt = 0.0f, ealt2 = 0.0f;
+double yalt = 0.0f, ealt = 0.0f, esum = 0.0f;
 
 
 int32_t pos_current_old = 0L;
@@ -33,40 +33,25 @@ int32_t stickintegral = 0;
 
 #define Ta  0.02
 
-double Q0, Q1, Q2;
-
-int8_t moving_direction = 0;
-
-
-void calculateQx()
-{
-    Q0 = activesettings.P+activesettings.I*Ta+activesettings.D/Ta;
-    Q1 = -activesettings.P-2*activesettings.D/Ta;
-    Q2 = activesettings.D/Ta;
-}
 
 void setPIDValues(double kp, double ki, double kd)
 {
     activesettings.P = kp;
     activesettings.I = ki;
     activesettings.D = kd;
-    calculateQx();
 }
 
 void setPValue(double v)
 {
     activesettings.P = v;
-    calculateQx();
 }
 void setIValue(double v)
 {
     activesettings.I = v;
-    calculateQx();
 }
 void setDValue(double v)
 {
     activesettings.D = v;
-    calculateQx();
 }
 
 
@@ -88,7 +73,6 @@ int32_t getPos(void)
 
 void initController(void)
 {
-    calculateQx();
     controllerstatus.safemode = INVALID_RC;
     controllerstatus.monitor = FREE;
 }
@@ -558,10 +542,15 @@ int16_t stickCycle(double pos, double brakedistance)
 
 void resetThrottle()
 {
-    ealt2 = 0.0f;
+    esum = 0.0f;
     ealt = 0.0f;
     yalt = 0.0f;
+}
 
+void resetPosTarget()
+{
+    pos_target = (double) ENCODER_VALUE;
+    pos_target_old = pos_target;
 }
 
 // ******** Main Loop *********
@@ -666,18 +655,20 @@ void controllercycle()
 
 
             double e = pos_target - pos;     // This is the amount of steps the target pos does not match the reality
+            esum += e;
 
-            if (e >= -activesettings.max_position_error && e <= activesettings.max_position_error)
+            if (e >= activesettings.max_position_error || e <= -activesettings.max_position_error)
             {
                 // The cablecam cannot catchup with the target position --> EMERGENCY BRAKE
                 resetThrottle();
+                resetPosTarget();
                 esc_output = 0;
                 controllerstatus.monitor = EMERGENCYBRAKE;
             }
             else
             {
-
-                y = yalt + Q0*e + Q1*ealt + Q2*ealt2;         // PID loop calculation
+                // y = Kp*e + Ki*Ta*esum + Kd/Ta*(e – ealt);
+                y = (activesettings.P * e) + (activesettings.I * Ta * esum) + (activesettings.D / Ta) * (e - ealt);         // PID loop calculation
 
                 if (activesettings.esc_direction == 1)
                 {
@@ -688,8 +679,12 @@ void controllercycle()
                     esc_output = (int16_t) -y;
                 }
 
-                ealt2 = ealt;
                 ealt = e;
+
+                if (is1Hz() && abs_d(e) > 1.0f)
+                {
+                    printPIDMonitor(e, y, EndPoint_USB);
+                }
                 yalt = y;
             }
         }
@@ -805,4 +800,27 @@ void printControlLoop(int16_t input, double speed, double pos, double brakedista
 
     PrintSerial_string("  Pos: ", endpoint);
     PrintlnSerial_double(pos, endpoint);
+}
+
+void printPIDMonitor(double e, double y, Endpoints endpoint)
+{
+    // y = (activesettings.P * e) + (activesettings.I * Ta * esum) + (activesettings.D / Ta) * (e - ealt);
+    PrintSerial_string("y = ", endpoint);
+    PrintSerial_double(activesettings.P, endpoint);
+    PrintSerial_string("* ", endpoint);
+    PrintSerial_double(e, endpoint);
+    PrintSerial_string("+   ", endpoint);
+    PrintSerial_double(activesettings.I, endpoint);
+    PrintSerial_string("* ", endpoint);
+    PrintSerial_double(Ta, endpoint);
+    PrintSerial_string("* ", endpoint);
+    PrintSerial_double(esum, endpoint);
+    PrintSerial_string("+   ", endpoint);
+    PrintSerial_double(activesettings.D, endpoint);
+    PrintSerial_string("* ", endpoint);
+    PrintSerial_double(e-ealt, endpoint);
+    PrintSerial_string("/ ", endpoint);
+    PrintSerial_double(Ta, endpoint);
+    PrintSerial_string("= ", endpoint);
+    PrintlnSerial_double(y, endpoint);
 }
