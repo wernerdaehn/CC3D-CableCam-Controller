@@ -127,7 +127,8 @@ int main(void)
     initProtocol();
 
 
-    HAL_TIM_Encoder_Start(&htim5, TIM_CHANNEL_1 | TIM_CHANNEL_2);
+    /* Start encoder in interrupt mode so the counter value is changed and the time of a counter tick can be evaluated */
+    HAL_TIM_Encoder_Start_IT(&htim5, TIM_CHANNEL_1 | TIM_CHANNEL_2);
 
     LED_WARN_OFF;
 
@@ -177,6 +178,8 @@ int main(void)
     activesettings.rc_channel_max_accel = 255;
     activesettings.rc_channel_max_speed = 255;
 
+    // 20171029
+    activesettings.rc_channel_mode = 255;
 
     eeprom_read_sector((uint8_t *)&defaultsettings, sizeof(defaultsettings), EEPROM_SECTOR_FOR_SETTINGS);
     if (strncmp(activesettings.version, defaultsettings.version, sizeof(activesettings.version)) == 0)
@@ -204,6 +207,12 @@ int main(void)
         {
             activesettings.rc_channel_max_accel = 255;
             activesettings.rc_channel_max_speed = 255;
+        }
+
+        // With firmware 20171029 the rc_channel_mode got added
+        if (activesettings.rc_channel_mode == 0)
+        {
+            activesettings.rc_channel_mode = 255;
         }
     }
     else

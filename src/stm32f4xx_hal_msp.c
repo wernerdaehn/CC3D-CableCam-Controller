@@ -214,6 +214,10 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* htim_encoder)
         GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
         GPIO_InitStruct.Alternate = GPIO_AF2_TIM5;
         HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+        /* Turn on interrupt handling on counters */
+        HAL_NVIC_SetPriority(TIM5_IRQn, 0, 1);
+        HAL_NVIC_EnableIRQ(TIM5_IRQn);
     }
 }
 

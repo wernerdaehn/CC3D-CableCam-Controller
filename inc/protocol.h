@@ -8,6 +8,7 @@
 #define PROTOCOL_I                '2'   // 1 float arguments for Ki
 #define PROTOCOL_D                '3'   // 1 float arguments for Kd
 #define PROTOCOL_MAX_ACCEL        'a'   // 1 float argument
+#define PROTOCOL_BINARY           'b'   // Hidden command to print the binary active settings or play them back (Useful to quickly transfer settings)
 #define PROTOCOL_PID       		  'c'	// PIDs set 3 floats
 #define PROTOCOL_SPEED_FACTOR     'f'	// Define Speed Factor, the conversion from RC Stick value to Speed based on Hall Encoder, used in positional mode only
 #define PROTOCOL_MAX_ERROR_DIST   'g'   // 1 float argument
@@ -23,6 +24,7 @@
 #define PROTOCOL_EEPROM_WRITE     'w'   // no argument
 #define PROTOCOL_MAX_SPEED        'v'   // 1 float argument
 #define PROTOCOL_D_CYCLES         'z'   // Hidden command to print the debug information about the values for each cycle
+
 
 #define MODE_ABSOLUTE_POSITION	0
 #define MODE_PASSTHROUGH		1
@@ -106,6 +108,7 @@ typedef struct
     int16_t esc_scale;
     uint8_t rc_channel_max_accel;
     uint8_t rc_channel_max_speed;
+    uint8_t rc_channel_mode;
 } settings_t;
 
 

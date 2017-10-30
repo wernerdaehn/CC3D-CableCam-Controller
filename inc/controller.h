@@ -24,6 +24,9 @@ uint16_t getProgrammingSwitch(void);
 uint16_t getEndPointSwitch(void);
 uint16_t getMaxAccelPoti(void);
 uint16_t getMaxSpeedPoti(void);
+uint16_t getModeSwitch(void);
 
+double getSpeedPosSensor(void);
+double getSpeedPosDifference(void);
 
 #endif

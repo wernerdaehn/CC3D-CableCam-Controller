@@ -4,6 +4,7 @@
 #include "protocol.h"
 #include "clock_50Hz.h"
 #include "sbus.h"
+#include "vesc.h"
 
 extern sbusData_t sbusdata;
 
@@ -18,13 +19,18 @@ int16_t stick_last_value = 0;
 
 double yalt = 0.0f, ealt = 0.0f, esum = 0.0f;
 
+uint32_t possensorduration = 0;
+uint32_t last_possensortick = 0;
+
+double speed_current = 0.0f;
+
 
 int32_t pos_current_old = 0L;
 double pos_target = 0.0f, pos_target_old = 0.0f;
 
 uint8_t endpointclicks = 0;
 uint16_t lastendpointswitch = 0;
-
+uint8_t lastmodeswitchsetting = 255;
 /*
  * To get the motor direction, we need to know if the stick was moved forward or reverse.
  * This value is the sum(stickpositions) where stickposition is centered around zero.
@@ -54,6 +60,31 @@ void setDValue(double v)
     activesettings.D = v;
 }
 
+double getSpeedPosSensor(void)
+{
+    if (HAL_GetTick() - last_possensortick > 2000)
+    {
+        return 0.0f;
+    }
+    else if (possensorduration == 0)
+    {
+        return 0.0f;
+    }
+    else
+    {
+        /* Speed is the number of signals per 0.02 (=Ta) secs.
+         * Hence refactor Ta to millisenconds to match the HAL_GetTick() millisecond time scale.
+         * But the encoder is set to by an X4 type, so it updates the position on rising and falling flanks
+         * of both channels whereas the interrupt fires on one pin and rising flank only - hence times 4.
+         */
+        return Ta * 1000.0f * 4.0f / ((double) possensorduration);
+    }
+}
+
+double getSpeedPosDifference(void)
+{
+    return speed_current;
+}
 
 int32_t getTargetPos(void)
 {
@@ -107,6 +138,11 @@ uint16_t getMaxAccelPoti()
 uint16_t getMaxSpeedPoti()
 {
     return getDuty(activesettings.rc_channel_max_speed);
+}
+
+uint16_t getModeSwitch()
+{
+    return getDuty(activesettings.rc_channel_mode);
 }
 
 /*
@@ -489,6 +525,9 @@ int16_t stickCycle(double pos, double brakedistance)
     lastendpointswitch = currentendpointswitch; // Needed to identify a raising flank on the tip switch
 
 
+    /*
+     * Evaluate the Max Acceleration Potentiometer
+     */
     uint16_t max_accel = getMaxAccelPoti();
     if (max_accel != 0 && max_accel > activesettings.stick_neutral_pos + activesettings.stick_neutral_range)
     {
@@ -499,10 +538,46 @@ int16_t stickCycle(double pos, double brakedistance)
         activesettings.stick_max_accel = 1 + ((max_accel - activesettings.stick_neutral_pos - activesettings.stick_neutral_range) / activesettings.esc_scale / 2);
     }
 
+    /*
+     * Evaluate the Max Speed Potentiometer
+     */
     uint16_t max_speed = getMaxSpeedPoti();
     if (max_speed != 0 && max_speed > activesettings.stick_neutral_pos + activesettings.stick_neutral_range)
     {
        activesettings.stick_max_speed = 1 + ((max_speed - activesettings.stick_neutral_pos - activesettings.stick_neutral_range) * 10 / activesettings.esc_scale);
+    }
+
+    /*
+     * Evaluate the Mode Switch
+     */
+    uint16_t modeswitch = getModeSwitch();
+    if (modeswitch != 0)
+    {
+        if (modeswitch < activesettings.stick_neutral_pos - activesettings.stick_neutral_range)
+        {
+            /*
+             * Passthrough
+             */
+            activesettings.mode = MODE_PASSTHROUGH;
+        }
+        else if (modeswitch > activesettings.stick_neutral_pos + activesettings.stick_neutral_range)
+        {
+            /*
+             * Full Limiters
+             */
+            activesettings.mode = MODE_LIMITER_ENDPOINTS;
+        }
+        else
+        {
+            activesettings.mode = MODE_LIMITER;
+        }
+
+        if (lastmodeswitchsetting != activesettings.mode)
+        {
+            lastmodeswitchsetting = activesettings.mode;
+            PrintlnSerial_string(getCurrentModeLabel(activesettings.mode), EndPoint_All);
+        }
+
     }
 
     /*
@@ -586,12 +661,22 @@ void controllercycle()
      *      time_to_stop
      */
     int32_t pos_current = ENCODER_VALUE;
-    double speed_current = abs_d((double) (pos_current_old - pos_current));
+    speed_current = abs_d((double) (pos_current_old - pos_current));
     double pos = (double) pos_current;
+    double speed_timer = getSpeedPosSensor();
+    double speed = speed_current;
+
+    /* If the pos difference is less than 5.0f per 20ms, then the resolution is not high enough. In that
+     * case use the time between to pos sensor interrupts to calculate a more precise speed.
+     */
+    if (speed_current <= 5.0f)
+    {
+        speed = speed_timer;
+    }
 
     double time_to_stop = abs_d((double) (getStick()/activesettings.stick_max_accel));
 
-    double distance_to_stop = speed_current * time_to_stop / 2.0f;
+    double distance_to_stop = speed * time_to_stop / 2.0f;
     int16_t stick_filtered_value;
 
     if (activesettings.mode == MODE_ABSOLUTE_POSITION)
@@ -708,18 +793,23 @@ void controllercycle()
     {
         TIM3->CCR3 = activesettings.esc_neutral_pos;
     }
+     if (is1Hz())
+    {
+        VESC_Output(esc_output);
+    }
+
 
     /*
      * Log the last CYCLEMONITOR_SAMPLE_COUNT events in memory.
      * If neither the cablecam moves nor should move (esc_output == 0), then there is nothing interesting to log
      */
-    if (speed_current != 0.0f || esc_output != 0)
+    if (speed != 0.0f || esc_output != 0)
     {
         cyclemonitor_t * sample = &controllerstatus.cyclemonitor[controllerstatus.cyclemonitor_position];
         sample->distance_to_stop = distance_to_stop;
         sample->esc = TIM3->CCR3;
         sample->pos = pos;
-        sample->speed = speed_current;
+        sample->speed = speed;
         sample->stick = getStick();
         sample->tick = HAL_GetTick();
         controllerstatus.cyclemonitor_position++;
@@ -734,7 +824,7 @@ void controllercycle()
 
     if (is1Hz())
     {
-        // printControlLoop(stick_filtered_value, speed_current, pos, distance_to_stop, controllerstatus.monitor, TIM3->CCR3, EndPoint_USB);
+        // printControlLoop(stick_filtered_value, speed, pos, distance_to_stop, controllerstatus.monitor, TIM3->CCR3, EndPoint_USB);
     }
 }
 

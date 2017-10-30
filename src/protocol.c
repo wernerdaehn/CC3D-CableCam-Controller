@@ -75,6 +75,7 @@ void writeProtocolErrorText(char *, Endpoints endpoint);
 void writeProtocolOK(Endpoints endpoint);
 void writeProtocolInt(int16_t v, Endpoints endpoint);
 void writeProtocolLong(int32_t v, Endpoints endpoint);
+void writeProtocolHex(uint8_t v, Endpoints endpoint);
 
 void printDebugCycles(Endpoints endpoint);
 
@@ -152,6 +153,19 @@ void writeProtocolInt(int16_t v, Endpoints endpoint)
     snprintf(bufpd, sizeof(bufpd), " %d ", v);
     int k = 0;
     while(k < 40 && bufpd[k] != 0)
+    {
+        checksum_response ^= bufpd[k];
+        k++;
+    }
+    PrintSerial_string(bufpd, endpoint);
+}
+
+void writeProtocolHex(uint8_t v, Endpoints endpoint)
+{
+    char bufpd[3];
+    snprintf(bufpd, sizeof(bufpd), "%02hhX", v);
+    int k = 0;
+    while(k < 3 && bufpd[k] != 0)
     {
         checksum_response ^= bufpd[k];
         k++;
@@ -471,6 +485,8 @@ void evaluateCommand(Endpoints endpoint)
         writeProtocolLong(activesettings.pos_start, endpoint);
         writeProtocolLong(activesettings.pos_end, endpoint);
         writeProtocolLong(getPos(), endpoint);
+        writeProtocolDouble(getSpeedPosDifference(), endpoint);
+        writeProtocolDouble(getSpeedPosSensor(), endpoint);
         if (activesettings.mode == MODE_ABSOLUTE_POSITION)
         {
             writeProtocolLong(getTargetPos(), endpoint);
@@ -529,8 +545,8 @@ void evaluateCommand(Endpoints endpoint)
         /*
          * Note, the protocol does remap channel1 to chan0
          */
-        int16_t p[5];
-        argument_index = sscanf(commandline, "%c %hd %hd %hd %hd %hd", &command, &p[0], &p[1], &p[2], &p[3], &p[4]);
+        int16_t p[6];
+        argument_index = sscanf(commandline, "%c %hd %hd %hd %hd %hd %hd", &command, &p[0], &p[1], &p[2], &p[3], &p[4], &p[5]);
 
         if (argument_index >= 4)
         {
@@ -570,6 +586,18 @@ void evaluateCommand(Endpoints endpoint)
                         activesettings.rc_channel_max_speed = 255; // not used
                     }
                 }
+                if (argument_index >= 7)
+                {
+                    if (p[5] > 0 && p[5] <= SBUS_MAX_CHANNEL)
+                    {
+                        activesettings.rc_channel_mode = p[5]-1;
+                        writeProtocolInt(activesettings.rc_channel_mode+1, endpoint);
+                    }
+                    else
+                    {
+                        activesettings.rc_channel_mode = 255; // not used
+                    }
+                }
                 writeProtocolOK(endpoint);
             }
             else
@@ -585,6 +613,7 @@ void evaluateCommand(Endpoints endpoint)
             writeProtocolInt(activesettings.rc_channel_endpoint+1, endpoint);
             writeProtocolInt(activesettings.rc_channel_max_accel+1, endpoint);
             writeProtocolInt(activesettings.rc_channel_max_speed+1, endpoint);
+            writeProtocolInt(activesettings.rc_channel_mode+1, endpoint);
             writeProtocolText("\r\n", endpoint);
 
             int i = 0;
@@ -613,6 +642,10 @@ void evaluateCommand(Endpoints endpoint)
                 else if (i == activesettings.rc_channel_max_speed)
                 {
                     writeProtocolText(" (used as max speed selector)", endpoint);
+                 }
+                else if (i == activesettings.rc_channel_mode)
+                {
+                    writeProtocolText(" (used as mode selector)", endpoint);
                 }
                 writeProtocolText("\r\n", endpoint);
             }
@@ -801,6 +834,47 @@ void evaluateCommand(Endpoints endpoint)
         printDebugCycles(endpoint);
         break;
     }
+    case PROTOCOL_BINARY:
+    {
+        uint8_t * tempsettingspointer;
+        if (strlen(commandline) > 10)
+        {
+            uint16_t pos = 1;
+            settings_t tempsettings;
+            tempsettingspointer = (uint8_t *) &tempsettings;
+            // Move forward to the first non-blank character after the command
+            while (pos < strlen(commandline) && pos < sizeof(commandline) && commandline[pos] == ' ')
+            {
+                pos++;
+            }
+
+            /*
+             * Two chars are one byte
+             */
+            uint16_t activesettingsoffset = 0;
+            while (pos < strlen(commandline)-1 && pos < sizeof(commandline)-1 && activesettingsoffset < sizeof(activesettings))
+            {
+                sscanf(&commandline[pos], "%02hhx", &tempsettingspointer[activesettingsoffset]);
+                pos+=2;
+                activesettingsoffset++;
+            }
+            if (activesettingsoffset < sizeof(tempsettings))
+            {
+                writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+            }
+            else
+            {
+                memcpy(&activesettings, &tempsettings, sizeof(tempsettings));
+            }
+        }
+        writeProtocolHead(PROTOCOL_SETTINGS, endpoint);
+        tempsettingspointer = (uint8_t *) &activesettings;
+        for (int pos=0; pos<sizeof(activesettings); pos++)
+        {
+            writeProtocolHex(tempsettingspointer[pos], endpoint);
+        }
+        writeProtocolOK(endpoint);
+    }
     default:  // we do not know how to handle the (valid) message, indicate error MSP $M!
         writeProtocolError(ERROR_UNKNOWN_COMMAND, endpoint);
         break;
@@ -839,7 +913,8 @@ void printHelp(Endpoints endpoint)
 
     PrintlnSerial_string("$a [<int> <int>]                        set or print maximum allowed acceleration in normal and programming mode", endpoint);
     PrintlnSerial_string("$g [<double>]                           set or print the max positional error -> exceeding it causes an emergency stop", endpoint);
-    PrintlnSerial_string("$i [[[<int> <int> <int>] <int>] <int>]  set or print input channels for Speed, Programming Switch, Endpoint Switch, Max Accel, Max Speed", endpoint);
+    PrintlnSerial_string("$i [[[[<int> <int> <int>]               set or print input channels for Speed, Programming Switch, Endpoint Switch,...", endpoint);
+    PrintlnSerial_string("      <int>] <int>] <int>]              ...Max Accel, Max Speed, Mode", endpoint);
     PrintlnSerial_string("$I [<int>]                              set or print input source 0..SumPPM", endpoint);
     PrintlnSerial_string("                                                                  1..SBus", endpoint);
     PrintlnSerial_string("$m [<int>]                              set or print the mode 0..positional", endpoint);
