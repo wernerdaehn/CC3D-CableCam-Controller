@@ -793,7 +793,7 @@ void controllercycle()
     {
         TIM3->CCR3 = activesettings.esc_neutral_pos;
     }
-     if (is1Hz())
+    if (is1Hz())
     {
         VESC_Output(esc_output);
     }

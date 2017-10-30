@@ -12,7 +12,7 @@ void VESC_Output(uint16_t esc_output)
     if (ret > 0)
     {
         HAL_UART_Transmit(&huart2, packet, ret, 10000);
-        PrintlnSerial_int(esc_output, EndPoint_USB);
+        // PrintlnSerial_int(esc_output, EndPoint_USB);
     }
 
 }

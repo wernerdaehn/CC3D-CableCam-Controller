@@ -58,10 +58,10 @@ settings_t activesettings;
 controllerstatus_t controllerstatus;
 
 
-char commandline[81]; // one extra char for the null termination
-uint8_t commandlinepos = 0;
+char commandline[RXBUFFERSIZE+1]; // one extra char for the null termination
+static uint8_t commandlinepos = 0;
 
-extern char commandlinebuffer[APP_TX_BUF_SIZE];
+extern char commandlinebuffer[RXBUFFERSIZE];
 
 extern TIM_HandleTypeDef htim1;
 
@@ -76,6 +76,7 @@ void writeProtocolOK(Endpoints endpoint);
 void writeProtocolInt(int16_t v, Endpoints endpoint);
 void writeProtocolLong(int32_t v, Endpoints endpoint);
 void writeProtocolHex(uint8_t v, Endpoints endpoint);
+int hexDigitToInt(char digit);
 
 void printDebugCycles(Endpoints endpoint);
 
@@ -163,7 +164,7 @@ void writeProtocolInt(int16_t v, Endpoints endpoint)
 void writeProtocolHex(uint8_t v, Endpoints endpoint)
 {
     char bufpd[3];
-    snprintf(bufpd, sizeof(bufpd), "%02hhX", v);
+    snprintf(bufpd, sizeof(bufpd), "%02X", v);
     int k = 0;
     while(k < 3 && bufpd[k] != 0)
     {
@@ -186,7 +187,20 @@ void writeProtocolLong(int32_t v, Endpoints endpoint)
     PrintSerial_string(bufpd, endpoint);
 }
 
-uint8_t c_state = COMMAND_IDLE;
+int hexDigitToInt(char digit) {
+    if ('0' <= digit && digit <= '9') //if it's decimal
+        return (int)(digit - '0');
+    else if ('a' <= digit && digit <= 'f') //if it's abcdef
+        return (int)(digit - ('a' - 10));
+    else if ('A' <= digit && digit <= 'F') //if it's abcdef
+        return (int)(digit - ('A' - 10));
+    else
+        return -1; //value not in [0-9][a-f] range
+}
+
+
+
+static uint8_t c_state = COMMAND_IDLE;
 
 void serialCom(Endpoints endpoint)
 {
@@ -238,37 +252,25 @@ void serialCom(Endpoints endpoint)
         {
             c_state = COMMAND_CHECKSUMBYTE1;
         }
-        else if (c_state == COMMAND_CHECKSUMBYTE1 && c >= '0' && c <= '9')
+        else if (c_state == COMMAND_CHECKSUMBYTE1)
         {
-            checksum_received = 16 * (c - '0');
-            c_state = COMMAND_CHECKSUMBYTE2;
+            int b = hexDigitToInt(c);
+            if (b != -1)
+            {
+                checksum_received = 16 * b;
+                c_state = COMMAND_CHECKSUMBYTE2;
+            }
         }
-        else if (c_state == COMMAND_CHECKSUMBYTE1 && c >= 'A' && c <= 'F')
+        else if (c_state == COMMAND_CHECKSUMBYTE2)
         {
-            checksum_received = 16 * (c - 'A' + 10);
-            c_state = COMMAND_CHECKSUMBYTE2;
+            int b = hexDigitToInt(c);
+            if (b != -1)
+            {
+                checksum_received += b;
+                c_state = COMMAND_CHECKSUM;
+            }
         }
-        else if (c_state == COMMAND_CHECKSUMBYTE1 && c >= 'a' && c <= 'f')
-        {
-            checksum_received = 16 * (c - 'a' + 10);
-            c_state = COMMAND_CHECKSUMBYTE2;
-        }
-        else if (c_state == COMMAND_CHECKSUMBYTE2 && c >= '0' && c <= '9')
-        {
-            checksum_received += c - '0';
-            c_state = COMMAND_CHECKSUM;
-        }
-        else if (c_state == COMMAND_CHECKSUMBYTE2 && c >= 'A' && c <= 'F')
-        {
-            checksum_received += c - 'A' + 10;
-            c_state = COMMAND_CHECKSUM;
-        }
-        else if (c_state == COMMAND_CHECKSUMBYTE2 && c >= 'a' && c <= 'f')
-        {
-            checksum_received += c - 'a' + 10;
-            c_state = COMMAND_CHECKSUM;
-        }
-        else if (commandlinepos < 80 && c_state == COMMAND_START)
+        else if (commandlinepos < RXBUFFERSIZE && c_state == COMMAND_START)
         {
             commandline[commandlinepos++] = c;
             checksum ^= c;
@@ -854,26 +856,38 @@ void evaluateCommand(Endpoints endpoint)
             uint16_t activesettingsoffset = 0;
             while (pos < strlen(commandline)-1 && pos < sizeof(commandline)-1 && activesettingsoffset < sizeof(activesettings))
             {
-                sscanf(&commandline[pos], "%02hhx", &tempsettingspointer[activesettingsoffset]);
-                pos+=2;
-                activesettingsoffset++;
+                int b1 = hexDigitToInt(commandline[pos++]);
+                int b2 = hexDigitToInt(commandline[pos++]);
+                if (b1 != -1 && b2 != -1)
+                {
+                    uint8_t b3 = b1*16 + b2;
+                    tempsettingspointer[activesettingsoffset++] = b3;
+                }
+                else
+                {
+                    writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                    return;
+                }
             }
             if (activesettingsoffset < sizeof(tempsettings))
             {
                 writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                return;
             }
             else
             {
                 memcpy(&activesettings, &tempsettings, sizeof(tempsettings));
             }
         }
-        writeProtocolHead(PROTOCOL_SETTINGS, endpoint);
+        writeProtocolHead(PROTOCOL_BINARY, endpoint);
+        writeProtocolChar(' ', endpoint);
         tempsettingspointer = (uint8_t *) &activesettings;
         for (int pos=0; pos<sizeof(activesettings); pos++)
         {
             writeProtocolHex(tempsettingspointer[pos], endpoint);
         }
         writeProtocolOK(endpoint);
+        break;
     }
     default:  // we do not know how to handle the (valid) message, indicate error MSP $M!
         writeProtocolError(ERROR_UNKNOWN_COMMAND, endpoint);
