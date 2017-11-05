@@ -59,6 +59,8 @@
 #include "spi_flash.h"
 #include "eeprom.h"
 
+#include "uart_callback.h"
+
 /* Private variables ---------------------------------------------------------*/
 RTC_HandleTypeDef hrtc;
 
@@ -80,6 +82,8 @@ DMA_HandleTypeDef hdma_usart3_tx;
 
 /* Private variables ---------------------------------------------------------*/
 uint32_t lasttick;
+uint8_t uart2_rxbuffer[RXBUFFERSIZE];
+uint16_t uart2readpos = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -254,6 +258,8 @@ int main(void)
 
     initController();
 
+    uart_init(&huart2, uart2_rxbuffer, RXBUFFERSIZE);
+
     while (1)
     {
         /*
@@ -301,6 +307,11 @@ int main(void)
         {
             serialCom(EndPoint_USB);
         }
+        /* while (uart2readpos < huart2.RxXferCount)
+        {
+            PrintSerial_char(huart2.pRxBuffPtr[uart2readpos % huart2.RxXferSize], EndPoint_USB);
+            uart2readpos++;
+        } */
     }
 }
 

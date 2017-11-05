@@ -145,6 +145,7 @@
 		<Unit filename="inc\stm32f4xx_hal_conf.h" />
 		<Unit filename="inc\stm32f4xx_it.h" />
 		<Unit filename="inc\system_stm32f4xx.h" />
+		<Unit filename="inc\uart_callback.h" />
 		<Unit filename="inc\usb_device.h" />
 		<Unit filename="inc\usbd_cdc_if.h" />
 		<Unit filename="inc\usbd_conf.h" />
@@ -205,6 +206,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src\timer_callbacks.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src\uart_callback.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src\usb_device.c">

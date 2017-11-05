@@ -1930,7 +1930,7 @@
 1497108752 c:\users\werne\onedrive\github\cc3d-cablecam-controller\stm32f4xx_hal_driver\inc\stm32f4xx_ll_system.h
 	"stm32f4xx.h"
 
-1509291275 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\main.c
+1509877354 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\main.c
 	"main.h"
 	"stm32f4xx_hal.h"
 	"usb_device.h"
@@ -1942,14 +1942,16 @@
 	"usbd_cdc_if.h"
 	"spi_flash.h"
 	"eeprom.h"
+	"uart_callback.h"
 
 1506157611 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\stm32f4xx_hal_msp.c
 	"stm32f4xx_hal.h"
 
-1506157611 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\stm32f4xx_it.c
+1509877846 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\stm32f4xx_it.c
 	"stm32f4xx_hal.h"
 	"stm32f4xx.h"
 	"stm32f4xx_it.h"
+	"uart_callback.h"
 	"sbus.h"
 
 1506157610 c:\users\werne\onedrive\github\cc3d-cablecam-controller\inc\stm32f4xx_it.h
@@ -1990,4 +1992,11 @@
 	"stdio.h"
 	"string.h"
 	"serial_print.h"
+
+1509879852 c:\users\werne\onedrive\github\cc3d-cablecam-controller\inc\uart_callback.h
+	"stm32f4xx_hal.h"
+
+1509879852 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\uart_callback.c
+	"stm32f4xx_hal.h"
+	"uart_callback.h"
 
