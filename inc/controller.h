@@ -4,6 +4,7 @@
 #include "stm32f4xx.h"
 
 #define APP_TX_BUF_SIZE 512
+#define ESC_STICK_SCALE 50
 
 void setServoNeutralRange(uint16_t forward, uint16_t reverse);
 void initController(void);

@@ -901,7 +901,6 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial(endpoint);
 
     PrintlnSerial_string(controllerstatus.boottext_eeprom, endpoint);
-
     PrintSerial_string("Current Mode: ", endpoint);
     PrintlnSerial_string(getCurrentModeLabel(activesettings.mode), endpoint);
 
@@ -924,6 +923,8 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial(endpoint);
     PrintlnSerial_string("Possible commands are", endpoint);
     PrintlnSerial(endpoint);
+
+    USBPeriodElapsed();
 
     PrintlnSerial_string("$a [<int> <int>]                        set or print maximum allowed acceleration in normal and programming mode", endpoint);
     PrintlnSerial_string("$g [<double>]                           set or print the max positional error -> exceeding it causes an emergency stop", endpoint);
@@ -1016,7 +1017,6 @@ void printActiveSettings(Endpoints endpoint)
     PrintlnSerial(endpoint);
     PrintlnSerial(endpoint);
 
-
     PrintlnSerial_string("Neutral position and range of the RC:", endpoint);
     PrintSerial_string("  Neutral point:", endpoint);
     PrintSerial_int(activesettings.stick_neutral_pos, endpoint);
@@ -1042,13 +1042,15 @@ void printActiveSettings(Endpoints endpoint)
         PrintSerial_string(getSafeModeLabel(), endpoint);
         PrintlnSerial_string(" does not use the accel and speed limits", endpoint);
     }
-    PrintSerial_string("  Limit stick value changes to ", endpoint);
+    PrintSerial_string("  Limit stick changes to ", endpoint);
     PrintSerial_int(activesettings.stick_max_accel, endpoint);
-    PrintSerial_string("* 5 every second at max", endpoint);
-    PrintSerial_string(" and the max value is +-", endpoint);
+    PrintSerial_string(" per second", endpoint);
+    PrintSerial_string(" and the absolute max stick is +-", endpoint);
     PrintSerial_int(activesettings.stick_max_speed, endpoint);
     PrintlnSerial_string(" around its neutral range", endpoint);
     PrintlnSerial(endpoint);
+
+    USBPeriodElapsed();
 
     PrintSerial_string("  Programming mode ", endpoint);
     if (controllerstatus.safemode == PROGRAMMING)
@@ -1059,10 +1061,10 @@ void printActiveSettings(Endpoints endpoint)
     {
         PrintlnSerial(endpoint);
     }
-    PrintSerial_string("  Limit stick value changes to ", endpoint);
+    PrintSerial_string("  Limit stick changes to ", endpoint);
     PrintSerial_int(activesettings.stick_max_accel_safemode, endpoint);
-    PrintSerial_string(" * 5 every second at max", endpoint);
-    PrintSerial_string(" and the max value is +-", endpoint);
+    PrintSerial_string(" per second", endpoint);
+    PrintSerial_string(" and the absolute max stick is +-", endpoint);
     PrintSerial_int(activesettings.stick_max_speed_safemode, endpoint);
     PrintlnSerial_string(" around its neutral range", endpoint);
     PrintlnSerial(endpoint);

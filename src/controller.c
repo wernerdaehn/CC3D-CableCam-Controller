@@ -10,12 +10,12 @@ extern sbusData_t sbusdata;
 
 void printControlLoop(int16_t input, double speed, double pos, double brakedistance, CONTROLLER_MONITOR_t monitor, uint16_t esc, Endpoints endpoint);
 void printPIDMonitor(double e, double y, Endpoints endpoint);
-int16_t stickCycle(double pos, double brakedistance);
+int32_t stickCycle(double pos, double brakedistance);
 
 /*
  * Preserve the previous filtered stick value to calculate the acceleration
  */
-int16_t stick_last_value = 0;
+int32_t stick_last_value = 0;
 
 double yalt = 0.0f, ealt = 0.0f, esum = 0.0f;
 
@@ -245,7 +245,7 @@ int16_t getStickPositionRaw()
  * \return stick_requested_value int16_t
  *
  */
-int16_t stickCycle(double pos, double brakedistance)
+int32_t stickCycle(double pos, double brakedistance)
 {
     /*
      * WATCHOUT, while the stick values are all in us, the value, stick_requested_value, esc_out values are all in 0.1us units.
@@ -253,7 +253,7 @@ int16_t stickCycle(double pos, double brakedistance)
      */
     int16_t tmp = getStickPositionRaw();
     stickintegral += tmp;
-    int16_t value = tmp*10;
+    int32_t value = tmp*ESC_STICK_SCALE;
 
     int32_t speed = ENCODER_VALUE - pos_current_old; // When the current pos is greater than the previous, speed is positive
 
@@ -263,8 +263,8 @@ int16_t stickCycle(double pos, double brakedistance)
         /*
          * In all other modes the accel and speed limiters are turned on
          */
-        int16_t maxaccel = activesettings.stick_max_accel;
-        int16_t maxspeed = activesettings.stick_max_speed;
+        int32_t maxaccel = activesettings.stick_max_accel;
+        int32_t maxspeed = activesettings.stick_max_speed;
 
         if (controllerstatus.safemode != OPERATIONAL)
         {
@@ -272,7 +272,7 @@ int16_t stickCycle(double pos, double brakedistance)
             maxspeed = activesettings.stick_max_speed_safemode;
         }
 
-        int16_t diff = value - stick_last_value;
+        int32_t diff = value - stick_last_value;
 
         /*
          * No matter what the stick value says, the speed is limited to the max range.
@@ -296,13 +296,13 @@ int16_t stickCycle(double pos, double brakedistance)
          * It is important to calculate the new value based on the acceleration first, then we have the new target speed,
          * now it is limited to an absolute value.
          */
-        if (value > maxspeed*10)
+        if (value > maxspeed*ESC_STICK_SCALE)
         {
-            value = maxspeed*10;
+            value = maxspeed*ESC_STICK_SCALE;
         }
-        else if (value < -maxspeed*10)
+        else if (value < -maxspeed*ESC_STICK_SCALE)
         {
-            value = -maxspeed*10;
+            value = -maxspeed*ESC_STICK_SCALE;
         }
 
 
@@ -355,9 +355,9 @@ int16_t stickCycle(double pos, double brakedistance)
                  * Only if the stick is in the reverse direction already, accept the value. Else you cannot maneuver
                  * back into the safe zone.
                  */
-                if (((int16_t) activesettings.esc_direction) * value > 0)
+                if (((int32_t) activesettings.esc_direction) * value > 0)
                 {
-                    value = stick_last_value - (maxaccel * ((int16_t) activesettings.esc_direction)); // reduce speed at full allowed acceleration
+                    value = stick_last_value - (maxaccel * ((int32_t) activesettings.esc_direction)); // reduce speed at full allowed acceleration
                     if (value * ((int16_t) activesettings.esc_direction) < 0) // watch out to not get into reverse.
                     {
                         value = 0;
@@ -403,10 +403,10 @@ int16_t stickCycle(double pos, double brakedistance)
                  * Only if the stick is in the reverse direction already, accept the value. Else you cannot maneuver
                  * back into the safe zone.
                  */
-                if (((int16_t) activesettings.esc_direction) * value < 0)
+                if (((int32_t) activesettings.esc_direction) * value < 0)
                 {
-                    value = stick_last_value + (maxaccel * ((int16_t) activesettings.esc_direction)); // reduce speed at full allowed acceleration
-                    if (value * ((int16_t) activesettings.esc_direction) > 0) // watch out to not get into reverse.
+                    value = stick_last_value + (maxaccel * ((int32_t) activesettings.esc_direction)); // reduce speed at full allowed acceleration
+                    if (value * ((int32_t) activesettings.esc_direction) > 0) // watch out to not get into reverse.
                     {
                         value = 0;
                     }
@@ -532,10 +532,9 @@ int16_t stickCycle(double pos, double brakedistance)
     if (max_accel != 0 && max_accel > activesettings.stick_neutral_pos + activesettings.stick_neutral_range)
     {
         /*
-         * (max_accel - neutral) * 10 / esc_scale = 0...700      that would be way too much, should be rather 0..35, so a factor of 20
-         * Hence removing the diff*10/scale/20 = diff/scale/2
-         */
-        activesettings.stick_max_accel = 1 + ((max_accel - activesettings.stick_neutral_pos - activesettings.stick_neutral_range) / activesettings.esc_scale / 2);
+         * (max_accel - neutral) * 10 = 0...700      that would be way too much, should be rather 0..35, so a factor of 20
+          */
+        activesettings.stick_max_accel = (max_accel - activesettings.stick_neutral_pos - activesettings.stick_neutral_range);
     }
 
     /*
@@ -544,7 +543,7 @@ int16_t stickCycle(double pos, double brakedistance)
     uint16_t max_speed = getMaxSpeedPoti();
     if (max_speed != 0 && max_speed > activesettings.stick_neutral_pos + activesettings.stick_neutral_range)
     {
-       activesettings.stick_max_speed = 1 + ((max_speed - activesettings.stick_neutral_pos - activesettings.stick_neutral_range) * 10 / activesettings.esc_scale);
+       activesettings.stick_max_speed = (max_speed - activesettings.stick_neutral_pos - activesettings.stick_neutral_range);
     }
 
     /*
@@ -677,7 +676,7 @@ void controllercycle()
     double time_to_stop = abs_d((double) (getStick()/activesettings.stick_max_accel));
 
     double distance_to_stop = speed * time_to_stop / 2.0f;
-    int16_t stick_filtered_value;
+    int32_t stick_filtered_value;
 
     if (activesettings.mode == MODE_ABSOLUTE_POSITION)
     {
@@ -695,7 +694,7 @@ void controllercycle()
      * at breaking and here the end point break in particular: In this case the thrust has to be set to zero
      * in order to break as hard as possible whereas the speed output can be gradually reduced to zero.
      */
-    int16_t esc_output = stick_filtered_value;
+    int32_t esc_output = stick_filtered_value;
 
     if (activesettings.mode != MODE_PASSTHROUGH && activesettings.mode != MODE_LIMITER)
     {
@@ -757,11 +756,11 @@ void controllercycle()
 
                 if (activesettings.esc_direction == 1)
                 {
-                    esc_output = (int16_t) y;
+                    esc_output = (int32_t) y;
                 }
                 else
                 {
-                    esc_output = (int16_t) -y;
+                    esc_output = (int32_t) -y;
                 }
 
                 ealt = e;

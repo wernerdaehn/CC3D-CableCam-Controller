@@ -73,29 +73,26 @@ TIM_HandleTypeDef htim5;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
-UART_HandleTypeDef huart3;
-DMA_HandleTypeDef hdma_usart1_rx;
-DMA_HandleTypeDef hdma_usart2_rx;
-DMA_HandleTypeDef hdma_usart2_tx;
-DMA_HandleTypeDef hdma_usart3_rx;
-DMA_HandleTypeDef hdma_usart3_tx;
+UART_HandleTypeDef huart6;
+
 
 /* Private variables ---------------------------------------------------------*/
 uint32_t lasttick;
 uint8_t uart2_rxbuffer[RXBUFFERSIZE];
+uint8_t uart6_rxbuffer[RXBUFFERSIZE];
 uint16_t uart2readpos = 0;
+uint16_t uart6readpos = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_DMA_Init(void);
 static void MX_RTC_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_SPI3_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_USART1_UART_Init(void);
-static void MX_USART3_UART_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_USART6_UART_Init(void);
 static void MX_TIM5_Init(void);
 static void MX_TIM1_Init(void);
 
@@ -115,12 +112,11 @@ int main(void)
 
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
-    MX_DMA_Init();
     MX_RTC_Init();
     MX_SPI1_Init();
     MX_SPI3_Init();
     MX_TIM3_Init();
-    MX_USART3_UART_Init();
+    MX_USART6_UART_Init();
     MX_USB_DEVICE_Init();
     MX_USART2_UART_Init();
     MX_TIM5_Init();
@@ -238,7 +234,7 @@ int main(void)
          * The esc_output is based on the SBus signal (+- 800) and hence has to be scaled properly to be in +-700 range.
          * The formula is 10/12 = 800*10/12 = 667
          */
-        activesettings.esc_scale = 12;
+        activesettings.esc_scale = ESC_STICK_SCALE*12/10;
     }
     else
     {
@@ -253,12 +249,13 @@ int main(void)
          * The esc_output is based on the SumPPM signal (+-400) and hence has to be scaled properly to be in +-700 range.
          * The formula is 10/6 = 400*10/6 = 667
          */
-        activesettings.esc_scale = 6;
+        activesettings.esc_scale = ESC_STICK_SCALE*6/10;
     }
 
     initController();
 
     uart_init(&huart2, uart2_rxbuffer, RXBUFFERSIZE);
+    uart_init(&huart6, uart6_rxbuffer, RXBUFFERSIZE);
 
     while (1)
     {
@@ -307,11 +304,16 @@ int main(void)
         {
             serialCom(EndPoint_USB);
         }
-        /* while (uart2readpos < huart2.RxXferCount)
+        while (uart2readpos < huart2.RxXferCount)
         {
-            PrintSerial_char(huart2.pRxBuffPtr[uart2readpos % huart2.RxXferSize], EndPoint_USB);
+            // PrintSerial_char(huart2.pRxBuffPtr[uart2readpos % huart2.RxXferSize], EndPoint_USB);
             uart2readpos++;
-        } */
+        }
+        while (uart6readpos < huart6.RxXferCount)
+        {
+            PrintSerial_char(huart6.pRxBuffPtr[uart6readpos % huart6.RxXferSize], EndPoint_USB);
+            uart6readpos++;
+        }
     }
 }
 
@@ -329,7 +331,7 @@ void SystemClock_Config(void)
 
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-    /**Initializes the CPU, AHB and APB busses clocks
+    /**Initializes the CPU, AHB and APB bus clocks
     */
     RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI
                                        |RCC_OSCILLATORTYPE_HSE;
@@ -618,48 +620,22 @@ static void MX_USART2_UART_Init(void)
 }
 
 /* USART3 init function */
-static void MX_USART3_UART_Init(void)
+static void MX_USART6_UART_Init(void)
 {
-    huart3.Instance = USART3;
-    huart3.Init.BaudRate = 115200;
-    huart3.Init.WordLength = UART_WORDLENGTH_8B;
-    huart3.Init.StopBits = UART_STOPBITS_1;
-    huart3.Init.Parity = UART_PARITY_NONE;
-    huart3.Init.Mode = UART_MODE_TX_RX;
-    huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-    huart3.Init.OverSampling = UART_OVERSAMPLING_16;
-    if (HAL_UART_Init(&huart3) != HAL_OK)
+    huart6.Instance = USART6;
+    huart6.Init.BaudRate = 115200;
+    huart6.Init.WordLength = UART_WORDLENGTH_8B;
+    huart6.Init.StopBits = UART_STOPBITS_1;
+    huart6.Init.Parity = UART_PARITY_NONE;
+    huart6.Init.Mode = UART_MODE_TX_RX;
+    huart6.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    huart6.Init.OverSampling = UART_OVERSAMPLING_16;
+    if (HAL_UART_Init(&huart6) != HAL_OK)
     {
         _Error_Handler(__FILE__, __LINE__);
     }
 }
 
-/**
-  * Enable DMA controller clock
-  */
-static void MX_DMA_Init(void)
-{
-    /* DMA controller clock enable */
-    __HAL_RCC_DMA2_CLK_ENABLE();
-    __HAL_RCC_DMA1_CLK_ENABLE();
-
-    /* DMA interrupt init */
-    /* DMA1_Stream1_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
-    /* DMA1_Stream3_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
-    /* DMA1_Stream5_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
-    /* DMA1_Stream6_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
-    /* DMA2_Stream2_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
-}
 
 /** Configure pins as
         * Analog
