@@ -1,3 +1,5 @@
+[LICENSE](LICENSE)
+
 # CC3D-CableCam-Controller
 
 **A CableCam Controller to allow smooth movements and automatic braking near the end points of the rope.**
