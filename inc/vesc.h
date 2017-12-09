@@ -2,6 +2,60 @@
 #define VESC_H_INCLUDED
 #include "stm32f4xx_hal.h"
 
-void VESC_Output(uint16_t esc_output);
+void VESC_Output(int32_t esc_output);
+
+typedef enum {
+	COMM_FW_VERSION = 0,
+	COMM_JUMP_TO_BOOTLOADER,
+	COMM_ERASE_NEW_APP,
+	COMM_WRITE_NEW_APP_DATA,
+	COMM_GET_VALUES,
+	COMM_SET_DUTY,
+	COMM_SET_CURRENT,
+	COMM_SET_CURRENT_BRAKE,
+	COMM_SET_RPM,
+	COMM_SET_POS,
+	COMM_SET_DETECT,
+	COMM_SET_SERVO_POS,
+	COMM_SET_MCCONF,
+	COMM_GET_MCCONF,
+	COMM_GET_MCCONF_DEFAULT,
+	COMM_SET_APPCONF,
+	COMM_GET_APPCONF,
+	COMM_GET_APPCONF_DEFAULT,
+	COMM_SAMPLE_PRINT,
+	COMM_TERMINAL_CMD,
+	COMM_PRINT,
+	COMM_ROTOR_POSITION,
+	COMM_EXPERIMENT_SAMPLE,
+	COMM_DETECT_MOTOR_PARAM,
+	COMM_DETECT_MOTOR_R_L,
+	COMM_DETECT_MOTOR_FLUX_LINKAGE,
+	COMM_DETECT_ENCODER,
+	COMM_DETECT_HALL_FOC,
+	COMM_REBOOT,
+	COMM_ALIVE,
+	COMM_GET_DECODED_PPM,
+	COMM_GET_DECODED_ADC,
+	COMM_GET_DECODED_CHUK,
+	COMM_FORWARD_CAN,
+	COMM_SET_CHUCK_DATA,
+	COMM_CUSTOM_APP_DATA
+} COMM_PACKET_ID;
+
+struct sendrpm_s {
+    uint8_t     startbyte;
+    uint8_t     length;
+    uint8_t     command;
+    int32_t     speed;
+    uint16_t    crc;
+    uint8_t     stop;
+} __attribute__ ((__packed__));
+
+
+typedef union {
+    uint8_t bytes[10];
+    struct sendrpm_s frame;
+} sendrpm_t;
 
 #endif /* VESC_H_INCLUDED */

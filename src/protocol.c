@@ -664,16 +664,18 @@ void evaluateCommand(Endpoints endpoint)
     }
     case PROTOCOL_NEUTRAL:
     {
-        int16_t p[2];
-        argument_index = sscanf(commandline, "%c %hd %hd", &command, &p[0], &p[1]);
-        if (argument_index == 3)
+        int16_t p[3];
+        argument_index = sscanf(commandline, "%c %hd %hd %hd", &command, &p[0], &p[1], &p[2]);
+        if (argument_index == 4)
         {
             if (p[0] > 500 && p[0] < 2000 &&
-                    p[1] > 0 && p[1] < 100)
+                    p[1] > 0 && p[1] < 100 &&
+                    p[2] > 300 && p[2] < 1400)
             {
                 writeProtocolHead(PROTOCOL_NEUTRAL, endpoint);
                 activesettings.stick_neutral_pos = p[0];
                 activesettings.stick_neutral_range = p[1];
+                activesettings.stick_value_range = p[2];
                 writeProtocolOK(endpoint);
             }
             else
@@ -686,6 +688,7 @@ void evaluateCommand(Endpoints endpoint)
             writeProtocolHead(PROTOCOL_NEUTRAL, endpoint);
             writeProtocolInt(activesettings.stick_neutral_pos, endpoint);
             writeProtocolInt(activesettings.stick_neutral_range, endpoint);
+            writeProtocolInt(activesettings.stick_value_range, endpoint);
             writeProtocolOK(endpoint);
         }
         else
@@ -747,6 +750,31 @@ void evaluateCommand(Endpoints endpoint)
         {
             writeProtocolHead(PROTOCOL_ROTATION_DIR, endpoint);
             writeProtocolInt(activesettings.esc_direction, endpoint);
+            writeProtocolOK(endpoint);
+        }
+        break;
+    }
+    case PROTOCOL_VESC_MAX_ERPM:
+    {
+        int32_t p;
+        argument_index = sscanf(commandline, "%c %ld", &command, &p);
+        if (argument_index == 2)
+        {
+            if (p > 500 && p <= 100000)
+            {
+                writeProtocolHead(PROTOCOL_VESC_MAX_ERPM, endpoint);
+                activesettings.vesc_max_erpm = p;
+                writeProtocolOK(endpoint);
+            }
+            else
+            {
+                writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+            }
+        }
+        else
+        {
+            writeProtocolHead(PROTOCOL_VESC_MAX_ERPM, endpoint);
+            writeProtocolLong(activesettings.vesc_max_erpm, endpoint);
             writeProtocolOK(endpoint);
         }
         break;
@@ -927,6 +955,7 @@ void printHelp(Endpoints endpoint)
     USBPeriodElapsed();
 
     PrintlnSerial_string("$a [<int> <int>]                        set or print maximum allowed acceleration in normal and programming mode", endpoint);
+    PrintlnSerial_string("$e [<long>]                             set or print maximum eRPMs as set in the VESC speed controller. 100% stick = this eRPM", endpoint);
     PrintlnSerial_string("$g [<double>]                           set or print the max positional error -> exceeding it causes an emergency stop", endpoint);
     PrintlnSerial_string("$i [[[[<int> <int> <int>]               set or print input channels for Speed, Programming Switch, Endpoint Switch,...", endpoint);
     PrintlnSerial_string("      <int>] <int>] <int>]              ...Max Accel, Max Speed, Mode", endpoint);
@@ -936,13 +965,15 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("                                                              1..passthrough", endpoint);
     PrintlnSerial_string("                                                              2..passthrough with speed limits", endpoint);
     PrintlnSerial_string("                                                              3..passthough with speed limits & end points", endpoint);
-    PrintlnSerial_string("$n [<int> <int>]                        set or print receiver neutral pos and +-range", endpoint);
+    PrintlnSerial_string("$n [<int> <int> <int>]                  set or print receiver neutral pos and +-neutral range and +-max range", endpoint);
     PrintlnSerial_string("$N [<int> <int>]                        set or print ESC output neutral pos and +-range", endpoint);
     PrintlnSerial_string("$p                                      print positions", endpoint);
     PrintlnSerial_string("$r [<int>]                              set or print rotation direction of the ESC output, either +1 or -1", endpoint);
     PrintlnSerial_string("$S                                      print all settings", endpoint);
     PrintlnSerial_string("$v [<int> <int>]                        set or print maximum allowed speed in normal and programming mode", endpoint);
     PrintlnSerial_string("$w                                      write settings to eeprom", endpoint);
+
+    USBPeriodElapsed();
 
     PrintlnSerial(endpoint);
     PrintlnSerial_string("$1 [<double>]                           set or print Kp for PID controller", endpoint);

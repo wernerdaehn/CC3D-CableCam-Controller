@@ -16,7 +16,7 @@
 #define PROTOCOL_INPUT_CHANNELS   'i'   // 3-5 int arguments for speed, command switch, end point button, max acceleration poti, may speed poti
 #define PROTOCOL_INPUT_SOURCE     'I'   // 1 int arguments for the input, SumPPM or SBus
 #define PROTOCOL_MODE             'm'
-#define PROTOCOL_NEUTRAL          'n'	// 2 int neutral microseconds, +-range microseconds
+#define PROTOCOL_NEUTRAL          'n'	// 3 int neutral microseconds, +-neutral range microseconds, +- 100% throttle
 #define PROTOCOL_ESC_NEUTRAL      'N'	// 2 int neutral microseconds, +-range microseconds
 #define PROTOCOL_POS              'p'
 #define PROTOCOL_ROTATION_DIR     'r'   // 1 int argument
@@ -24,6 +24,7 @@
 #define PROTOCOL_EEPROM_WRITE     'w'   // no argument
 #define PROTOCOL_MAX_SPEED        'v'   // 1 float argument
 #define PROTOCOL_D_CYCLES         'z'   // Hidden command to print the debug information about the values for each cycle
+#define PROTOCOL_VESC_MAX_ERPM    'e'   // 1 int argument, the maximum eRPM value set in the VESC. Goal is that 100% throttle = this eRPM value
 
 
 #define MODE_ABSOLUTE_POSITION	0
@@ -109,6 +110,8 @@ typedef struct
     uint8_t rc_channel_max_accel;
     uint8_t rc_channel_max_speed;
     uint8_t rc_channel_mode;
+    int16_t stick_value_range;
+    int32_t vesc_max_erpm;
 } settings_t;
 
 

@@ -160,13 +160,13 @@ int main(void)
     activesettings.rc_channel_endpoint = 6;
     activesettings.rc_channel_programming = 5;
     activesettings.rc_channel_speed = 0;
-    activesettings.stick_max_accel = 20;
-    activesettings.stick_max_accel_safemode = 10;
+    activesettings.stick_max_accel = 100;
+    activesettings.stick_max_accel_safemode = 200;
     activesettings.stick_max_speed = 500;
     activesettings.stick_max_speed_safemode = 100;
     activesettings.stick_neutral_pos = 992;
     activesettings.stick_neutral_range = 30;
-    strcpy(activesettings.version, "20170817");
+    strcpy(activesettings.version, "20171209");
     activesettings.stick_speed_factor = 0.01f;
     activesettings.receivertype = RECEIVER_TYPE_SUMPPM;
 
@@ -180,6 +180,10 @@ int main(void)
 
     // 20171029
     activesettings.rc_channel_mode = 255;
+
+    // 20171209
+    activesettings.stick_value_range = 800;
+    activesettings.vesc_max_erpm = 50000;
 
     eeprom_read_sector((uint8_t *)&defaultsettings, sizeof(defaultsettings), EEPROM_SECTOR_FOR_SETTINGS);
     if (strncmp(activesettings.version, defaultsettings.version, sizeof(activesettings.version)) == 0)
@@ -196,23 +200,31 @@ int main(void)
         memcpy(&activesettings, &defaultsettings, sizeof(defaultsettings));
         strcpy(controllerstatus.boottext_eeprom, "defaults loaded from eeprom using an older version");
         // With firmware 20170815 the esc neutral pos and range got added
-        if (activesettings.esc_neutral_pos == 0)
+        if (activesettings.esc_neutral_pos <= 0)
         {
             activesettings.esc_neutral_pos = 1500;
             activesettings.esc_neutral_range = 30;
         }
 
         // With firmware 20170817 the rc_channel_max_accel and rc_channel_max_speed got added
-        if (activesettings.rc_channel_max_accel == 0)
+        if (activesettings.rc_channel_max_accel <= 0)
         {
             activesettings.rc_channel_max_accel = 255;
             activesettings.rc_channel_max_speed = 255;
         }
 
         // With firmware 20171029 the rc_channel_mode got added
-        if (activesettings.rc_channel_mode == 0)
+        if (activesettings.rc_channel_mode <= 0)
         {
             activesettings.rc_channel_mode = 255;
+        }
+
+
+        // With firmware 20171209 the stick_value_range and vesc_max_erpm got added
+        if (activesettings.stick_value_range <= 0 || activesettings.vesc_max_erpm <= 0)
+        {
+            activesettings.stick_value_range = 800;
+            activesettings.vesc_max_erpm = 50000;
         }
     }
     else
@@ -306,7 +318,7 @@ int main(void)
         }
         while (uart2readpos < huart2.RxXferCount)
         {
-            // PrintSerial_char(huart2.pRxBuffPtr[uart2readpos % huart2.RxXferSize], EndPoint_USB);
+            // PrintSerial_hexchar(huart2.pRxBuffPtr[uart2readpos % huart2.RxXferSize], EndPoint_USB);
             uart2readpos++;
         }
         while (uart6readpos < huart6.RxXferCount)
