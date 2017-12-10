@@ -75,10 +75,10 @@ _Note: All drivers used are included in a standard Windows 10 installation._
 
 **ESC setup**
 
-Program the RC car ESC to forward/reverse and high levels of drag and initial brakes. This is essential for the CableCam controller to work. The CableCam Controller only moves the stack forward, neutral or reverse but does not apply extra power to hold against the movement of the CableCam!
+Program the RC car ESC to forward/reverse and high levels of drag and initial brakes. This is essential for the CableCam controller to work. The CableCam Controller only moves the stick forward, neutral or reverse but does not apply extra power to hold against the movement of the CableCam!
 
 This is worth some explanations:
-At first sight the CableCam is like a RC car. Drving forward, backward and stop. One main difference however is that the CableCam should drive forward and backward identical. Many car ESCs do not support that. With those you can accelerate the car forward, putting the stick in neutral lets the car free wheeling and to brake it actively, the stick has to be put into reverse until it stops. And only then you can go in reverse direction, probalby at reduced speed.
+At first sight the CableCam is like a RC car. Drving forward, backward and stop. One main difference however is that the CableCam should drive forward and backward in an identical fashion. Many car ESCs do not support that. With those you can accelerate the car forward, putting the stick in neutral lets the car free wheeling and to brake it actively, the stick has to be put into reverse until it stops. And only then you can go in reverse direction, probably at reduced speed.
 With the CableCam we want something else. Putting the stick forward drives the CableCam in one direction, neutral means stopping and reverse means driving in reverse direction at same speed as forward.
 ESCs that support that are used for rock crawlers and usually name that application specifically. Another indication the ESC supports all the CableCam application needs is when there is a drive mode forward/reverse, a drag brake setting and an intial brake setting is available. 
 The drag brake level means how decisive the car brakes when the stick is in neutral while moving. A drag brake of zero would let the car continue to drive, slowed down only by resistance. A high drag brake means the ESC does use regenerative braking and removes kinetic energy from the car, thus stopping it more quickly.
@@ -86,11 +86,17 @@ The initial brake level controls if the motor should be energized a little bit w
 Unfortunately even the higest brake level settings are too weak for the CableCam to work in all instances. Most noticable when the CableCam should drive up and down a hill. Without an initial brake, it would start rolling downhill getting faster and faster. Thanks to the initial and drag brake it rather brakes but is still going downhill, just slower.
 
 The best ESC would be one that supports a Closed Loop Speed control. Because then the stick position controls the speed instead of the thrust. With such an ESC a stick position of neutral would make the CableCam hold the current position, preventing it from rolling downhill at all. 
-Such ESCs are quite common in industrial applications like robotics or CNC servo motors but they are also quite expensive and not meant for cars. So they do not have an UART input but RS232. They are quite heavy or conveniently small but support tiny motors only. Unfortunately I have not managed to convince any of the RC car ESC vendors to add a close loop mode although it would be a piece of cake for them. The hardware supports that already and the logic is well known.
+Such ESCs are quite common in industrial applications like robotics or CNC servo motors but they are also quite expensive and not meant for cars and RC implementations. So they do not have an UART input but RS232. They are quite heavy or conveniently small but support tiny motors only. Unfortunately I have not managed to convince any of the RC car ESC vendors to add a close loop mode although it would be a piece of cake for them. The hardware supports that already and the logic is well known.
 
-The ESC I use at the moment is the [SkyRC TS160](http://www.skyrc.com/index.php?route=product/product&product_id=212) for 3s batteries together with a [programming box](http://www.skyrc.com/index.php?route=product/product&product_id=176).
-An ESC supporting Closed Loop operations would be the [VESC](http://www.trampaboards.com/vesc-6-in-cnc-t6-sealed-of-aluminum-box--vedder-electronic-speed-controller-trampa-exclusive-x1-p-23866.html). The price of 350EUR is a bit too high for an experiment.
+A cheap ESC I use at the moment is the [SkyRC TS160](http://www.skyrc.com/index.php?route=product/product&product_id=212) for 3s batteries together with a [programming box](http://www.skyrc.com/index.php?route=product/product&product_id=176).
+An ESC supporting Closed Loop operations is the [VESC](http://www.trampaboards.com/vesc-6-in-cnc-t6-sealed-of-aluminum-box--vedder-electronic-speed-controller-trampa-exclusive-x1-p-23866.html). The price of 330EUR is steep though.
 
+** VESC6 ESC
+
+In order to take full advantage of the VESC, the CableCam controller talks to it via UART instead of PPM signals. This allows for more fine grained control and possible more features in future. At the moment only the desired speed is sent and nothing else.
+To connect the VESC with the CableCam Controller, Servo Out 3 is configured as UART RX and Servo Out 4 as TX.
+![VESC_UART.png](_images/VESC_UART.png)
+The VESC itself has to be configured to use its speed PID controller.
 
 
 **On the rope**
