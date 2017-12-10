@@ -98,7 +98,8 @@ To connect the VESC with the CableCam Controller, Servo Out 3 is configured as U
 ![VESC_UART.png](_images/VESC_UART.png)
 The VESC itself has to be configured to use its speed PID controller.
 As with the RC ESC, the VESC powers the CableCam Controller board via the +5V and GND of the VESC connected to one of the Servo's +5V and GND pins.
-*Note: Power the CableCam Controller via +5V and not the Vcc pin. The latter might be a too high voltage*
+
+_Note: Power the CableCam Controller via +5V and not the Vcc pin. The latter might be a too high voltage_
 
 
 **On the rope**
