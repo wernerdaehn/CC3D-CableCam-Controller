@@ -91,7 +91,7 @@ Such ESCs are quite common in industrial applications like robotics or CNC servo
 A cheap ESC I use at the moment is the [SkyRC TS160](http://www.skyrc.com/index.php?route=product/product&product_id=212) for 3s batteries together with a [programming box](http://www.skyrc.com/index.php?route=product/product&product_id=176).
 An ESC supporting Closed Loop operations is the [VESC](http://www.trampaboards.com/vesc-6-in-cnc-t6-sealed-of-aluminum-box--vedder-electronic-speed-controller-trampa-exclusive-x1-p-23866.html). The price of 330EUR is steep though.
 
-** VESC6 ESC
+**VESC6 ESC**
 
 In order to take full advantage of the VESC, the CableCam controller talks to it via UART instead of PPM signals. This allows for more fine grained control and possible more features in future. At the moment only the desired speed is sent and nothing else.
 To connect the VESC with the CableCam Controller, Servo Out 3 is configured as UART RX and Servo Out 4 as TX.
