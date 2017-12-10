@@ -97,6 +97,8 @@ Command | Description
 ------- | -----------
 _$a_ | Shows the two acceleration values, the first is the max acceleration in operational mode, the second in programming mode
 _$a int int_ | sets the two acceleration values. Default is _$a 20 10_
+_$e_ | Print the exponential factor for the thrust stick input.
+_$e double_ | Set the exponential factor for the thrust input curve. A common input curve is a linear relationship between the stick position and the output signal. 100% stick means 100% output, 50% stick is 50% ouput signal. This behavior would require the factor to be set to 1.0. If the stick can send signals in 0.1% steps and the maximum RPMs are 50'000, the lowest possible resolution would be in 50RPM steps. Which is absolutely fine at higher speeds but at low speeds it does not allow fine control. The closer this factor is to zero, the fine grained low speeds can be controlled.
 _$g_ | Print the maximum positional error before going into an emergency brake. In case moving the stick slowly towards neutral does not apply enough brake power and hence the endpoint will be overshot by more than this value, the ESC output is reset to neutral forcefully. Thus applying the maximum brake power the ESC can apply. Default is 100 Hall sensor steps.
 _$g int_ | Set the max error.
 _$i_ | Print the the current channel assignments and a overview of all channels with their current values as received from the RC receiver. A value of 0 means no valid data received.
@@ -109,8 +111,8 @@ _$m 0_ | Positional mode. In this mode the stick moves a target position and a P
 _$m 1_ | Passthrough mode. Essentially output = input. All the control does is converting the receiver signal into an ESC servo output signal. Useful for testing and to calibrate the ESC for neutral/max/min points.
 _$m 2_ | Passthrough with speed limits. The stick movements is filtered through the acceleration and speed filter, thus being turned into a ramp. Enpoints are not considered.
 _$m 3_ | Passthough with speed limits & end points. In addition to the _$m 2_ mode, the end points are considered as well. The default mode, the mode that should be used all the time.
-_$n_ | Prints the neutral point of the input and the range. Make sure that the neutral point is the same value _$i_ shows for the speed channel when the RC stick is in idle.
-_$n int int_ | set the neutral point to the first value and the range to the second. The default value of _$n 992 30_ would consider all stick values from 962 to 1022 as idle.
+_$n_ | Prints the neutral point of the input, the neutral range and the 100% range. Make sure that the neutral point is the same value _$i_ shows for the speed channel when the RC stick is in idle.
+_$n int int int_ | set the neutral point to the first value and the neutral range to the second. The third value is the maximum deflection from neutral. The default value of _$n 992 30 800_ would consider all stick values from 962 to 1022 as idle and values from 1023 to 1762 as thrust.
 _$N_ | Prints the neutral point and range of the ESC output pwm signal. 
 _$N int int_ | sets the neutral point and range. The default _$N 1500 30_ creates a pwm signal with a puls width of 1500us in idle and to create movement overcomes the neutral range of the ESC by starting with 1530 (or 1470 for reverse). This should match the defaults of the ESC but ESC calibration is adviced. The better these values match the ESC, the faster the response times at start.
 _$p_ | Print the low endpoint, the high endpoint and the current position. 
