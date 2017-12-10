@@ -917,6 +917,32 @@ void evaluateCommand(Endpoints endpoint)
         writeProtocolOK(endpoint);
         break;
     }
+    case PROTOCOL_EXPO_FACTOR:
+    {
+        double d;
+        argument_index = sscanf(commandline, "%c %lf", &command, &d);
+        if (argument_index == 2)
+        {
+            if (d > 0.0f && d <= 1.0f)
+            {
+                activesettings.expo_factor = d;
+                writeProtocolHead(PROTOCOL_EXPO_FACTOR, endpoint);
+                writeProtocolOK(endpoint);
+            }
+            else
+            {
+                writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                return;
+            }
+         }
+        else
+        {
+            writeProtocolHead(PROTOCOL_EXPO_FACTOR, endpoint);
+            writeProtocolDouble(activesettings.expo_factor, endpoint);
+            writeProtocolOK(endpoint);
+        }
+        break;
+    }
     default:  // we do not know how to handle the (valid) message, indicate error MSP $M!
         writeProtocolError(ERROR_UNKNOWN_COMMAND, endpoint);
         break;
@@ -965,6 +991,9 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("                                                              1..passthrough", endpoint);
     PrintlnSerial_string("                                                              2..passthrough with speed limits", endpoint);
     PrintlnSerial_string("                                                              3..passthough with speed limits & end points", endpoint);
+
+    USBPeriodElapsed();
+
     PrintlnSerial_string("$n [<int> <int> <int>]                  set or print receiver neutral pos and +-neutral range and +-max range", endpoint);
     PrintlnSerial_string("$N [<int> <int>]                        set or print ESC output neutral pos and +-range", endpoint);
     PrintlnSerial_string("$p                                      print positions", endpoint);
@@ -972,6 +1001,7 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("$S                                      print all settings", endpoint);
     PrintlnSerial_string("$v [<int> <int>]                        set or print maximum allowed speed in normal and programming mode", endpoint);
     PrintlnSerial_string("$w                                      write settings to eeprom", endpoint);
+    PrintlnSerial_string("$x [<double>]                           expo factor 1.0 means linear, everything between 1 and 0 is a exponential input", endpoint);
 
     USBPeriodElapsed();
 

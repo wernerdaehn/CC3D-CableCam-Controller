@@ -58,6 +58,7 @@
 #include "usbd_cdc_if.h"
 #include "spi_flash.h"
 #include "eeprom.h"
+#include "math.h"
 
 #include "uart_callback.h"
 
@@ -166,7 +167,7 @@ int main(void)
     activesettings.stick_max_speed_safemode = 100;
     activesettings.stick_neutral_pos = 992;
     activesettings.stick_neutral_range = 30;
-    strcpy(activesettings.version, "20171209");
+    strcpy(activesettings.version, "20171210");
     activesettings.stick_speed_factor = 0.01f;
     activesettings.receivertype = RECEIVER_TYPE_SUMPPM;
 
@@ -184,6 +185,10 @@ int main(void)
     // 20171209
     activesettings.stick_value_range = 800;
     activesettings.vesc_max_erpm = 50000;
+
+    // 20171210
+    activesettings.expo_factor = 0.1f;
+
 
     eeprom_read_sector((uint8_t *)&defaultsettings, sizeof(defaultsettings), EEPROM_SECTOR_FOR_SETTINGS);
     if (strncmp(activesettings.version, defaultsettings.version, sizeof(activesettings.version)) == 0)
@@ -225,6 +230,12 @@ int main(void)
         {
             activesettings.stick_value_range = 800;
             activesettings.vesc_max_erpm = 50000;
+        }
+
+        // With firmware 20171210 the expo_factor got added
+        if (activesettings.expo_factor <= 0.0f || activesettings.expo_factor > 1.0f || isnan(activesettings.expo_factor))
+        {
+            activesettings.expo_factor = 0.1f;
         }
     }
     else

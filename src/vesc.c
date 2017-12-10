@@ -47,6 +47,7 @@ extern UART_HandleTypeDef huart2;
 void VESC_Output(int32_t esc_output)
 {
     int32_t vesc_erpm = (esc_output / ESC_STICK_SCALE) * activesettings.vesc_max_erpm / (activesettings.stick_value_range - activesettings.stick_neutral_range);
+
     rpmpacket.frame.startbyte = 0x02;
     rpmpacket.frame.length = 0x05;
     rpmpacket.frame.command = COMM_SET_RPM;

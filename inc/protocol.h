@@ -25,6 +25,7 @@
 #define PROTOCOL_MAX_SPEED        'v'   // 1 float argument
 #define PROTOCOL_D_CYCLES         'z'   // Hidden command to print the debug information about the values for each cycle
 #define PROTOCOL_VESC_MAX_ERPM    'e'   // 1 int argument, the maximum eRPM value set in the VESC. Goal is that 100% throttle = this eRPM value
+#define PROTOCOL_EXPO_FACTOR      'x'   // 1 float argument
 
 
 #define MODE_ABSOLUTE_POSITION	0
@@ -112,6 +113,7 @@ typedef struct
     uint8_t rc_channel_mode;
     int16_t stick_value_range;
     int32_t vesc_max_erpm;
+    double expo_factor;
 } settings_t;
 
 
