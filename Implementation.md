@@ -97,8 +97,8 @@ Command | Description
 ------- | -----------
 _$a_ | Shows the two acceleration values, the first is the max acceleration in operational mode, the second in programming mode
 _$a int int_ | sets the two acceleration values. Default is _$a 20 10_
-_$e_ | Print the exponential factor for the thrust stick input.
-_$e double_ | Set the exponential factor for the thrust input curve. A common input curve is a linear relationship between the stick position and the output signal. 100% stick means 100% output, 50% stick is 50% ouput signal. This behavior would require the factor to be set to 1.0. If the stick can send signals in 0.1% steps and the maximum RPMs are 50'000, the lowest possible resolution would be in 50RPM steps. Which is absolutely fine at higher speeds but at low speeds it does not allow fine control. The closer this factor is to zero, the fine grained low speeds can be controlled.
+_$e_ | Print the maximum eRPMs as defined in the VESC ESC.
+_$e int_ | Set the maximum eRPMs as defined in the VESC ESC.
 _$g_ | Print the maximum positional error before going into an emergency brake. In case moving the stick slowly towards neutral does not apply enough brake power and hence the endpoint will be overshot by more than this value, the ESC output is reset to neutral forcefully. Thus applying the maximum brake power the ESC can apply. Default is 100 Hall sensor steps.
 _$g int_ | Set the max error.
 _$i_ | Print the the current channel assignments and a overview of all channels with their current values as received from the RC receiver. A value of 0 means no valid data received.
@@ -122,6 +122,8 @@ _$S_ | Print a summary of all settings.
 _$v_ | Print the max value the speed input signal is allowed range between the neutral point. With the neutral point at 992 and a speed limit of 800, the full SBus range of 192 to 1792 can be used. With a value of 400, everything above 50% thrust on the stick is limited to 50% max thrust. Note that this value controls the stick and hence is dependant on the type of input receiver.
 _$v int int_ | Sets the max speed for the operational mode and the programming mode. The idea is to limit the max speed when setting the endpoints as a safety precaution. Default is _$v 500 100_.
 _$w_ | Write all active settings to the EEPROM from which they are loaded at boot time. Active settings does include everything, even the start/end points.
+_$x_ | Print the exponential factor for the thrust stick input.
+_$x double_ | Set the exponential factor for the thrust input curve. A common input curve is a linear relationship between the stick position and the output signal. 100% stick means 100% output, 50% stick is 50% ouput signal. This behavior would require the factor to be set to 1.0. If the stick can send signals in 0.1% steps and the maximum RPMs are 50'000, the lowest possible resolution would be in 50RPM steps. Which is absolutely fine at higher speeds but at low speeds it does not allow fine control. The closer this factor is to zero, the fine grained low speeds can be controlled.
 _$1_ | Print the P component of the PID loop for positional control.
 _$1 double_ | Sets the P component of the PID loop for positional control, e.g. _$P 3.14_.
 _$2_ | Print the I component of the PID loop for positional control.
