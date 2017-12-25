@@ -3,6 +3,7 @@
 
 #include "serial_print.h"
 #include "controller.h"
+#include "stdbool.h"
 
 #define PROTOCOL_P                '1'   // 1 float arguments for Kp
 #define PROTOCOL_I                '2'   // 1 float arguments for Ki
@@ -68,11 +69,12 @@ typedef enum {
  * In case of an emergency, signal loss, CableCam runs away, software fault,... the ESC is set to neutral
  * as last operation and the monitor state is EMERGENCYBRAKE.
  */
+ /*
 typedef enum {
 	FREE = 0,
 	EMERGENCYBRAKE,
 	ENDPOINTBRAKE
-} CONTROLLER_MONITOR_t;
+} CONTROLLER_MONITOR_t; */
 
 /** \brief Structure holding all permanent settings
  *
@@ -140,9 +142,13 @@ typedef struct
 {
     char boottext_eeprom[81];
     SAFE_MODE_t safemode;
-    CONTROLLER_MONITOR_t monitor;
+//    CONTROLLER_MONITOR_t monitor;
     cyclemonitor_t cyclemonitor[CYCLEMONITOR_SAMPLE_COUNT];
     int16_t cyclemonitor_position;
+    bool accel_limiter;
+    bool speed_limiter;
+    bool endpointbrake;
+    bool emergencybrake;
 } controllerstatus_t;
 
 extern controllerstatus_t controllerstatus;

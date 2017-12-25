@@ -1028,22 +1028,6 @@ void printActiveSettings(Endpoints endpoint)
     PrintlnSerial(endpoint);
     PrintlnSerial(endpoint);
 
-    PrintSerial_string("Controller status: ", endpoint);
-    switch (controllerstatus.monitor)
-    {
-    case EMERGENCYBRAKE:
-        PrintlnSerial_string("Emergency brake on", endpoint);
-        break;
-    case FREE:
-        PrintlnSerial_string("Free running", endpoint);
-        break;
-    case ENDPOINTBRAKE:
-        PrintlnSerial_string("Endpoint brake on", endpoint);
-        break;
-    }
-    PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
-
     PrintlnSerial_string("Currently the endpoint limits are configured as ", endpoint);
     int32_t pos = ENCODER_VALUE;
 

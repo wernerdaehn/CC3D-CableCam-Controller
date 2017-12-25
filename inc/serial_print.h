@@ -23,5 +23,6 @@ void PrintlnSerial_char(char v, Endpoints endpoint);
 void PrintlnSerial_string(char * v, Endpoints endpoint);
 void PrintlnSerial_long(int32_t v, Endpoints endpoint);
 void PrintlnSerial_double(double v, Endpoints endpoint);
+void PrintlnSerial_hexstring(uint8_t v[], uint8_t len, Endpoints endpoint);
 void PrintlnSerial(Endpoints endpoint);
 #endif

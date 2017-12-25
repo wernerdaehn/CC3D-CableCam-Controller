@@ -51,6 +51,16 @@ void PrintSerial_hexchar(char v, Endpoints endpoint)
     SendString(printbuf, endpoint);
 }
 
+void PrintlnSerial_hexstring(uint8_t v[], uint8_t len, Endpoints endpoint)
+{
+    for (int i=0; i<len; i++)
+    {
+        snprintf(printbuf, sizeof(printbuf), " %02x", v[i]);
+        SendString(printbuf, endpoint);
+    }
+    PrintlnSerial(endpoint);
+}
+
 void PrintlnSerial_int(int16_t v, Endpoints endpoint)
 {
     snprintf(printbuf, sizeof(printbuf), " %d \r\n", v);

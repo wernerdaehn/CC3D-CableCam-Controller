@@ -8,7 +8,7 @@
 
 extern sbusData_t sbusdata;
 
-void printControlLoop(int16_t input, double speed, double pos, double brakedistance, CONTROLLER_MONITOR_t monitor, uint16_t esc, Endpoints endpoint);
+void printControlLoop(int16_t input, double speed, double pos, double brakedistance, uint16_t esc, Endpoints endpoint);
 void printPIDMonitor(double e, double y, Endpoints endpoint);
 int32_t stickCycle(double pos, double brakedistance);
 
@@ -100,7 +100,6 @@ int32_t getPos(void)
 void initController(void)
 {
     controllerstatus.safemode = INVALID_RC;
-    controllerstatus.monitor = FREE;
 }
 
 double abs_d(double v)
@@ -283,6 +282,22 @@ int32_t stickCycle(double pos, double brakedistance)
          * decel as well.
          */
 
+        // First handle the controller status state machine and print out a warning
+        if (diff > maxaccel || diff < -maxaccel)
+        {
+            if (controllerstatus.accel_limiter == false)
+            {
+                PrintSerial_string("Acceleration limited to ", EndPoint_All);
+                PrintlnSerial_long(maxaccel, EndPoint_All);
+            }
+            controllerstatus.accel_limiter = true;
+        }
+        else
+        {
+            controllerstatus.accel_limiter = false;
+        }
+
+        // Now limit to max accel
         if (diff > maxaccel)
         {
             // Example: last time: 150; now stick: 200 --> diff: 50; max change is 10 per cycle --> new value: 150+10=160 as the limiter kicks in
@@ -298,6 +313,20 @@ int32_t stickCycle(double pos, double brakedistance)
          * It is important to calculate the new value based on the acceleration first, then we have the new target speed,
          * now it is limited to an absolute value.
          */
+        if (value > maxspeed*ESC_STICK_SCALE || value < -maxspeed*ESC_STICK_SCALE)
+        {
+            if (controllerstatus.speed_limiter == false)
+            {
+                PrintSerial_string("Speed limited to ", EndPoint_All);
+                PrintlnSerial_long(maxspeed, EndPoint_All);
+            }
+            controllerstatus.speed_limiter = true;
+        }
+        else
+        {
+            controllerstatus.speed_limiter = false;
+        }
+
         if (value > maxspeed*ESC_STICK_SCALE)
         {
             value = maxspeed*ESC_STICK_SCALE;
@@ -314,7 +343,6 @@ int32_t stickCycle(double pos, double brakedistance)
             /*
              * The current status is OPERATIONAL, hence the endpoints are honored.
              *
-             * If we would overshoot the end points, then ignore the requested value and reduce the stick position by max_accel.
              */
 
 
@@ -350,98 +378,125 @@ int32_t stickCycle(double pos, double brakedistance)
              *
              *
              */
-            if (pos + brakedistance >= activesettings.pos_end)
-            {
-                /*
-                 * In case the CableCam will overshoot the end point reduce the speed to zero.
-                 * Only if the stick is in the reverse direction already, accept the value. Else you cannot maneuver
-                 * back into the safe zone.
-                 */
-                if (((int32_t) activesettings.esc_direction) * value > 0)
-                {
-                    value = stick_last_value - (maxaccel * ((int32_t) activesettings.esc_direction)); // reduce speed at full allowed acceleration
-                    if (value * ((int16_t) activesettings.esc_direction) < 0) // watch out to not get into reverse.
-                    {
-                        value = 0;
-                    }
-                    controllerstatus.monitor = ENDPOINTBRAKE;
-                    LED_WARN_ON;
-                    /*
-                     * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
-                     */
-                    if (pos >= activesettings.pos_end)
-                    {
-                        stick_last_value = 0;
-                        return 0;
-                    }
-                }
-                else
-                {
-                    controllerstatus.monitor = FREE;
-                    LED_WARN_OFF;
-                }
 
-                /*
-                 * Failsafe: No matter what the user did going way over the endpoint at speed causes this function to return a speed=0 request.
-                 */
-                if (pos + brakedistance >= activesettings.pos_end + activesettings.max_position_error && speed > 0)
-                {
-                    /*
-                     * We are in danger to overshoot the end point by max_position_error because we are moving with a speed > 0 towards
-                     * the end point. Hence kick in the emergency brake.
-                     */
-                    controllerstatus.monitor = EMERGENCYBRAKE;
-                    LED_WARN_ON;
-                    stick_last_value = value;
-                    return 0;
-                }
+            if (pos + brakedistance < activesettings.pos_end && pos - brakedistance > activesettings.pos_start)
+            {
+                controllerstatus.endpointbrake = false;
+                controllerstatus.emergencybrake = false;
             }
-
-
-            if (pos - brakedistance <= activesettings.pos_start)
+            else
             {
-                /*
-                 * In case the CableCam will overshoot the start point reduce the speed to zero.
-                 * Only if the stick is in the reverse direction already, accept the value. Else you cannot maneuver
-                 * back into the safe zone.
-                 */
-                if (((int32_t) activesettings.esc_direction) * value < 0)
+                if (pos + brakedistance >= activesettings.pos_end)
                 {
-                    value = stick_last_value + (maxaccel * ((int32_t) activesettings.esc_direction)); // reduce speed at full allowed acceleration
-                    if (value * ((int32_t) activesettings.esc_direction) > 0) // watch out to not get into reverse.
-                    {
-                        value = 0;
-                    }
-                    controllerstatus.monitor = ENDPOINTBRAKE;
-                    LED_WARN_ON;
                     /*
-                     * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
+                     * In case the CableCam will overshoot the end point reduce the speed to zero.
+                     * Only if the stick is in the reverse direction already, accept the value. Else you cannot maneuver
+                     * back into the safe zone.
                      */
-                    if (pos <= activesettings.pos_start)
+                    if (((int32_t) activesettings.esc_direction) * value > 0)
                     {
-                        stick_last_value = 0;
+                        value = stick_last_value - (maxaccel * ((int32_t) activesettings.esc_direction)); // reduce speed at full allowed acceleration
+                        if (value * ((int16_t) activesettings.esc_direction) < 0) // watch out to not get into reverse.
+                        {
+                            value = 0;
+                        }
+                        if (controllerstatus.endpointbrake == false)
+                        {
+                            PrintlnSerial_string("Endpoint brake on ", EndPoint_All);
+                        }
+                        controllerstatus.endpointbrake = true;
+                        LED_WARN_ON;
+                        /*
+                         * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
+                         */
+                        if (pos >= activesettings.pos_end)
+                        {
+                            stick_last_value = 0;
+                            return 0;
+                        }
+                    }
+                    else
+                    {
+                        controllerstatus.endpointbrake = false;
+                        controllerstatus.emergencybrake = false;
+                        LED_WARN_OFF;
+                    }
+
+                    /*
+                     * Failsafe: No matter what the user did going way over the endpoint at speed causes this function to return a speed=0 request.
+                     */
+                    if (pos + brakedistance >= activesettings.pos_end + activesettings.max_position_error && speed > 0)
+                    {
+                        /*
+                         * We are in danger to overshoot the end point by max_position_error because we are moving with a speed > 0 towards
+                         * the end point. Hence kick in the emergency brake.
+                         */
+                        if (controllerstatus.emergencybrake == false)
+                        {
+                            PrintlnSerial_string("Emergency brake on ", EndPoint_All);
+                        }
+                        controllerstatus.emergencybrake = true;
+                        LED_WARN_ON;
+                        stick_last_value = value;
                         return 0;
                     }
                 }
-                else
-                {
-                    controllerstatus.monitor = FREE;
-                    LED_WARN_OFF;
-                }
 
-                /*
-                 * Failsafe: No matter what the user did going way over the endpoint at speed causes this function to return a speed=0 request.
-                 */
-                if (pos - brakedistance <= activesettings.pos_start - activesettings.max_position_error && speed < 0)
+
+                if (pos - brakedistance <= activesettings.pos_start)
                 {
                     /*
-                     * We are in danger to overshoot the end point by max_position_error because we are moving with a speed > 0 towards
-                     * the end point. Hence kick in the emergency brake.
+                     * In case the CableCam will overshoot the start point reduce the speed to zero.
+                     * Only if the stick is in the reverse direction already, accept the value. Else you cannot maneuver
+                     * back into the safe zone.
                      */
-                    controllerstatus.monitor = EMERGENCYBRAKE;
-                    LED_WARN_ON;
-                    stick_last_value = value;
-                    return 0;
+                    if (((int32_t) activesettings.esc_direction) * value < 0)
+                    {
+                        value = stick_last_value + (maxaccel * ((int32_t) activesettings.esc_direction)); // reduce speed at full allowed acceleration
+                        if (value * ((int32_t) activesettings.esc_direction) > 0) // watch out to not get into reverse.
+                        {
+                            value = 0;
+                        }
+                        if (controllerstatus.endpointbrake == false)
+                        {
+                            PrintlnSerial_string("Endpoint brake on ", EndPoint_All);
+                        }
+                        controllerstatus.endpointbrake = true;
+                        LED_WARN_ON;
+                        /*
+                         * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
+                         */
+                        if (pos <= activesettings.pos_start)
+                        {
+                            stick_last_value = 0;
+                            return 0;
+                        }
+                    }
+                    else
+                    {
+                        controllerstatus.endpointbrake = false;
+                        controllerstatus.emergencybrake = false;
+                        LED_WARN_OFF;
+                    }
+
+                    /*
+                     * Failsafe: No matter what the user did going way over the endpoint at speed causes this function to return a speed=0 request.
+                     */
+                    if (pos - brakedistance <= activesettings.pos_start - activesettings.max_position_error && speed < 0)
+                    {
+                        /*
+                         * We are in danger to overshoot the end point by max_position_error because we are moving with a speed > 0 towards
+                         * the end point. Hence kick in the emergency brake.
+                         */
+                        if (controllerstatus.emergencybrake == false)
+                        {
+                            PrintlnSerial_string("Emergency brake on ", EndPoint_All);
+                        }
+                        controllerstatus.emergencybrake = true;
+                        LED_WARN_ON;
+                        stick_last_value = value;
+                        return 0;
+                    }
                 }
             }
         }
@@ -600,7 +655,6 @@ void resetPosTarget()
 // ******** Main Loop *********
 void controllercycle()
 {
-    controllerstatus.monitor = FREE; // might be overwritten by stickCycle() so has to come first
     /*
      * speed = change in position per cycle. Speed is always positive.
      * speed = abs(pos_old - pos)
@@ -717,7 +771,7 @@ void controllercycle()
                 resetThrottle();
                 resetPosTarget();
                 esc_output = 0;
-                controllerstatus.monitor = EMERGENCYBRAKE;
+                controllerstatus.emergencybrake = true;
             }
             else
             {
@@ -795,7 +849,7 @@ void controllercycle()
     }
 }
 
-void printControlLoop(int16_t input, double speed, double pos, double brakedistance, CONTROLLER_MONITOR_t monitor, uint16_t esc, Endpoints endpoint)
+void printControlLoop(int16_t input, double speed, double pos, double brakedistance, uint16_t esc, Endpoints endpoint)
 {
     PrintSerial_string("LastValidFrame: ", endpoint);
     PrintSerial_long(sbusdata.sbusLastValidFrame, endpoint);
@@ -836,23 +890,6 @@ void printControlLoop(int16_t input, double speed, double pos, double brakedista
         {
             PrintSerial_string("         ", endpoint);
         }
-    }
-
-    if (monitor == FREE)
-    {
-        PrintSerial_string("  FREE", endpoint);
-    }
-    else if (monitor == ENDPOINTBRAKE)
-    {
-        PrintSerial_string("  ENDPOINTBRAKE", endpoint);
-    }
-    else if (monitor == EMERGENCYBRAKE)
-    {
-        PrintSerial_string("  EMERGENCYBRAKE", endpoint);
-    }
-    else
-    {
-        PrintSerial_string("  ???", endpoint);
     }
 
     PrintSerial_string("  Pos: ", endpoint);

@@ -35,6 +35,7 @@
 #include "stm32f4xx.h"
 #include "stm32f4xx_it.h"
 #include "uart_callback.h"
+#include "vesc.h"
 
 /* USER CODE BEGIN 0 */
 #include "sbus.h"
@@ -214,7 +215,7 @@ void USART2_IRQHandler(void)
     /* USER CODE BEGIN USART2_IRQn 0 */
 
     /* USER CODE END USART2_IRQn 0 */
-    UARTX_IRQHandler(&huart2);
+    VESC_IRQHandler(&huart2);
     /* USER CODE BEGIN USART2_IRQn 1 */
 
     /* USER CODE END USART2_IRQn 1 */

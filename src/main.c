@@ -59,6 +59,7 @@
 #include "spi_flash.h"
 #include "eeprom.h"
 #include "math.h"
+#include "vesc.h"
 
 #include "uart_callback.h"
 
@@ -79,9 +80,7 @@ UART_HandleTypeDef huart6;
 
 /* Private variables ---------------------------------------------------------*/
 uint32_t lasttick;
-uint8_t uart2_rxbuffer[RXBUFFERSIZE];
 uint8_t uart6_rxbuffer[RXBUFFERSIZE];
-uint16_t uart2readpos = 0;
 uint16_t uart6readpos = 0;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -126,6 +125,7 @@ int main(void)
     /* __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT); */
 
     initProtocol();
+    VESC_init();
 
 
     /* Start encoder in interrupt mode so the counter value is changed and the time of a counter tick can be evaluated */
@@ -277,7 +277,9 @@ int main(void)
 
     initController();
 
-    uart_init(&huart2, uart2_rxbuffer, RXBUFFERSIZE);
+    HAL_UART_Receive_IT(&huart2, getRequestValuePacketFrameAddress(), VESC_RXBUFFER_SIZE);
+
+    // uart_init(&huart2, uart2_rxbuffer, RXBUFFERSIZE);
     uart_init(&huart6, uart6_rxbuffer, RXBUFFERSIZE);
 
     while (1)
@@ -326,11 +328,6 @@ int main(void)
         if( USB_ReceiveString() > 0 )
         {
             serialCom(EndPoint_USB);
-        }
-        while (uart2readpos < huart2.RxXferCount)
-        {
-            // PrintSerial_hexchar(huart2.pRxBuffPtr[uart2readpos % huart2.RxXferSize], EndPoint_USB);
-            uart2readpos++;
         }
         while (uart6readpos < huart6.RxXferCount)
         {
