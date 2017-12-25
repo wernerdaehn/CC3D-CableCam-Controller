@@ -6,7 +6,7 @@
 
 typedef enum
 {
-  EndPoint_UART3                   = 0x00,
+  EndPoint_UART6                   = 0x00,
   EndPoint_USB,
   EndPoint_All,
 } Endpoints;

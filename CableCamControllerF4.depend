@@ -1513,7 +1513,7 @@
 	"controller.h"
 	"stdbool.h"
 
-1513968541 c:\users\werne\onedrive\github\cc3d-cablecam-controller\inc\serial_print.h
+1514227859 c:\users\werne\onedrive\github\cc3d-cablecam-controller\inc\serial_print.h
 	"main.h"
 
 1512840906 c:\users\werne\onedrive\github\cc3d-cablecam-controller\inc\controller.h
@@ -1539,7 +1539,7 @@
 	"eeprom.h"
 	"usbd_cdc_if.h"
 
-1513968541 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\serial_print.c
+1514227945 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\serial_print.c
 	"serial_print.h"
 	"stm32f4xx_hal.h"
 	"string.h"
@@ -1931,7 +1931,7 @@
 1497108752 c:\users\werne\onedrive\github\cc3d-cablecam-controller\stm32f4xx_hal_driver\inc\stm32f4xx_ll_system.h
 	"stm32f4xx.h"
 
-1514128377 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\main.c
+1514227859 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\main.c
 	"main.h"
 	"stm32f4xx_hal.h"
 	"usb_device.h"

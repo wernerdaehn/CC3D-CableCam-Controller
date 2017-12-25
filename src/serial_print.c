@@ -6,6 +6,8 @@
 
 char printbuf[80];
 
+extern UART_HandleTypeDef huart6;
+
 void SendString(char * ptr, Endpoints endpoint);
 
 
@@ -106,9 +108,9 @@ void PrintlnSerial(Endpoints endpoint)
 
 void SendString(char * ptr, Endpoints endpoint)
 {
-    if (endpoint == EndPoint_UART3 || endpoint == EndPoint_All)
+    if (endpoint == EndPoint_UART6 || endpoint == EndPoint_All)
     {
-        // Uart_SendString(ptr);
+        HAL_UART_Transmit(&huart6, (uint8_t *)ptr, strlen(ptr), 1000);
     }
     if (endpoint == EndPoint_USB || endpoint == EndPoint_All)
     {

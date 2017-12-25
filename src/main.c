@@ -279,7 +279,6 @@ int main(void)
 
     HAL_UART_Receive_IT(&huart2, getRequestValuePacketFrameAddress(), VESC_RXBUFFER_SIZE);
 
-    // uart_init(&huart2, uart2_rxbuffer, RXBUFFERSIZE);
     uart_init(&huart6, uart6_rxbuffer, RXBUFFERSIZE);
 
     while (1)
