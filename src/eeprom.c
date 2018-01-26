@@ -20,8 +20,7 @@ uint8_t eeprom_init()
     /* Check the SPI Flash ID */
     if (FlashID != sFLASH_ID)
     {
-        FlashID = 1;
-        return 2;
+        return 0;
     }
     return 0;
 }

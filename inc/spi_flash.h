@@ -74,9 +74,7 @@
 #define sFLASH_M25P64_ID          0x202017
 #define sFLASH_M25P16_ID          0x202015
 
-/**
-  * @}
-  */
+
 
 /** @defgroup STM32_EVAL_SPI_FLASH_Exported_Macros
   * @{
