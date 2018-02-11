@@ -5,13 +5,8 @@
 #include "controller.h"
 #include "stdbool.h"
 
-#define PROTOCOL_P                '1'   // 1 float arguments for Kp
-#define PROTOCOL_I                '2'   // 1 float arguments for Ki
-#define PROTOCOL_D                '3'   // 1 float arguments for Kd
 #define PROTOCOL_MAX_ACCEL        'a'   // 1 float argument
 #define PROTOCOL_BINARY           'b'   // Hidden command to print the binary active settings or play them back (Useful to quickly transfer settings)
-#define PROTOCOL_PID       		  'c'	// PIDs set 3 floats
-#define PROTOCOL_SPEED_FACTOR     'f'	// Define Speed Factor, the conversion from RC Stick value to Speed based on Hall Encoder, used in positional mode only
 #define PROTOCOL_MAX_ERROR_DIST   'g'   // 1 float argument
 #define PROTOCOL_HELP		      'h'	// help
 #define PROTOCOL_INPUT_CHANNELS   'i'   // 3-5 int arguments for speed, command switch, end point button, max acceleration poti, may speed poti
@@ -27,13 +22,11 @@
 #define PROTOCOL_D_CYCLES         'z'   // Hidden command to print the debug information about the values for each cycle
 #define PROTOCOL_VESC_MAX_ERPM    'e'   // 1 int argument, the maximum eRPM value set in the VESC. Goal is that 100% throttle = this eRPM value
 #define PROTOCOL_EXPO_FACTOR      'x'   // 1 float argument
+#define PROTOCOL_BLUETOOTH        'B'   // no argument
 
-
-#define MODE_ABSOLUTE_POSITION	0
 #define MODE_PASSTHROUGH		1
 #define MODE_LIMITER			2
 #define MODE_LIMITER_ENDPOINTS	3
-#define MODE_LIMITER_HOLD		4
 
 #define POS_END_NOT_SET         0x7FFFFFFF
 
@@ -87,9 +80,9 @@ typedef enum {
 typedef struct
 {
     char version[11];
-    double P;
-    double I;
-    double D;
+    double noop1;
+    double noop2;
+    double noop3;
     uint8_t debuglevel;
     int8_t esc_direction;
     int16_t stick_neutral_pos;
@@ -105,7 +98,7 @@ typedef struct
     double max_position_error;
     double pos_start;
     double pos_end;
-    double stick_speed_factor;
+    double noop4;
     uint8_t receivertype;
     int16_t esc_neutral_pos;
     int16_t esc_neutral_range;
@@ -154,7 +147,7 @@ typedef struct
 extern controllerstatus_t controllerstatus;
 
 void initProtocol(void);
-void serialCom(Endpoints endpoint);
+void serialCom(Endpoints endpoint, char commandlinebuffer[]);
 void printHelp(Endpoints endpoint);
 void printActiveSettings(Endpoints endpoint);
 

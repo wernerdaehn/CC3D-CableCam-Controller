@@ -9,15 +9,12 @@
 extern sbusData_t sbusdata;
 
 void printControlLoop(int16_t input, double speed, double pos, double brakedistance, uint16_t esc, Endpoints endpoint);
-void printPIDMonitor(double e, double y, Endpoints endpoint);
 int32_t stickCycle(double pos, double brakedistance);
 
 /*
  * Preserve the previous filtered stick value to calculate the acceleration
  */
 int32_t stick_last_value = 0;
-
-double yalt = 0.0f, ealt = 0.0f, esum = 0.0f;
 
 uint32_t possensorduration = 0;
 uint32_t last_possensortick = 0;
@@ -32,28 +29,6 @@ uint8_t endpointclicks = 0;
 uint16_t lastendpointswitch = 0;
 uint8_t lastmodeswitchsetting = 255;
 
-#define Ta  0.02
-
-
-void setPIDValues(double kp, double ki, double kd)
-{
-    activesettings.P = kp;
-    activesettings.I = ki;
-    activesettings.D = kd;
-}
-
-void setPValue(double v)
-{
-    activesettings.P = v;
-}
-void setIValue(double v)
-{
-    activesettings.I = v;
-}
-void setDValue(double v)
-{
-    activesettings.D = v;
-}
 
 double getSpeedPosSensor(void)
 {
@@ -72,7 +47,7 @@ double getSpeedPosSensor(void)
          * But the encoder is set to by an X4 type, so it updates the position on rising and falling flanks
          * of both channels whereas the interrupt fires on one pin and rising flank only - hence times 4.
          */
-        return Ta * 1000.0f * 4.0f / ((double) possensorduration);
+        return 0.02f * 1000.0f * 4.0f / ((double) possensorduration);
     }
 }
 
@@ -639,18 +614,6 @@ int32_t stickCycle(double pos, double brakedistance)
     return value;
 }
 
-void resetThrottle()
-{
-    esum = 0.0f;
-    ealt = 0.0f;
-    yalt = 0.0f;
-}
-
-void resetPosTarget()
-{
-    pos_target = (double) ENCODER_VALUE;
-    pos_target_old = pos_target;
-}
 
 // ******** Main Loop *********
 void controllercycle()
@@ -702,15 +665,7 @@ void controllercycle()
     double distance_to_stop = speed * time_to_stop / 2.0f;
     int32_t stick_filtered_value;
 
-    if (activesettings.mode == MODE_ABSOLUTE_POSITION)
-    {
-        // in case of mode-absolute the actual position does not matter, it is the target position that counts
-        stick_filtered_value = stickCycle(pos_target_old, distance_to_stop); // go through the stick position calculation with its limiters, max accel etc
-    }
-    else
-    {
-        stick_filtered_value = stickCycle(pos, distance_to_stop); // go through the stick position calculation with its limiters, max accel etc
-    }
+    stick_filtered_value = stickCycle(pos, distance_to_stop); // go through the stick position calculation with its limiters, max accel etc
 
     /*
      * The stick position and the speed_new variables both define essentially the ESC target. So if the
@@ -719,90 +674,6 @@ void controllercycle()
      * in order to break as hard as possible whereas the speed output can be gradually reduced to zero.
      */
     int32_t esc_output = stick_filtered_value;
-
-    if (activesettings.mode != MODE_PASSTHROUGH && activesettings.mode != MODE_LIMITER)
-    {
-        /*
-         * In passthrough mode or limiter mode, the cablecam can move freely, no end points are considered. In all other modes...
-         */
-        if (activesettings.mode == MODE_ABSOLUTE_POSITION)
-        {
-            /*
-             * In absolute mode everything revolves around the target pos. The speed is the change in target pos etc.
-             * The actual position does not matter, as the stick controls where the cablecam should be. It is an idealistic world,
-             * where the target position can be calculated mathematically correct.
-             * The PID loop is responsible to keep the cablecam near the target position.
-             */
-
-
-            /*
-             * The new target is the old target increased by the stick signal.
-             */
-            pos_target += ((double)stick_filtered_value) * activesettings.stick_speed_factor;
-
-            // In OPERATIONAL mode the position including the break distance has to be within the end points, in programming mode you can go past that
-            if (controllerstatus.safemode == OPERATIONAL)
-            {
-                // Of course the target can never exceed the end points, unless in programming mode
-                if (pos_target > activesettings.pos_end)
-                {
-                    pos_target = activesettings.pos_end;
-                }
-                else if (pos_target < activesettings.pos_start)
-                {
-                    pos_target = activesettings.pos_start;
-                }
-            }
-            pos_target_old = pos_target;
-
-
-            /*
-             * The PID loop calculates the error between target pos and actual pos and does change the throttle/speed signal in order to keep the error as small as possible.
-             */
-            double y = 0.0f;
-
-
-            double e = pos_target - pos;     // This is the amount of steps the target pos does not match the reality
-            esum += e;
-
-            if (e >= activesettings.max_position_error || e <= -activesettings.max_position_error)
-            {
-                // The cablecam cannot catchup with the target position --> EMERGENCY BRAKE
-                resetThrottle();
-                resetPosTarget();
-                esc_output = 0;
-                controllerstatus.emergencybrake = true;
-            }
-            else
-            {
-                // y = Kp*e + Ki*Ta*esum + Kd/Ta*(e – ealt);
-                y = (activesettings.P * e) + (activesettings.I * Ta * esum) + (activesettings.D / Ta) * (e - ealt);         // PID loop calculation
-
-                if (activesettings.esc_direction == 1)
-                {
-                    esc_output = (int32_t) y;
-                }
-                else
-                {
-                    esc_output = (int32_t) -y;
-                }
-
-                ealt = e;
-
-                if (is1Hz() && abs_d(e) > 1.0f)
-                {
-                    printPIDMonitor(e, y, EndPoint_USB);
-                }
-                yalt = y;
-            }
-        }
-        else
-        {
-            // activesettings.mode != MODE_ABSOLUTE_POSITION
-
-            // esc_out = stick_requested_value for speed based ESCs or in case of a classic ESC esc_out = 0 if monitor == ENDPOINTBREAK
-        }
-    }
 
     if (esc_output > 0)
     {
@@ -894,27 +765,4 @@ void printControlLoop(int16_t input, double speed, double pos, double brakedista
 
     PrintSerial_string("  Pos: ", endpoint);
     PrintlnSerial_double(pos, endpoint);
-}
-
-void printPIDMonitor(double e, double y, Endpoints endpoint)
-{
-    // y = (activesettings.P * e) + (activesettings.I * Ta * esum) + (activesettings.D / Ta) * (e - ealt);
-    PrintSerial_string("y = ", endpoint);
-    PrintSerial_double(activesettings.P, endpoint);
-    PrintSerial_string("* ", endpoint);
-    PrintSerial_double(e, endpoint);
-    PrintSerial_string("+   ", endpoint);
-    PrintSerial_double(activesettings.I, endpoint);
-    PrintSerial_string("* ", endpoint);
-    PrintSerial_double(Ta, endpoint);
-    PrintSerial_string("* ", endpoint);
-    PrintSerial_double(esum, endpoint);
-    PrintSerial_string("+   ", endpoint);
-    PrintSerial_double(activesettings.D, endpoint);
-    PrintSerial_string("* ", endpoint);
-    PrintSerial_double(e-ealt, endpoint);
-    PrintSerial_string("/ ", endpoint);
-    PrintSerial_double(Ta, endpoint);
-    PrintSerial_string("= ", endpoint);
-    PrintlnSerial_double(y, endpoint);
 }

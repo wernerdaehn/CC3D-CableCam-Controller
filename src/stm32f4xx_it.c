@@ -46,7 +46,7 @@
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
-extern UART_HandleTypeDef huart6;
+extern UART_HandleTypeDef huart3;
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim5;
 extern uint16_t d;
@@ -222,14 +222,14 @@ void USART2_IRQHandler(void)
 }
 
 /**
-* @brief This function handles USART6 global interrupt.
+* @brief This function handles USART3 global interrupt.
 */
-void USART6_IRQHandler(void)
+void USART3_IRQHandler(void)
 {
     /* USER CODE BEGIN USART6_IRQn 0 */
 
     /* USER CODE END USART6_IRQn 0 */
-    UARTX_IRQHandler(&huart6);
+    UARTX_IRQHandler(&huart3);
     /* USER CODE BEGIN USART6_IRQn 1 */
 
     /* USER CODE END USART6_IRQn 1 */

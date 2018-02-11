@@ -98,8 +98,8 @@
   * @{
   */
 
-char commandlinebuffer[RXBUFFERSIZE];
-uint16_t commandlinebuffer_pos = 0;
+char usb_commandlinebuffer[RXBUFFERSIZE];
+uint16_t usb_commandlinebuffer_pos = 0;
 
 /* Create buffer for reception and transmission           */
 /* It's up to user to redefine and/or remove those define */
@@ -113,10 +113,10 @@ uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
 
 uint8_t tempbuf[7];
 uint8_t rxbuffer[RXBUFFERSIZE];
-uint32_t bytes_received = 0;
-uint32_t bytes_scanned = 0;
+uint32_t usb_bytes_received = 0;
+uint32_t usb_bytes_scanned = 0;
 uint32_t last_string_start_pos = 0;
-uint8_t rxbuffer_overflow = 0;
+uint8_t usb_rxbuffer_overflow = 0;
 
 uint8_t UserRxBuffer[APP_RX_DATA_SIZE];/* Received Data over USB are stored in this buffer */
 uint8_t UserTxBuffer[APP_TX_DATA_SIZE];/* Received Data over UART (CDC interface) are stored in this buffer */
@@ -317,7 +317,7 @@ static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
      *      | <--------RXBUFFERSIZE--------> | <--------RXBUFFERSIZE--------> | <-...
      *    last_string
      */
-    if (bytes_received + len1 > last_string_start_pos + RXBUFFERSIZE)
+    if (usb_bytes_received + len1 > last_string_start_pos + RXBUFFERSIZE)
     {
         /*
          * The received packet does not fit into the remain space of the ring buffer.
@@ -327,17 +327,17 @@ static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
          * Hence test if there is space available at all. If not, this is an overflow, else reduce
          * the len to what will fit int the remaining space.
          */
-        if (bytes_received > last_string_start_pos + RXBUFFERSIZE)
+        if (usb_bytes_received > last_string_start_pos + RXBUFFERSIZE)
         {
             // overflow condition
-            rxbuffer_overflow = 1;
+            usb_rxbuffer_overflow = 1;
         }
         else
         {
-            len1 = last_string_start_pos + RXBUFFERSIZE - bytes_received;
+            len1 = last_string_start_pos + RXBUFFERSIZE - usb_bytes_received;
         }
     }
-    if (rxbuffer_overflow == 0)
+    if (usb_rxbuffer_overflow == 0)
     {
         /*
          * Copy the USB packet into the ring buffer.
@@ -346,7 +346,7 @@ static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
          *
          * Or the packet fits into the middle of the ring buffer, hence is just copied there.
          */
-        current_pos = bytes_received % RXBUFFERSIZE;
+        current_pos = usb_bytes_received % RXBUFFERSIZE;
         if (len1 > RXBUFFERSIZE - current_pos)
         {
             memcpy(&rxbuffer[current_pos], Buf, RXBUFFERSIZE - current_pos);
@@ -356,7 +356,7 @@ static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
         {
             memcpy(&rxbuffer[current_pos], Buf, len1);
         }
-        bytes_received += len1;
+        usb_bytes_received += len1;
     }
 
     /* Prepare for the next reception of data */
@@ -390,21 +390,21 @@ uint16_t USB_ReceiveString()
     * copy the entire text from the start position to the position of the next found \n
     * character into the commandlinebuffer.
     */
-    while (bytes_scanned < bytes_received)
+    while (usb_bytes_scanned < usb_bytes_received)
     {
-        uint8_t c = rxbuffer[bytes_scanned % RXBUFFERSIZE];
-        bytes_scanned++;
+        uint8_t c = rxbuffer[usb_bytes_scanned % RXBUFFERSIZE];
+        usb_bytes_scanned++;
         CDC_TransmitBuffer((uint8_t *) &c, 1); // echo input text
         if (c == '\n' || c == '\r')
         {
-            last_string_start_pos = bytes_scanned; // next string starts here
-            if (commandlinebuffer_pos < RXBUFFERSIZE-1)   // in case the string does not fit into the commandlinebuffer, the entire line is ignored
+            last_string_start_pos = usb_bytes_scanned; // next string starts here
+            if (usb_commandlinebuffer_pos < RXBUFFERSIZE-1)   // in case the string does not fit into the commandlinebuffer, the entire line is ignored
             {
-                commandlinebuffer[commandlinebuffer_pos++] = c;
-                commandlinebuffer_pos = 0;
+                usb_commandlinebuffer[usb_commandlinebuffer_pos++] = c;
+                usb_commandlinebuffer_pos = 0;
                 return 1;
             }
-            commandlinebuffer_pos = 0;
+            usb_commandlinebuffer_pos = 0;
         }
         else if (c == 0x08) // backspace char
         {
@@ -415,27 +415,27 @@ uint16_t USB_ReceiveString()
              * User deleted char 0x68, hence instead of moving the commandlinebuffer_pos one ahead, it is
              * moved backwards by one step.
              */
-            commandlinebuffer_pos--;
-            if (commandlinebuffer_pos < 0)
+            usb_commandlinebuffer_pos--;
+            if (usb_commandlinebuffer_pos < 0)
             {
                 // Obviously extra backspace chars have to be ignored
-                commandlinebuffer_pos = 0;
+                usb_commandlinebuffer_pos = 0;
             }
         }
         else
         {
-            if (commandlinebuffer_pos < RXBUFFERSIZE)
+            if (usb_commandlinebuffer_pos < RXBUFFERSIZE)
             {
-                commandlinebuffer[commandlinebuffer_pos++] = c;
+                usb_commandlinebuffer[usb_commandlinebuffer_pos++] = c;
             }
         }
     }
     // No newline char was found
-    if (rxbuffer_overflow == 1)
+    if (usb_rxbuffer_overflow == 1)
     {
-        bytes_scanned = bytes_received;
-        last_string_start_pos = bytes_received;
-        rxbuffer_overflow = 0;
+        usb_bytes_scanned = usb_bytes_received;
+        last_string_start_pos = usb_bytes_received;
+        usb_rxbuffer_overflow = 0;
     }
     return 0;
 }

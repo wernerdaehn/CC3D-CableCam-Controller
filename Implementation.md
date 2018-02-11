@@ -183,7 +183,7 @@ Servo6 | 32Bit Quadruple Encoder used for Hall Sensor input | PA1 | TIM5_CH2
 LED Status | Status LED on the boards (Low = On) | PB5 | GPIO
 LED Warn | Warn LED on the board (Low = On) | PB4 | GPIO
 MainUSART | Receiver input; In SBus Mode | PA10 | USART1_RX
-MainUSART | Receiver input; In SBus Mode | PA10 | TIM1_CH3
+MainUSART | Receiver input; In SumPPM Mode | PA10 | TIM1_CH3
 IMU | SPI for MPU-6000 IMU | PA4 | SPI1_NSS
 IMU | SPI for MPU-6000 IMU | PA5 | SPI1_SCK
 IMU | SPI for MPU-6000 IMU | PA6 | SPI1_MISO
@@ -193,3 +193,5 @@ EEPROM | SPI for Flash 16MBit and optional RF Module (not used) | PC10 | SPI3_SC
 EEPROM | SPI for Flash 16MBit and optional RF Module (not used) | PC11 | SPI3_MISO
 EEPROM | SPI for Flash 16MBit and optional RF Module (not used) | PC12 | SPI3_MOSI
 EEPROM | Select for Flash 16MBit | PB3 | GPIO
+Bluetooth | TX3 on Flexiport | PB10 | USART3_TX
+Bleutooth | RX3 on Flexiport | PB11 | USART3_RX

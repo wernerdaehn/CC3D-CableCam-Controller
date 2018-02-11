@@ -1,5 +1,15 @@
 #include "stm32f4xx_hal.h"
 #include "uart_callback.h"
+#include "usbd_cdc_if.h"
+
+char uart3_commandlinebuffer[RXBUFFERSIZE];
+uint16_t uart3_commandlinebuffer_pos = 0;
+uint16_t uart3_bytes_scanned = 0;
+uint8_t uart3_rxbuffer_overflow = 0;
+
+
+extern UART_HandleTypeDef huart3;
+
 
 void uart_init(UART_HandleTypeDef *huart, uint8_t * rxbuffer, uint16_t rxbuffersize)
 {
@@ -74,4 +84,76 @@ uint16_t uart_bytesunread(UART_HandleTypeDef *huart, uint16_t lastreadpos)
     {
         return huart->RxXferCount - lastreadpos;
     }
+}
+
+/** \brief USB_ReceiveString
+ *         Does extract an entire line from the USB buffer using the line terminator
+ *         character \r and/or \n. If there was an overflow, the line is ignored.
+ *
+ * This method is called periodically and tries to catchup with the received USB packets
+ * by scanning from the last scanned position up to the last received character.
+ *
+ * bytes_scanned is the absolute position of the last byte read
+ * bytes_received is the absolute position of the last received byte
+ *
+ * The ring buffer rxbuffer is scanned for \n chars and everything between to \n chars is
+ * copied into a line buffer.
+ * Hence the line buffer starts with the first char after a \n and ends
+ *
+ * \return uint16_t returns 1 in case a line was found
+ *
+ */
+uint16_t UART3_ReceiveString()
+{
+    /*
+    * Go through all characters and locate the next \n. If one is found
+    * copy the entire text from the start position to the position of the next found \n
+    * character into the commandlinebuffer.
+    */
+    while (uart3_bytes_scanned < huart3.RxXferCount)
+    {
+        uint8_t c = huart3.pRxBuffPtr[uart3_bytes_scanned % huart3.RxXferSize];
+        uart3_bytes_scanned++;
+        HAL_UART_Transmit(&huart3, (uint8_t *) &c, 1, 1000);
+        if (c == '\n' || c == '\r')
+        {
+            if (uart3_commandlinebuffer_pos < RXBUFFERSIZE-1)   // in case the string does not fit into the commandlinebuffer, the entire line is ignored
+            {
+                uart3_commandlinebuffer[uart3_commandlinebuffer_pos++] = c;
+                uart3_commandlinebuffer_pos = 0;
+                return 1;
+            }
+            uart3_commandlinebuffer_pos = 0;
+        }
+        else if (c == 0x08) // backspace char
+        {
+            /*
+             *                      commandlinebuffer_pos
+             *                               |
+             * ....... 0x65 0x66 0x67 0x68 0x08
+             * User deleted char 0x68, hence instead of moving the commandlinebuffer_pos one ahead, it is
+             * moved backwards by one step.
+             */
+            uart3_commandlinebuffer_pos--;
+            if (uart3_commandlinebuffer_pos < 0)
+            {
+                // Obviously extra backspace chars have to be ignored
+                uart3_commandlinebuffer_pos = 0;
+            }
+        }
+        else
+        {
+            if (uart3_commandlinebuffer_pos < RXBUFFERSIZE)
+            {
+                uart3_commandlinebuffer[uart3_commandlinebuffer_pos++] = c;
+            }
+        }
+    }
+    // No newline char was found
+    if (uart3_rxbuffer_overflow == 1)
+    {
+        uart3_bytes_scanned = huart3.RxXferCount;
+        uart3_rxbuffer_overflow = 0;
+    }
+    return 0;
 }

@@ -13,6 +13,7 @@ void VESC_init(void);
 void VESC_Output(int32_t esc_output);
 void VESC_set_rpm(int32_t erpm);
 void VESC_set_handbrake_current(float brake_current);
+void VESC_set_currentbrake_current(float brake_current);
 void VESC_request_values(void);
 void VESC_IRQHandler(UART_HandleTypeDef *huart);
 uint8_t* getRequestValuePacketFrameAddress(void);
@@ -127,11 +128,11 @@ struct sendhandbrake_s {
     uint8_t     stop;
 } __attribute__ ((__packed__));
 
-
 typedef union {
     uint8_t bytes[10];
     struct sendhandbrake_s frame;
 } sendhandbrake_t;
+
 
 struct requestvalues_s {
     uint8_t     startbyte;
@@ -141,10 +142,23 @@ struct requestvalues_s {
     uint8_t     stop;
 } __attribute__ ((__packed__));
 
-
 typedef union {
     uint8_t bytes[6];
     struct requestvalues_s frame;
 } requestvalues_t;
 
+
+struct sendcurrentbrake_s {
+    uint8_t     startbyte;
+    uint8_t     length;
+    uint8_t     command;
+    int32_t     brakecurrent_1000;
+    uint16_t    crc;
+    uint8_t     stop;
+} __attribute__ ((__packed__));
+
+typedef union {
+    uint8_t bytes[10];
+    struct sendcurrentbrake_s frame;
+} sendcurrentbrake_t;
 #endif /* VESC_H_INCLUDED */

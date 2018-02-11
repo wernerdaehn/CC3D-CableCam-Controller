@@ -37,6 +37,11 @@
 					<Add option="-u _printf_float" />
 					<Add option="-Wl,--gc-sections" />
 				</Linker>
+				<ExtraCommands>
+					<Add after='C:\Users\werne\OneDrive\GitHub\DfuCreator\dfucreator.exe C:\Users\werne\OneDrive\GitHub\CC3D-CableCam-Controller\bin\Debug\CableCamControllerF4.hex C:\Users\werne\OneDrive\GitHub\CC3D-CableCam-Controller\bin\Debug\CableCamControllerF4.dfu &quot;Cable Cam&quot; 0483 1234 FFFF' />
+					<Mode before="0" />
+					<Mode after="2" />
+				</ExtraCommands>
 			</Target>
 			<Target title="Release">
 				<Option output="bin\Release\CableCamControllerF4.elf" />
@@ -133,6 +138,7 @@
 		<Unit filename="cmsis\Include\core_sc000.h" />
 		<Unit filename="cmsis\Include\core_sc300.h" />
 		<Unit filename="cmsis\RTOS\Template\cmsis_os.h" />
+		<Unit filename="inc\bluetooth.h" />
 		<Unit filename="inc\clock_50Hz.h" />
 		<Unit filename="inc\config.h" />
 		<Unit filename="inc\controller.h" />
@@ -169,6 +175,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="readme.txt" />
+		<Unit filename="src\bluetooth.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src\clock_50Hz.c">
 			<Option compilerVar="CC" />
 		</Unit>

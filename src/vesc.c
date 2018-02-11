@@ -45,6 +45,7 @@ const unsigned short crc16_tab[] = { 0x0000, 0x1021, 0x2042, 0x3063, 0x4084,
 sendrpm_t rpmpacket;
 sendhandbrake_t handbrakepacket;
 requestvalues_t requestvaluespacket;
+sendcurrentbrake_t currentbrakepacket;
 
 // Receiving packets
 getvalues_t vescvalues;
@@ -72,6 +73,11 @@ void VESC_init()
     requestvaluespacket.frame.length = 0x01;
     requestvaluespacket.frame.command = COMM_GET_VALUES;
     requestvaluespacket.frame.stop = 0x03;
+
+    currentbrakepacket.frame.startbyte = 0x02;
+    currentbrakepacket.frame.length = 0x05;
+    currentbrakepacket.frame.command = COMM_SET_CURRENT_BRAKE;
+    currentbrakepacket.frame.stop = 0x03;
 }
 
 uint8_t* getRequestValuePacketFrameAddress(void)
@@ -86,17 +92,26 @@ void VESC_Output(int32_t esc_output)
     if (esc_output == 0)
     {
         float diff = (float) (tacho_current - tacho_old);
-        handbrake_current += diff - 0.1f;
+        if (diff > 10.0f)
+        {
+            // We are moving fast and the target speed is zero, e.g. due to an emergency brake
+            // Therefore kick in the VESC brake first before enabling the handbrake
+            VESC_set_currentbrake_current(50.0f);
+        }
+        else
+        {
+            handbrake_current += diff - 0.1f;
 
-        if (handbrake_current > 15.0f)
-        {
-            handbrake_current = 15.0f;
+            if (handbrake_current > 15.0f)
+            {
+                handbrake_current = 15.0f;
+            }
+            else if (handbrake_current < 10.0f)
+            {
+                handbrake_current = 10.0f;
+            }
+            VESC_set_handbrake_current(handbrake_current);
         }
-        else if (handbrake_current < 10.0f)
-        {
-            handbrake_current = 10.0f;
-        }
-        VESC_set_handbrake_current(handbrake_current);
     }
     else
     {
@@ -121,6 +136,14 @@ void VESC_set_handbrake_current(float brake_current)
     handbrakepacket.frame.crc = __REV16(crc16(&handbrakepacket.bytes[2], handbrakepacket.frame.length));
 
     HAL_UART_Transmit(&huart2, handbrakepacket.bytes, sizeof(handbrakepacket.bytes), 1000);
+}
+
+void VESC_set_currentbrake_current(float brake_current)
+{
+    currentbrakepacket.frame.brakecurrent_1000 = __REV((int32_t) (brake_current*1000.0f));
+    currentbrakepacket.frame.crc = __REV16(crc16(&currentbrakepacket.bytes[2], currentbrakepacket.frame.length));
+
+    HAL_UART_Transmit(&huart2, currentbrakepacket.bytes, sizeof(currentbrakepacket.bytes), 1000);
 }
 
 uint16_t crc16(uint8_t *buf, uint16_t len) {

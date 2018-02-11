@@ -75,13 +75,15 @@ TIM_HandleTypeDef htim5;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
-UART_HandleTypeDef huart6;
+UART_HandleTypeDef huart3;
 
 
 /* Private variables ---------------------------------------------------------*/
 uint32_t lasttick;
-uint8_t uart6_rxbuffer[RXBUFFERSIZE];
-uint16_t uart6readpos = 0;
+uint8_t uart3_rxbuffer[RXBUFFERSIZE];
+
+extern char usb_commandlinebuffer[RXBUFFERSIZE];
+extern char uart3_commandlinebuffer[RXBUFFERSIZE];
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -92,7 +94,7 @@ static void MX_SPI3_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
-static void MX_USART6_UART_Init(void);
+static void MX_USART3_UART_Init(void);
 static void MX_TIM5_Init(void);
 static void MX_TIM1_Init(void);
 
@@ -116,7 +118,7 @@ int main(void)
     MX_SPI1_Init();
     MX_SPI3_Init();
     MX_TIM3_Init();
-    MX_USART6_UART_Init();
+    MX_USART3_UART_Init();
     MX_USB_DEVICE_Init();
     MX_USART2_UART_Init();
     MX_TIM5_Init();
@@ -151,9 +153,9 @@ int main(void)
     }
 
     activesettings.esc_direction = 0;
-    activesettings.D = 0.0f;
-    activesettings.I = 0.0f;
-    activesettings.P = 0.0f;
+    activesettings.noop1 = 0.0f;
+    activesettings.noop2 = 0.0f;
+    activesettings.noop3 = 0.0f;
     activesettings.max_position_error = 100.0f;
     activesettings.mode = MODE_PASSTHROUGH;
     activesettings.pos_end = (double) POS_END_NOT_SET;
@@ -168,7 +170,7 @@ int main(void)
     activesettings.stick_neutral_pos = 992;
     activesettings.stick_neutral_range = 30;
     strcpy(activesettings.version, "20171210");
-    activesettings.stick_speed_factor = 0.01f;
+    activesettings.noop4 = 0.00f;
     activesettings.receivertype = RECEIVER_TYPE_SUMPPM;
 
     // 20170815
@@ -279,7 +281,7 @@ int main(void)
 
     HAL_UART_Receive_IT(&huart2, getRequestValuePacketFrameAddress(), VESC_RXBUFFER_SIZE);
 
-    uart_init(&huart6, uart6_rxbuffer, RXBUFFERSIZE);
+    uart_init(&huart3, uart3_rxbuffer, RXBUFFERSIZE);
 
     while (1)
     {
@@ -326,12 +328,11 @@ int main(void)
         }
         if( USB_ReceiveString() > 0 )
         {
-            serialCom(EndPoint_USB);
+            serialCom(EndPoint_USB, usb_commandlinebuffer);
         }
-        while (uart6readpos < huart6.RxXferCount)
+        if (UART3_ReceiveString())
         {
-            PrintSerial_char(huart6.pRxBuffPtr[uart6readpos % huart6.RxXferSize], EndPoint_USB);
-            uart6readpos++;
+            serialCom(EndPoint_UART3, uart3_commandlinebuffer);
         }
     }
 }
@@ -605,6 +606,9 @@ static void MX_TIM1_Init(void)
 
 
 /* USART1 init function */
+/*
+ * The SBus receiver
+ */
 static void MX_USART1_UART_Init(void)
 {
     huart1.Instance = USART1;
@@ -622,6 +626,9 @@ static void MX_USART1_UART_Init(void)
 }
 
 /* USART2 init function */
+/*
+ * VESC6 ESC communication
+ */
 static void MX_USART2_UART_Init(void)
 {
     huart2.Instance = USART2;
@@ -639,17 +646,17 @@ static void MX_USART2_UART_Init(void)
 }
 
 /* USART3 init function */
-static void MX_USART6_UART_Init(void)
+static void MX_USART3_UART_Init(void)
 {
-    huart6.Instance = USART6;
-    huart6.Init.BaudRate = 115200;
-    huart6.Init.WordLength = UART_WORDLENGTH_8B;
-    huart6.Init.StopBits = UART_STOPBITS_1;
-    huart6.Init.Parity = UART_PARITY_NONE;
-    huart6.Init.Mode = UART_MODE_TX_RX;
-    huart6.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-    huart6.Init.OverSampling = UART_OVERSAMPLING_16;
-    if (HAL_UART_Init(&huart6) != HAL_OK)
+    huart3.Instance = USART3;
+    huart3.Init.BaudRate = 38400;
+    huart3.Init.WordLength = UART_WORDLENGTH_8B;
+    huart3.Init.StopBits = UART_STOPBITS_1;
+    huart3.Init.Parity = UART_PARITY_NONE;
+    huart3.Init.Mode = UART_MODE_TX_RX;
+    huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    huart3.Init.OverSampling = UART_OVERSAMPLING_16;
+    if (HAL_UART_Init(&huart3) != HAL_OK)
     {
         _Error_Handler(__FILE__, __LINE__);
     }
