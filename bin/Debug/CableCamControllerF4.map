@@ -14550,7 +14550,7 @@ LOAD c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-
                 0x00000000                __HEAP_SIZE = 0x0
                 0x00000100                __STACK_SIZE = 0x100
 
-.text           0x08000000    0x14d68
+.text           0x08000000    0x14d70
  *(.isr_vector)
  .isr_vector    0x08000000      0x188 obj\debug\src\startup_stm32f4xx.o
                 0x08000000                __isr_vector
@@ -15841,114 +15841,115 @@ LOAD c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-
  *fill*         0x08013296        0x2 
  .rodata        0x08013298      0x1ec obj\debug\src\controller.o
  .rodata        0x08013484       0xb0 obj\debug\src\main.o
- .rodata        0x08013534     0x120c obj\debug\src\protocol.o
- .rodata        0x08014740       0x5f obj\debug\src\serial_print.o
- *fill*         0x0801479f        0x1 
+ .rodata        0x08013534     0x1210 obj\debug\src\protocol.o
+ .rodata        0x08014744       0x5f obj\debug\src\serial_print.o
+ *fill*         0x080147a3        0x1 
  .rodata.AHBPrescTable
-                0x080147a0       0x10 obj\debug\src\system_stm32f4xx.o
-                0x080147a0                AHBPrescTable
+                0x080147a4       0x10 obj\debug\src\system_stm32f4xx.o
+                0x080147a4                AHBPrescTable
  .rodata.APBPrescTable
-                0x080147b0        0x8 obj\debug\src\system_stm32f4xx.o
-                0x080147b0                APBPrescTable
- .rodata        0x080147b8       0x10 obj\debug\src\usbd_conf.o
- .rodata        0x080147c8       0x56 obj\debug\src\usbd_desc.o
- *fill*         0x0801481e        0x2 
+                0x080147b4        0x8 obj\debug\src\system_stm32f4xx.o
+                0x080147b4                APBPrescTable
+ .rodata        0x080147bc       0x10 obj\debug\src\usbd_conf.o
+ .rodata        0x080147cc       0x56 obj\debug\src\usbd_desc.o
+ *fill*         0x08014822        0x2 
  .rodata.crc16_tab
-                0x08014820      0x200 obj\debug\src\vesc.o
-                0x08014820                crc16_tab
+                0x08014824      0x200 obj\debug\src\vesc.o
+                0x08014824                crc16_tab
  .rodata.str1.1
-                0x08014a20        0x2 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-impure.o)
- *fill*         0x08014a22        0x2 
+                0x08014a24        0x2 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-impure.o)
+ *fill*         0x08014a26        0x2 
  .rodata._global_impure_ptr
-                0x08014a24        0x4 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-impure.o)
-                0x08014a24                _global_impure_ptr
+                0x08014a28        0x4 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-impure.o)
+                0x08014a28                _global_impure_ptr
  .rodata.str1.1
-                0x08014a28       0x10 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-nano-vfprintf_float.o)
+                0x08014a2c       0x10 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-nano-vfprintf_float.o)
                                  0x12 (size before relaxing)
  .rodata.str1.1
-                0x08014a38       0x22 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-nano-vfprintf_i.o)
+                0x08014a3c       0x22 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-nano-vfprintf_i.o)
  .rodata.str1.1
-                0x08014a5a        0x5 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-nano-vfscanf_float.o)
- *fill*         0x08014a5f        0x1 
+                0x08014a5e        0x5 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-nano-vfscanf_float.o)
+ *fill*         0x08014a63        0x1 
  .rodata.fpinan.5403
-                0x08014a60       0x14 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-strtod.o)
+                0x08014a64       0x14 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-strtod.o)
  .rodata.str1.1
-                0x08014a74        0x5 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-strtod.o)
+                0x08014a78        0x5 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-strtod.o)
                                   0xc (size before relaxing)
  .rodata.fpi.5367
-                0x08014a74       0x14 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-strtod.o)
+                0x08014a78       0x14 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-strtod.o)
+ *fill*         0x08014a8c        0x4 
  .rodata.tinytens
-                0x08014a88       0x28 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-strtod.o)
+                0x08014a90       0x28 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-strtod.o)
  .rodata._ctype_
-                0x08014ab0      0x101 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-ctype_.o)
-                0x08014ab0                _ctype_
+                0x08014ab8      0x101 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-ctype_.o)
+                0x08014ab8                _ctype_
  .rodata.str1.1
-                0x08014bb1        0xd c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-dtoa.o)
+                0x08014bb9        0xd c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-dtoa.o)
                                   0xf (size before relaxing)
  .rodata.str1.1
-                0x08014bbe        0x8 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-locale.o)
+                0x08014bc6        0x8 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-locale.o)
                                   0xb (size before relaxing)
- *fill*         0x08014bc6        0x2 
+ *fill*         0x08014bce        0x2 
  .rodata.p05.5410
-                0x08014bc8        0xc c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-mprec.o)
- *fill*         0x08014bd4        0x4 
+                0x08014bd0        0xc c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-mprec.o)
+ *fill*         0x08014bdc        0x4 
  .rodata.__mprec_bigtens
-                0x08014bd8       0x28 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-mprec.o)
-                0x08014bd8                __mprec_bigtens
+                0x08014be0       0x28 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-mprec.o)
+                0x08014be0                __mprec_bigtens
  .rodata.__mprec_tens
-                0x08014c00       0xc8 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-mprec.o)
-                0x08014c00                __mprec_tens
+                0x08014c08       0xc8 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-mprec.o)
+                0x08014c08                __mprec_tens
  .rodata.str1.1
-                0x08014cc8       0x11 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-nano-svfprintf.o)
+                0x08014cd0       0x11 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-nano-svfprintf.o)
  .rodata.str1.1
-                0x08014cd9        0x4 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-nano-svfscanf.o)
- *fill*         0x08014cd9        0x3 
- .rodata        0x08014cdc        0xc c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-nano-vfscanf_i.o)
+                0x08014ce1        0x4 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-nano-svfscanf.o)
+ *fill*         0x08014ce1        0x3 
+ .rodata        0x08014ce4        0xc c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-nano-vfscanf_i.o)
  .rodata.str1.1
-                0x08014ce8       0x1b c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-nano-vfscanf_i.o)
- *fill*         0x08014d03        0x1 
+                0x08014cf0       0x1b c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-nano-vfscanf_i.o)
+ *fill*         0x08014d0b        0x1 
  .rodata.__sf_fake_stdin
-                0x08014d04       0x20 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-findfp.o)
-                0x08014d04                __sf_fake_stdin
+                0x08014d0c       0x20 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-findfp.o)
+                0x08014d0c                __sf_fake_stdin
  .rodata.__sf_fake_stdout
-                0x08014d24       0x20 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-findfp.o)
-                0x08014d24                __sf_fake_stdout
+                0x08014d2c       0x20 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-findfp.o)
+                0x08014d2c                __sf_fake_stdout
  .rodata.__sf_fake_stderr
-                0x08014d44       0x20 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-findfp.o)
-                0x08014d44                __sf_fake_stderr
+                0x08014d4c       0x20 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu\libg_n.a(lib_a-findfp.o)
+                0x08014d4c                __sf_fake_stderr
  *(.eh_frame*)
- .eh_frame      0x08014d64        0x0 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv7e-m/fpu/crtbegin.o
- .eh_frame      0x08014d64        0x4 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv7e-m/fpu/crtend.o
+ .eh_frame      0x08014d6c        0x0 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv7e-m/fpu/crtbegin.o
+ .eh_frame      0x08014d6c        0x4 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv7e-m/fpu/crtend.o
 
-.glue_7         0x08014d68        0x0
- .glue_7        0x08014d68        0x0 linker stubs
+.glue_7         0x08014d70        0x0
+ .glue_7        0x08014d70        0x0 linker stubs
 
-.glue_7t        0x08014d68        0x0
- .glue_7t       0x08014d68        0x0 linker stubs
+.glue_7t        0x08014d70        0x0
+ .glue_7t       0x08014d70        0x0 linker stubs
 
-.vfp11_veneer   0x08014d68        0x0
- .vfp11_veneer  0x08014d68        0x0 linker stubs
+.vfp11_veneer   0x08014d70        0x0
+ .vfp11_veneer  0x08014d70        0x0 linker stubs
 
-.v4_bx          0x08014d68        0x0
- .v4_bx         0x08014d68        0x0 linker stubs
+.v4_bx          0x08014d70        0x0
+ .v4_bx         0x08014d70        0x0 linker stubs
 
-.iplt           0x08014d68        0x0
- .iplt          0x08014d68        0x0 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv7e-m/fpu/crtbegin.o
+.iplt           0x08014d70        0x0
+ .iplt          0x08014d70        0x0 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv7e-m/fpu/crtbegin.o
 
 .ARM.extab
  *(.ARM.extab* .gnu.linkonce.armextab.*)
-                0x08014d68                __exidx_start = .
+                0x08014d70                __exidx_start = .
 
-.ARM.exidx      0x08014d68        0x8
+.ARM.exidx      0x08014d70        0x8
  *(.ARM.exidx* .gnu.linkonce.armexidx.*)
- .ARM.exidx     0x08014d68        0x8 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu/crt0.o
-                0x08014d70                __exidx_end = .
-                0x08014d70                __etext = .
+ .ARM.exidx     0x08014d70        0x8 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/../../../../arm-none-eabi/lib/armv7e-m/fpu/crt0.o
+                0x08014d78                __exidx_end = .
+                0x08014d78                __etext = .
 
-.rel.dyn        0x08014d70        0x0
- .rel.iplt      0x08014d70        0x0 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv7e-m/fpu/crtbegin.o
+.rel.dyn        0x08014d78        0x0
+ .rel.iplt      0x08014d78        0x0 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv7e-m/fpu/crtbegin.o
 
-.data           0x20000000      0x248 load address 0x08014d70
+.data           0x20000000      0x248 load address 0x08014d78
                 0x20000000                __data_start__ = .
  *(vtable)
  *(.data*)
@@ -16026,13 +16027,13 @@ LOAD c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-
                 0x20000248                . = ALIGN (0x4)
                 0x20000248                __data_end__ = .
 
-.jcr            0x20000248        0x0 load address 0x08014fb8
+.jcr            0x20000248        0x0 load address 0x08014fc0
  .jcr           0x20000248        0x0 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv7e-m/fpu/crtbegin.o
 
-.igot.plt       0x20000248        0x0 load address 0x08014fb8
+.igot.plt       0x20000248        0x0 load address 0x08014fc0
  .igot.plt      0x20000248        0x0 c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv7e-m/fpu/crtbegin.o
 
-.bss            0x20000248     0xd6f8 load address 0x08014fb8
+.bss            0x20000248     0xd6f8 load address 0x08014fc0
                 0x20000248                __bss_start__ = .
  *(.bss*)
  .bss           0x20000248       0x1c c:/program files (x86)/embitz/1.11/share/em_armgcc/bin/../lib/gcc/arm-none-eabi/5.4.1/armv7e-m/fpu/crtbegin.o

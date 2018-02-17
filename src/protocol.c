@@ -895,13 +895,13 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             writeProtocolText("\r\nFault:", endpoint);
             switch (vescvalues.frame.fault_code)
             {
-                case FAULT_CODE_NONE:               writeProtocolText("None\r\n", endpoint); break;
-                case FAULT_CODE_OVER_VOLTAGE:       writeProtocolText("Overvoltage\r\n", endpoint); break;
-                case FAULT_CODE_UNDER_VOLTAGE:      writeProtocolText("Undervoltage\r\n", endpoint); break;
-                case FAULT_CODE_DRV8302:            writeProtocolText("DRV8302\r\n", endpoint); break;
-                case FAULT_CODE_ABS_OVER_CURRENT:   writeProtocolText("Overcurrent\r\n", endpoint); break;
-                case FAULT_CODE_OVER_TEMP_FET:      writeProtocolText("OvertempFET\r\n", endpoint); break;
-                case FAULT_CODE_OVER_TEMP_MOTOR:    writeProtocolText("OvertempMotor\r\n", endpoint); break;
+                case FAULT_CODE_NONE:               writeProtocolText(" None\r\n", endpoint); break;
+                case FAULT_CODE_OVER_VOLTAGE:       writeProtocolText(" Overvoltage\r\n", endpoint); break;
+                case FAULT_CODE_UNDER_VOLTAGE:      writeProtocolText(" Undervoltage\r\n", endpoint); break;
+                case FAULT_CODE_DRV8302:            writeProtocolText(" DRV8302\r\n", endpoint); break;
+                case FAULT_CODE_ABS_OVER_CURRENT:   writeProtocolText(" Overcurrent\r\n", endpoint); break;
+                case FAULT_CODE_OVER_TEMP_FET:      writeProtocolText(" OvertempFET\r\n", endpoint); break;
+                case FAULT_CODE_OVER_TEMP_MOTOR:    writeProtocolText(" OvertempMotor\r\n", endpoint); break;
             }
 			writeProtocolOK(endpoint);
             break;
