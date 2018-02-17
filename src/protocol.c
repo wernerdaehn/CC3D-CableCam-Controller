@@ -132,6 +132,19 @@ void writeProtocolChar(char c, Endpoints endpoint)
 void writeProtocolDouble(double v, Endpoints endpoint)
 {
     char bufpd[80];
+    snprintf(bufpd, sizeof(bufpd), " %7.3lf", v);
+    int k = 0;
+    while(k < 40 && bufpd[k] != 0)
+    {
+        checksum_response ^= bufpd[k];
+        k++;
+    }
+    PrintSerial_string(bufpd, endpoint);
+}
+
+void writeProtocolFloat(float v, Endpoints endpoint)
+{
+    char bufpd[80];
     snprintf(bufpd, sizeof(bufpd), " %7.3f", v);
     int k = 0;
     while(k < 40 && bufpd[k] != 0)
@@ -854,27 +867,27 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
              */
             writeProtocolHead(PROTOCOL_VESC_STATUS, endpoint);
             writeProtocolText("\r\nTempFET[C]:", endpoint);
-            writeProtocolDouble(__REV16(vescvalues.frame.temp_fet_10) / 10.0f, endpoint);
+            writeProtocolFloat(__REV16(vescvalues.frame.temp_fet_10) / 10.0f, endpoint);
             writeProtocolText("\r\nTempMotor[C]:", endpoint);
-            writeProtocolDouble(__REV16(vescvalues.frame.temp_motor_10) / 10.0f, endpoint);
+            writeProtocolFloat(__REV16(vescvalues.frame.temp_motor_10) / 10.0f, endpoint);
             writeProtocolText("\r\nAvgMot[A]:", endpoint);
-            writeProtocolDouble(__REV(vescvalues.frame.avg_motor_current_100) / 100.0f, endpoint);
+            writeProtocolDouble(__REV(vescvalues.frame.avg_motor_current_100) / 100.0, endpoint);
             writeProtocolText("\r\nAvgInput[A]:", endpoint);
-            writeProtocolDouble(__REV(vescvalues.frame.avg_input_current_100) / 100.0f, endpoint);
+            writeProtocolDouble(__REV(vescvalues.frame.avg_input_current_100) / 100.0, endpoint);
             writeProtocolText("\r\nDuty[%]:", endpoint);
-            writeProtocolDouble(__REV16(vescvalues.frame.duty_now_1000) / 1000.0f, endpoint);
+            writeProtocolFloat(__REV16(vescvalues.frame.duty_now_1000) / 1000.0f, endpoint);
             writeProtocolText("\r\nrpm:", endpoint);
             writeProtocolLong(__REV(vescvalues.frame.rpm_1), endpoint);
             writeProtocolText("\r\nBatt[V]:", endpoint);
-            writeProtocolDouble(__REV16(vescvalues.frame.v_in_10) / 10.0f, endpoint);
+            writeProtocolFloat(__REV16(vescvalues.frame.v_in_10) / 10.0f, endpoint);
             writeProtocolText("\r\nConsumed[mAh]:", endpoint);
-            writeProtocolDouble(__REV(vescvalues.frame.amp_hours_10000) / 10.0f, endpoint);
+            writeProtocolDouble(__REV(vescvalues.frame.amp_hours_10000) / 10.0, endpoint);
             writeProtocolText("\r\nRegenBrake[mAh]:", endpoint);
-            writeProtocolDouble(__REV(vescvalues.frame.amp_hours_charged_10000) / 10.0f, endpoint);
+            writeProtocolDouble(__REV(vescvalues.frame.amp_hours_charged_10000) / 10.0, endpoint);
             writeProtocolText("\r\nConsumed[Wh]:", endpoint);
-            writeProtocolDouble(__REV(vescvalues.frame.watt_hours_10000) / 10000.0f, endpoint);
+            writeProtocolDouble(__REV(vescvalues.frame.watt_hours_10000) / 10000.0, endpoint);
             writeProtocolText("\r\nRegenBrake[Wh]:", endpoint);
-            writeProtocolDouble(__REV(vescvalues.frame.watt_hours_charged_10000) / 10000.0f, endpoint);
+            writeProtocolDouble(__REV(vescvalues.frame.watt_hours_charged_10000) / 10000.0, endpoint);
             writeProtocolText("\r\nTachometer:", endpoint);
             writeProtocolLong(__REV(vescvalues.frame.tachometer), endpoint);
             writeProtocolText("\r\nTachometerAbs:", endpoint);
