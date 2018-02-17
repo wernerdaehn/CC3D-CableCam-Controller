@@ -74,9 +74,15 @@ void writeProtocolInt(int16_t v, Endpoints endpoint);
 void writeProtocolLong(int32_t v, Endpoints endpoint);
 void writeProtocolHex(uint8_t v, Endpoints endpoint);
 int hexDigitToInt(char digit);
+int16_t rev16(int16_t input);
 
 void printDebugCycles(Endpoints endpoint);
 
+
+int16_t rev16(int16_t input)
+{
+    return (input >> 8) | (input << 8);
+}
 
 void initProtocol()
 {
@@ -867,19 +873,19 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
              */
             writeProtocolHead(PROTOCOL_VESC_STATUS, endpoint);
             writeProtocolText("\r\nTempFET[C]:", endpoint);
-            writeProtocolFloat(__REV16(vescvalues.frame.temp_fet_10) / 10.0f, endpoint);
+            writeProtocolFloat(rev16(vescvalues.frame.temp_fet_10) / 10.0f, endpoint);
             writeProtocolText("\r\nTempMotor[C]:", endpoint);
-            writeProtocolFloat(__REV16(vescvalues.frame.temp_motor_10) / 10.0f, endpoint);
+            writeProtocolFloat(rev16(vescvalues.frame.temp_motor_10) / 10.0f, endpoint);
             writeProtocolText("\r\nAvgMot[A]:", endpoint);
             writeProtocolDouble(__REV(vescvalues.frame.avg_motor_current_100) / 100.0, endpoint);
             writeProtocolText("\r\nAvgInput[A]:", endpoint);
             writeProtocolDouble(__REV(vescvalues.frame.avg_input_current_100) / 100.0, endpoint);
             writeProtocolText("\r\nDuty[%]:", endpoint);
-            writeProtocolFloat(__REV16(vescvalues.frame.duty_now_1000) / 1000.0f, endpoint);
+            writeProtocolFloat(rev16(vescvalues.frame.duty_now_1000) / 1000.0f, endpoint);
             writeProtocolText("\r\nrpm:", endpoint);
             writeProtocolLong(__REV(vescvalues.frame.rpm_1), endpoint);
             writeProtocolText("\r\nBatt[V]:", endpoint);
-            writeProtocolFloat(__REV16(vescvalues.frame.v_in_10) / 10.0f, endpoint);
+            writeProtocolFloat(rev16(vescvalues.frame.v_in_10) / 10.0f, endpoint);
             writeProtocolText("\r\nConsumed[mAh]:", endpoint);
             writeProtocolDouble(__REV(vescvalues.frame.amp_hours_10000) / 10.0, endpoint);
             writeProtocolText("\r\nRegenBrake[mAh]:", endpoint);
