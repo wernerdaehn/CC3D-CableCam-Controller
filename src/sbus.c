@@ -47,14 +47,6 @@ void initSBusData(uint8_t receivertype)
 {
     sbusdata.sbusLastValidFrame = 0L;
     sbusdata.receivertype = receivertype;
-    /*
-     * Set all values to zero. This makes sure that when swapping receivers, all values are reset.
-     * It is not perfect as it could be that the rc sent 16 channel values before and then suddenly only
-     */
-    for (int i=0; i<16; i++)
-    {
-        sbusdata.servovalues[i].duty = 0;
-    }
 }
 
 void setServoValues()

@@ -15,6 +15,7 @@
 #include "main.h"
 #include "vesc.h"
 
+
 #define COMMAND_START  '$'
 #define COMMAND_ARGUMENTS 'a'
 #define COMMAND_CHECKSUM '*'
@@ -226,11 +227,8 @@ void serialCom(Endpoints endpoint, char commandlinebuffer[])
                 c_state = COMMAND_START;
             }
         }
-        else if (c == '\r')
-        {
-            // ignore
-        }
-        else if (c == '\n')
+
+        else if (c == '\n' || c == '\r')
         {
             /*
              * The command line string contains a null-terminated string like "$I 1".

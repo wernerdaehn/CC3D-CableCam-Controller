@@ -3,7 +3,7 @@
 #include "usbd_cdc_if.h"
 
 char uart3_commandlinebuffer[RXBUFFERSIZE];
-uint16_t uart3_commandlinebuffer_pos = 0;
+int16_t uart3_commandlinebuffer_pos = 0;
 uint16_t uart3_bytes_scanned = 0;
 uint8_t uart3_rxbuffer_overflow = 0;
 

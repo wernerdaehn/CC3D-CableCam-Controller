@@ -99,7 +99,7 @@
   */
 
 char usb_commandlinebuffer[RXBUFFERSIZE];
-uint16_t usb_commandlinebuffer_pos = 0;
+int16_t usb_commandlinebuffer_pos = 0;
 
 /* Create buffer for reception and transmission           */
 /* It's up to user to redefine and/or remove those define */
@@ -418,7 +418,7 @@ uint16_t USB_ReceiveString()
             usb_commandlinebuffer_pos--;
             if (usb_commandlinebuffer_pos < 0)
             {
-                // Obviously extra backspace chars have to be ignored
+                // Obviously, extra backspace chars have to be ignored
                 usb_commandlinebuffer_pos = 0;
             }
         }
