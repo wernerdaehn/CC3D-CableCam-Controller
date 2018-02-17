@@ -112,7 +112,7 @@ _$m 1_ | Passthrough mode. Essentially output = input. All the control does is c
 _$m 2_ | Passthrough with speed limits. The stick movements is filtered through the acceleration and speed filter, thus being turned into a ramp. Enpoints are not considered.
 _$m 3_ | Passthough with speed limits & end points. In addition to the _$m 2_ mode, the end points are considered as well. The default mode, the mode that should be used all the time.
 _$n_ | Prints the neutral point of the input, the neutral range and the 100% range. Make sure that the neutral point is the same value _$i_ shows for the speed channel when the RC stick is in idle.
-_$n int int int_ | set the neutral point to the first value and the neutral range to the second. The third value is the maximum deflection from neutral. The default value of _$n 992 30 800_ would consider all stick values from 962 to 1022 as idle and values from 1023 to 1762 as thrust.
+_$n int int int_ | set the neutral point to the first value and the neutral range to the second. The third value is the maximum deflection from neutral. The default value of _$n 992 30 800_ would consider all stick values from 962 to 1022 as idle and values from 162 to 1762 as thrust.
 _$N_ | Prints the neutral point and range of the ESC output pwm signal. 
 _$N int int_ | sets the neutral point and range. The default _$N 1500 30_ creates a pwm signal with a puls width of 1500us in idle and to create movement overcomes the neutral range of the ESC by starting with 1530 (or 1470 for reverse). This should match the defaults of the ESC but ESC calibration is adviced. The better these values match the ESC, the faster the response times at start.
 _$p_ | Print the low endpoint, the high endpoint and the current position. 
@@ -124,16 +124,7 @@ _$v int int_ | Sets the max speed for the operational mode and the programming m
 _$w_ | Write all active settings to the EEPROM from which they are loaded at boot time. Active settings does include everything, even the start/end points.
 _$x_ | Print the exponential factor for the thrust stick input.
 _$x double_ | Set the exponential factor for the thrust input curve. A common input curve is a linear relationship between the stick position and the output signal. 100% stick means 100% output, 50% stick is 50% ouput signal. This behavior would require the factor to be set to 1.0. If the stick can send signals in 0.1% steps and the maximum RPMs are 50'000, the lowest possible resolution would be in 50RPM steps. Which is absolutely fine at higher speeds but at low speeds it does not allow fine control. The closer this factor is to zero, the fine grained low speeds can be controlled.
-_$1_ | Print the P component of the PID loop for positional control.
-_$1 double_ | Sets the P component of the PID loop for positional control, e.g. _$P 3.14_.
-_$2_ | Print the I component of the PID loop for positional control.
-_$2 double_ | Sets the I component of the PID loop for positional control, e.g. _$P 3.14_.
-_$3_ | Print the D component of the PID loop for positional control.
-_$3 double_ | Sets the D component of the PID loop for positional control, e.g. _$P 3.14_.
-_$c_ | Print all three components of the PID loop.
-_$c double double double_ | Sets all three components of the PID loop at once.
-_$f_ | Print the stick-to-hall-sensor-speed factor for positional control. In case of _$m 0_ the stick does no longer control the ESC value directly, instead it moves the target position. Hence it needs to know the conversion factor from stick level to velocity.
-_$f double_ | Sets the stick-to-hall-sensor-speed factor. A value of the default 0.01 means that the target position is increased by 500 steps per second if the stick has a value of 100. 
+
 
 Just to repeat: Every setting starting with _$1_ and below has no effect, except for the positional mode _$m 0_. And this mode should not be used for now.
 

@@ -68,5 +68,6 @@ void printSBUSChannels(Endpoints endpoint);
 int16_t getDuty(uint8_t channel);
 uint8_t* getSBUSFrameAddress(void);
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim);
+void initSBusData(uint8_t receivertype);
 
 #endif

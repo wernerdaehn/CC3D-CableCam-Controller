@@ -43,6 +43,20 @@ static sbusFrame_t sbusFrame;
 
 sbusData_t sbusdata;
 
+void initSBusData(uint8_t receivertype)
+{
+    sbusdata.sbusLastValidFrame = 0L;
+    sbusdata.receivertype = receivertype;
+    /*
+     * Set all values to zero. This makes sure that when swapping receivers, all values are reset.
+     * It is not perfect as it could be that the rc sent 16 channel values before and then suddenly only
+     */
+    for (int i=0; i<16; i++)
+    {
+        sbusdata.servovalues[i].duty = 0;
+    }
+}
+
 void setServoValues()
 {
     if (sbusFrame.frame.syncByte == SBUS_FRAME_BEGIN_BYTE && sbusFrame.frame.endByte == SBUS_FRAME_END_BYTE)
@@ -84,6 +98,7 @@ int16_t getDuty(uint8_t channel)
     }
     else if (channel < SBUS_MAX_CHANNEL)
     {
+        int16_t val = 0;
         if (sbusdata.servovalues[channel].duty == 0)
         {
             return 0;
@@ -91,12 +106,23 @@ int16_t getDuty(uint8_t channel)
         else if (sbusdata.receivertype == RECEIVER_TYPE_SERVO)
         {
             // 900 .. 1500 .. 2050
-            return sbusdata.servovalues[channel].duty-500;
+            val = sbusdata.servovalues[channel].duty-500;
         }
         else
         {
-            return sbusdata.servovalues[channel].duty;
+            val = sbusdata.servovalues[channel].duty;
         }
+
+        if (val >= activesettings.stick_neutral_pos - activesettings.stick_value_range - activesettings.stick_neutral_range &&
+            val <= activesettings.stick_neutral_pos + activesettings.stick_neutral_range + activesettings.stick_value_range)
+        {
+            return val;
+        }
+        else
+        {
+            return 0;
+        }
+
     }
     else
     {

@@ -12,6 +12,8 @@
 #include "eeprom.h"
 #include "usbd_cdc_if.h"
 #include "bluetooth.h"
+#include "main.h"
+#include "vesc.h"
 
 #define COMMAND_START  '$'
 #define COMMAND_ARGUMENTS 'a'
@@ -59,6 +61,7 @@ settings_t activesettings;
 controllerstatus_t controllerstatus;
 
 extern TIM_HandleTypeDef htim1;
+extern getvalues_t vescvalues;
 
 static uint8_t checksum_response;
 
@@ -663,12 +666,14 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             {
                 writeProtocolHead(PROTOCOL_INPUT_SOURCE, endpoint);
                 activesettings.receivertype = RECEIVER_TYPE_SUMPPM;
+                initPPMReceiver();
                 writeProtocolOK(endpoint);
             }
             else if (p == 1)
             {
                 writeProtocolHead(PROTOCOL_INPUT_SOURCE, endpoint);
                 activesettings.receivertype = RECEIVER_TYPE_SBUS;
+                initSBusReceiver();
                 writeProtocolOK(endpoint);
             }
             else
@@ -688,9 +693,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             {
                 writeProtocolText("(Receiver is of type SBus) ", endpoint);
             }
-            writeProtocolText("\r\nStoring all settings to eeprom\r\nReboot device to make the new receiver type active.\r\n", endpoint);
             writeProtocolOK(endpoint);
-            evaluateCommand(endpoint, "$w\n");
         }
         break;
     }
@@ -830,6 +833,68 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
 			}
 		}
 		break;
+    case PROTOCOL_VESC_STATUS:
+        {
+            /*
+             * The VESC status is requested in every vesc set erpm call, hence the values should be current
+             *      int16_t         temp_fet_10;                // 0x011a
+             *      int16_t         temp_motor_10;              // 0x00f3
+             *  	int32_t         avg_motor_current_100;      // 0x000001ba (7-10)
+             *  	int32_t         avg_input_current_100;      // 0x00000066 (11-14)
+             *      int32_t         avg_id_100;                 // 0x00000000 (15-18)
+             *      int32_t         avg_iq_100;                 // 0xfffffe46 (19-22)
+             *      int16_t         duty_now_1000;              // 0xfef8
+             *      int32_t         rpm_1;                      // 0xffffe02c (25-28)
+             *  	int16_t         v_in_10;                    // 0x0071
+             *      int32_t         amp_hours_10000;            // 0x0000002e (31-34)
+             *      int32_t         amp_hours_charged_10000;    // 0x00000000 (35-38)
+             *      int32_t         watt_hours_10000;           // 0x00000212 (39-42)
+             *      int32_t         watt_hours_charged_10000;   // 0x00000000 (43-46)
+             *      int32_t         tachometer;                 // 0xffffe0bb (47-50)
+             *      int32_t         tachometer_abs;             // 0x00003c2f (51-54)
+             *      vesc_fault_code fault_code;                 // 00
+             */
+            writeProtocolHead(PROTOCOL_VESC_STATUS, endpoint);
+            writeProtocolText("\r\nTempFET[C]:", endpoint);
+            writeProtocolDouble(__REV16(vescvalues.frame.temp_fet_10) / 10.0f, endpoint);
+            writeProtocolText("\r\nTempMotor[C]:", endpoint);
+            writeProtocolDouble(__REV16(vescvalues.frame.temp_motor_10) / 10.0f, endpoint);
+            writeProtocolText("\r\nAvgMot[A]:", endpoint);
+            writeProtocolDouble(__REV(vescvalues.frame.avg_motor_current_100) / 100.0f, endpoint);
+            writeProtocolText("\r\nAvgInput[A]:", endpoint);
+            writeProtocolDouble(__REV(vescvalues.frame.avg_input_current_100) / 100.0f, endpoint);
+            writeProtocolText("\r\nDuty[%]:", endpoint);
+            writeProtocolDouble(__REV16(vescvalues.frame.duty_now_1000) / 1000.0f, endpoint);
+            writeProtocolText("\r\nrpm:", endpoint);
+            writeProtocolLong(__REV(vescvalues.frame.rpm_1), endpoint);
+            writeProtocolText("\r\nBatt[V]:", endpoint);
+            writeProtocolDouble(__REV16(vescvalues.frame.v_in_10) / 10.0f, endpoint);
+            writeProtocolText("\r\nConsumed[mAh]:", endpoint);
+            writeProtocolDouble(__REV(vescvalues.frame.amp_hours_10000) / 10.0f, endpoint);
+            writeProtocolText("\r\nRegenBrake[mAh]:", endpoint);
+            writeProtocolDouble(__REV(vescvalues.frame.amp_hours_charged_10000) / 10.0f, endpoint);
+            writeProtocolText("\r\nConsumed[Wh]:", endpoint);
+            writeProtocolDouble(__REV(vescvalues.frame.watt_hours_10000) / 10000.0f, endpoint);
+            writeProtocolText("\r\nRegenBrake[Wh]:", endpoint);
+            writeProtocolDouble(__REV(vescvalues.frame.watt_hours_charged_10000) / 10000.0f, endpoint);
+            writeProtocolText("\r\nTachometer:", endpoint);
+            writeProtocolLong(__REV(vescvalues.frame.tachometer), endpoint);
+            writeProtocolText("\r\nTachometerAbs:", endpoint);
+            writeProtocolLong(__REV(vescvalues.frame.tachometer_abs), endpoint);
+            writeProtocolText("\r\nFault:", endpoint);
+            switch (vescvalues.frame.fault_code)
+            {
+                case FAULT_CODE_NONE:               writeProtocolText("None\r\n", endpoint); break;
+                case FAULT_CODE_OVER_VOLTAGE:       writeProtocolText("Overvoltage\r\n", endpoint); break;
+                case FAULT_CODE_UNDER_VOLTAGE:      writeProtocolText("Undervoltage\r\n", endpoint); break;
+                case FAULT_CODE_DRV8302:            writeProtocolText("DRV8302\r\n", endpoint); break;
+                case FAULT_CODE_ABS_OVER_CURRENT:   writeProtocolText("Overcurrent\r\n", endpoint); break;
+                case FAULT_CODE_OVER_TEMP_FET:      writeProtocolText("OvertempFET\r\n", endpoint); break;
+                case FAULT_CODE_OVER_TEMP_MOTOR:    writeProtocolText("OvertempMotor\r\n", endpoint); break;
+            }
+			writeProtocolOK(endpoint);
+            break;
+        }
     default:  // we do not know how to handle the (valid) message, indicate error MSP $M!
         writeProtocolError(ERROR_UNKNOWN_COMMAND, endpoint);
         break;
@@ -870,6 +935,7 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("$a [<int> <int>]                        set or print maximum allowed acceleration in normal and programming mode", endpoint);
     PrintlnSerial_string("$B                                      Configure the HC-05 Bluetooth module on FlexiPort (RX3/TX3)", endpoint);
     PrintlnSerial_string("$e [<long>]                             set or print maximum eRPMs as set in the VESC speed controller. 100% stick = this eRPM", endpoint);
+    PrintlnSerial_string("$E                                      print the status of the VESC ESC", endpoint);
     PrintlnSerial_string("$g [<double>]                           set or print the max positional error -> exceeding it causes an emergency stop", endpoint);
     PrintlnSerial_string("$i [[[[<int> <int> <int>]               set or print input channels for Speed, Programming Switch, Endpoint Switch,...", endpoint);
     PrintlnSerial_string("      <int>] <int>] <int>]                                              ...Max Accel, Max Speed, Mode", endpoint);

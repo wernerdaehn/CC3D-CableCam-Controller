@@ -247,34 +247,11 @@ int main(void)
 
     if (activesettings.receivertype == RECEIVER_TYPE_SBUS)
     {
-        MX_USART1_UART_Init();
-
-        /* Turn on interrupt for uart1/sbus */
-        HAL_UART_Receive_IT(&huart1, getSBUSFrameAddress(), SBUS_FRAME_SIZE);
-
-        /* Turn on SBUS Inverter */
-        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
-
-        /*
-         * The esc_output is based on the SBus signal (+- 800) and hence has to be scaled properly to be in +-700 range.
-         * The formula is 10/12 = 800*10/12 = 667
-         */
-        activesettings.esc_scale = ESC_STICK_SCALE*12/10;
+        initSBusReceiver();
     }
     else
     {
-        MX_TIM1_Init();
-
-        /* Turn off SBUS Inverter */
-        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
-
-        HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_3);
-        HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_4);
-        /*
-         * The esc_output is based on the SumPPM signal (+-400) and hence has to be scaled properly to be in +-700 range.
-         * The formula is 10/6 = 400*10/6 = 667
-         */
-        activesettings.esc_scale = ESC_STICK_SCALE*6/10;
+        initPPMReceiver();
     }
 
     initController();
@@ -702,6 +679,52 @@ static void MX_GPIO_Init(void)
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
+
+
+
+
+void initSBusReceiver()
+{
+    HAL_TIM_IC_Stop(&htim1, TIM_CHANNEL_3);
+    HAL_TIM_IC_Stop(&htim1, TIM_CHANNEL_4);
+
+    MX_USART1_UART_Init();
+
+    /* Turn on interrupt for uart1/sbus */
+    HAL_UART_Receive_IT(&huart1, getSBUSFrameAddress(), SBUS_FRAME_SIZE);
+
+    /* Turn on SBUS Inverter */
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
+
+    /*
+     * The esc_output is based on the SBus signal (+- 800) and hence has to be scaled properly to be in +-700 range.
+     * The formula is 10/12 = 800*10/12 = 667
+     */
+    activesettings.esc_scale = ESC_STICK_SCALE*12/10;
+    initSBusData(RECEIVER_TYPE_SBUS);
+}
+
+void initPPMReceiver()
+{
+    HAL_UART_DeInit(&huart1);
+
+    MX_TIM1_Init();
+
+    /* Turn off SBUS Inverter */
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
+
+    HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_3);
+    HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_4);
+    /*
+     * The esc_output is based on the SumPPM signal (+-400) and hence has to be scaled properly to be in +-700 range.
+     * The formula is 10/6 = 400*10/6 = 667
+     */
+    activesettings.esc_scale = ESC_STICK_SCALE*6/10;
+    initSBusData(RECEIVER_TYPE_SUMPPM);  // In case it is a servo only, the Timer Interrupt will recognize that and change the value
+}
+
+
+
 
 /**
   * @brief  This function is executed in case of error occurrence.

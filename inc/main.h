@@ -61,6 +61,9 @@
 #define LED_STATUS_OFF HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET)
 #define LED_STATUS_TOGGLE HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5)
 
+void initSBusReceiver(void);
+void initPPMReceiver(void);
+
 void _Error_Handler(char *, int);
 
 #define Error_Handler() _Error_Handler(__FILE__, __LINE__)

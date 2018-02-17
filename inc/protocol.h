@@ -7,6 +7,8 @@
 
 #define PROTOCOL_MAX_ACCEL        'a'   // 1 float argument
 #define PROTOCOL_BINARY           'b'   // Hidden command to print the binary active settings or play them back (Useful to quickly transfer settings)
+#define PROTOCOL_VESC_MAX_ERPM    'e'   // 1 int argument, the maximum eRPM value set in the VESC. Goal is that 100% throttle = this eRPM value
+#define PROTOCOL_VESC_STATUS      'E'   // no argument
 #define PROTOCOL_MAX_ERROR_DIST   'g'   // 1 float argument
 #define PROTOCOL_HELP		      'h'	// help
 #define PROTOCOL_INPUT_CHANNELS   'i'   // 3-5 int arguments for speed, command switch, end point button, max acceleration poti, may speed poti
@@ -20,7 +22,6 @@
 #define PROTOCOL_EEPROM_WRITE     'w'   // no argument
 #define PROTOCOL_MAX_SPEED        'v'   // 1 float argument
 #define PROTOCOL_D_CYCLES         'z'   // Hidden command to print the debug information about the values for each cycle
-#define PROTOCOL_VESC_MAX_ERPM    'e'   // 1 int argument, the maximum eRPM value set in the VESC. Goal is that 100% throttle = this eRPM value
 #define PROTOCOL_EXPO_FACTOR      'x'   // 1 float argument
 #define PROTOCOL_BLUETOOTH        'B'   // no argument
 
