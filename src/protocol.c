@@ -74,15 +74,16 @@ void writeProtocolInt(int16_t v, Endpoints endpoint);
 void writeProtocolLong(int32_t v, Endpoints endpoint);
 void writeProtocolHex(uint8_t v, Endpoints endpoint);
 int hexDigitToInt(char digit);
-int16_t rev16(int16_t input);
 
 void printDebugCycles(Endpoints endpoint);
 
 
-int16_t rev16(int16_t input)
+/*
+int16_t rev16(uint16_t input)
 {
-    return (input >> 8) | (input << 8);
+    return ((input) >> 8) | ((input) << 8);
 }
+*/
 
 void initProtocol()
 {
@@ -151,7 +152,7 @@ void writeProtocolDouble(double v, Endpoints endpoint)
 void writeProtocolFloat(float v, Endpoints endpoint)
 {
     char bufpd[80];
-    snprintf(bufpd, sizeof(bufpd), " %7.3f", v);
+    snprintf(bufpd, sizeof(bufpd), " %7.3f", (double) v);
     int k = 0;
     while(k < 40 && bufpd[k] != 0)
     {
@@ -160,6 +161,7 @@ void writeProtocolFloat(float v, Endpoints endpoint)
     }
     PrintSerial_string(bufpd, endpoint);
 }
+
 
 void writeProtocolInt(int16_t v, Endpoints endpoint)
 {
@@ -361,7 +363,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         argument_index = sscanf(&commandlinebuffer[2], "%lf", &d);
         if (argument_index == 1)
         {
-            if (d > 0.0f)
+            if (d > 0.0)
             {
                 activesettings.max_position_error = d;
                 writeProtocolHead(PROTOCOL_MAX_ERROR_DIST, endpoint);
@@ -802,7 +804,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         writeProtocolHead(PROTOCOL_BINARY, endpoint);
         writeProtocolChar(' ', endpoint);
         tempsettingspointer = (uint8_t *) &activesettings;
-        for (int pos=0; pos<sizeof(activesettings); pos++)
+        for (size_t pos=0; pos<sizeof(activesettings); pos++)
         {
             writeProtocolHex(tempsettingspointer[pos], endpoint);
         }
@@ -815,7 +817,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         argument_index = sscanf(&commandlinebuffer[2], "%lf", &d);
         if (argument_index == 1)
         {
-            if (d > 0.0f && d <= 1.0f)
+            if (d > 0.0 && d <= 1.0)
             {
                 activesettings.expo_factor = d;
                 writeProtocolHead(PROTOCOL_EXPO_FACTOR, endpoint);
@@ -873,31 +875,31 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
              */
             writeProtocolHead(PROTOCOL_VESC_STATUS, endpoint);
             writeProtocolText("\r\nTempFET[C]:", endpoint);
-            writeProtocolFloat(rev16(vescvalues.frame.temp_fet_10) / 10.0f, endpoint);
+            writeProtocolFloat(vesc_get_float(vescvalues.frame.temp_fet_10, 10.0f), endpoint);
             writeProtocolText("\r\nTempMotor[C]:", endpoint);
-            writeProtocolFloat(rev16(vescvalues.frame.temp_motor_10) / 10.0f, endpoint);
+            writeProtocolFloat(vesc_get_float(vescvalues.frame.temp_motor_10, 10.0f), endpoint);
             writeProtocolText("\r\nAvgMot[A]:", endpoint);
-            writeProtocolDouble(__REV(vescvalues.frame.avg_motor_current_100) / 100.0, endpoint);
+            writeProtocolDouble(vesc_get_double(vescvalues.frame.avg_motor_current_100, 100.0), endpoint);
             writeProtocolText("\r\nAvgInput[A]:", endpoint);
-            writeProtocolDouble(__REV(vescvalues.frame.avg_input_current_100) / 100.0, endpoint);
+            writeProtocolDouble(vesc_get_double(vescvalues.frame.avg_input_current_100, 100.0), endpoint);
             writeProtocolText("\r\nDuty[%]:", endpoint);
-            writeProtocolFloat(rev16(vescvalues.frame.duty_now_1000) / 1000.0f, endpoint);
+            writeProtocolFloat(vesc_get_float(vescvalues.frame.duty_now_1000, 1000.0f), endpoint);
             writeProtocolText("\r\nrpm:", endpoint);
-            writeProtocolLong(__REV(vescvalues.frame.rpm_1), endpoint);
+            writeProtocolLong(vesc_get_long(vescvalues.frame.rpm_1), endpoint);
             writeProtocolText("\r\nBatt[V]:", endpoint);
-            writeProtocolFloat(rev16(vescvalues.frame.v_in_10) / 10.0f, endpoint);
+            writeProtocolFloat(vesc_get_float(vescvalues.frame.v_in_10, 10.0f), endpoint);
             writeProtocolText("\r\nConsumed[mAh]:", endpoint);
-            writeProtocolDouble(__REV(vescvalues.frame.amp_hours_10000) / 10.0, endpoint);
+            writeProtocolDouble(vesc_get_double(vescvalues.frame.amp_hours_10000, 10.0), endpoint);
             writeProtocolText("\r\nRegenBrake[mAh]:", endpoint);
-            writeProtocolDouble(__REV(vescvalues.frame.amp_hours_charged_10000) / 10.0, endpoint);
+            writeProtocolDouble(vesc_get_double(vescvalues.frame.amp_hours_charged_10000, 10.0), endpoint);
             writeProtocolText("\r\nConsumed[Wh]:", endpoint);
-            writeProtocolDouble(__REV(vescvalues.frame.watt_hours_10000) / 10000.0, endpoint);
+            writeProtocolDouble(vesc_get_double(vescvalues.frame.watt_hours_10000, 10000.0), endpoint);
             writeProtocolText("\r\nRegenBrake[Wh]:", endpoint);
-            writeProtocolDouble(__REV(vescvalues.frame.watt_hours_charged_10000) / 10000.0, endpoint);
+            writeProtocolDouble(vesc_get_double(vescvalues.frame.watt_hours_charged_10000, 10000.0), endpoint);
             writeProtocolText("\r\nTachometer:", endpoint);
-            writeProtocolLong(__REV(vescvalues.frame.tachometer), endpoint);
+            writeProtocolLong(vesc_get_long(vescvalues.frame.tachometer), endpoint);
             writeProtocolText("\r\nTachometerAbs:", endpoint);
-            writeProtocolLong(__REV(vescvalues.frame.tachometer_abs), endpoint);
+            writeProtocolLong(vesc_get_long(vescvalues.frame.tachometer_abs), endpoint);
             writeProtocolText("\r\nFault:", endpoint);
             switch (vescvalues.frame.fault_code)
             {

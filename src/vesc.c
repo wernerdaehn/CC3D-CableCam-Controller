@@ -85,10 +85,33 @@ uint8_t* getRequestValuePacketFrameAddress(void)
     return vesc_rxbuffer;
 }
 
+float vesc_get_float(uint16_t uartfield, float scale)
+{
+    int16_t swapped = (int16_t) __REV16(uartfield);
+    return ((float) swapped)/scale;
+}
+
+double vesc_get_double(uint32_t uartfield, double scale)
+{
+    int32_t swapped = (int32_t) __REV(uartfield);
+    return ((double) swapped)/scale;
+}
+
+int32_t vesc_get_long(uint32_t uartfield)
+{
+    return (int32_t) __REV(uartfield);
+}
+
+int16_t vesc_get_int(uint16_t uartfield)
+{
+    return (int16_t) __REV16(uartfield);
+}
+
+
 void VESC_Output(int32_t esc_output)
 {
     VESC_request_values();
-    int32_t tacho_current = __REV(vescvalues.frame.tachometer_abs);
+    int32_t tacho_current = (int32_t) __REV(vescvalues.frame.tachometer_abs);
     if (esc_output == 0)
     {
         float diff = (float) (tacho_current - tacho_old);

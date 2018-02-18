@@ -47,7 +47,7 @@ double getSpeedPosSensor(void)
          * But the encoder is set to by an X4 type, so it updates the position on rising and falling flanks
          * of both channels whereas the interrupt fires on one pin and rising flank only - hence times 4.
          */
-        return 0.02f * 1000.0f * 4.0f / ((double) possensorduration);
+        return 0.02 * 1000.0 * 4.0 / ((double) possensorduration);
     }
 }
 
@@ -226,7 +226,7 @@ int32_t stickCycle(double pos, double brakedistance)
     // output = ( (1 - factor) x input^3 ) + ( factor x input )     with input and output between -1 and +1
 
     double stickpercent = ((double) tmp) / ((double) (activesettings.stick_value_range - activesettings.stick_neutral_range));
-    double outputpercent = ((1.0f - activesettings.expo_factor) * stickpercent * stickpercent * stickpercent) + (activesettings.expo_factor * stickpercent);
+    double outputpercent = ((1.0 - activesettings.expo_factor) * stickpercent * stickpercent * stickpercent) + (activesettings.expo_factor * stickpercent);
 
 
     int32_t value = ((int32_t) (outputpercent * ((double) (activesettings.stick_value_range - activesettings.stick_neutral_range)))) * ESC_STICK_SCALE;
@@ -655,14 +655,14 @@ void controllercycle()
     /* If the pos difference is less than 5.0f per 20ms, then the resolution is not high enough. In that
      * case use the time between to pos sensor interrupts to calculate a more precise speed.
      */
-    if (speed_current <= 5.0f)
+    if (speed_current <= 5.0)
     {
         speed = speed_timer;
     }
 
     double time_to_stop = abs_d((double) (getStick()/activesettings.stick_max_accel));
 
-    double distance_to_stop = speed * time_to_stop / 2.0f;
+    double distance_to_stop = speed * time_to_stop / 2.0;
     int32_t stick_filtered_value;
 
     stick_filtered_value = stickCycle(pos, distance_to_stop); // go through the stick position calculation with its limiters, max accel etc
@@ -695,7 +695,7 @@ void controllercycle()
      * Log the last CYCLEMONITOR_SAMPLE_COUNT events in memory.
      * If neither the cablecam moves nor should move (esc_output == 0), then there is nothing interesting to log
      */
-    if (speed != 0.0f || esc_output != 0)
+    if (speed != 0.0 || esc_output != 0)
     {
         cyclemonitor_t * sample = &controllerstatus.cyclemonitor[controllerstatus.cyclemonitor_position];
         sample->distance_to_stop = distance_to_stop;

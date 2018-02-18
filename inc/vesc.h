@@ -17,6 +17,10 @@ void VESC_set_currentbrake_current(float brake_current);
 void VESC_request_values(void);
 void VESC_IRQHandler(UART_HandleTypeDef *huart);
 uint8_t* getRequestValuePacketFrameAddress(void);
+float vesc_get_float(uint16_t uartfield, float scale);
+double vesc_get_double(uint32_t uartfield, double scale);
+int32_t vesc_get_long(uint32_t uartfield);
+int16_t vesc_get_int(uint16_t uartfield);
 
 
 typedef enum {
@@ -35,22 +39,23 @@ typedef enum {
 // 02 3a 04 01 1a 00 f3 00 00 01 ba 00 00 00 66 00 00 00 00 ff ff fe 46 fe f8 ff ff e0 2c 00 71 00 00 00 2e 00 00 00 00 00 00 02 12 00 00 00 00 ff ff e0 bb 00 00 3c 2f 00 09 69 58 d0 cc 6f 03
 // getvalues_s size = 1*1 + 4*2 + 11*4 = 1 + 8 + 44 = 53
 // 0x3a = 58
+// The struct is using uint's at this point in time because they bytes have not been swapped big/little endian.
 struct getvalues_s {
-    int16_t         temp_fet_10;                // 0x011a
-	int16_t         temp_motor_10;              // 0x00f3
-	int32_t         avg_motor_current_100;      // 0x000001ba (7-10)
-	int32_t         avg_input_current_100;      // 0x00000066 (11-14)
-    int32_t         avg_id_100;                 // 0x00000000 (15-18)
-    int32_t         avg_iq_100;                 // 0xfffffe46 (19-22)
-    int16_t         duty_now_1000;              // 0xfef8
-    int32_t         rpm_1;                      // 0xffffe02c (25-28)
-	int16_t         v_in_10;                    // 0x0071
-    int32_t         amp_hours_10000;            // 0x0000002e (31-34)
-    int32_t         amp_hours_charged_10000;    // 0x00000000 (35-38)
-    int32_t         watt_hours_10000;           // 0x00000212 (39-42)
-    int32_t         watt_hours_charged_10000;   // 0x00000000 (43-46)
-    int32_t         tachometer;                 // 0xffffe0bb (47-50)
-    int32_t         tachometer_abs;             // 0x00003c2f (51-54)
+    uint16_t         temp_fet_10;                // 0x011a
+	uint16_t         temp_motor_10;              // 0x00f3
+	uint32_t         avg_motor_current_100;      // 0x000001ba (7-10)
+	uint32_t         avg_input_current_100;      // 0x00000066 (11-14)
+    uint32_t         avg_id_100;                 // 0x00000000 (15-18)
+    uint32_t         avg_iq_100;                 // 0xfffffe46 (19-22)
+    uint16_t         duty_now_1000;              // 0xfef8
+    uint32_t         rpm_1;                      // 0xffffe02c (25-28)
+	uint16_t         v_in_10;                    // 0x0071
+    uint32_t         amp_hours_10000;            // 0x0000002e (31-34)
+    uint32_t         amp_hours_charged_10000;    // 0x00000000 (35-38)
+    uint32_t         watt_hours_10000;           // 0x00000212 (39-42)
+    uint32_t         watt_hours_charged_10000;   // 0x00000000 (43-46)
+    uint32_t         tachometer;                 // 0xffffe0bb (47-50)
+    uint32_t         tachometer_abs;             // 0x00003c2f (51-54)
     vesc_fault_code fault_code;                 // 00
     // more unknown data
 } __attribute__ ((__packed__));

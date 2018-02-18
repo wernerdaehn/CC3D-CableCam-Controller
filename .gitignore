@@ -45,3 +45,5 @@ Temporary Items
 *.o
 *.d
 
+*.cscope_file_list
+cscope.out

@@ -235,9 +235,9 @@ int main(void)
         }
 
         // With firmware 20171210 the expo_factor got added
-        if (activesettings.expo_factor <= 0.0f || activesettings.expo_factor > 1.0f || isnan(activesettings.expo_factor))
+        if (activesettings.expo_factor <= 0.0 || activesettings.expo_factor > 1.0 || isnan(activesettings.expo_factor))
         {
-            activesettings.expo_factor = 0.1f;
+            activesettings.expo_factor = 0.1;
         }
     }
     else
