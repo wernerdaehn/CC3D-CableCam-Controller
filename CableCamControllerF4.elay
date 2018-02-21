@@ -16,6 +16,16 @@
 			<Cursor1 position="210629" topLine="5724" />
 		</Cursor>
 	</File>
+	<File name="cmsis\Include\cmsis_armcc_V6.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="25393" topLine="777" />
+		</Cursor>
+	</File>
+	<File name="cmsis\Include\cmsis_gcc.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="14151" topLine="0" />
+		</Cursor>
+	</File>
 	<File name="cmsis\Include\core_cm4.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="8498" topLine="165" />
@@ -96,9 +106,9 @@
 			<Cursor1 position="4425" topLine="75" />
 		</Cursor>
 	</File>
-	<File name="inc\vesc.h" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="inc\vesc.h" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2401" topLine="9" />
+			<Cursor1 position="690" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="Middlewares\ST\STM32_USB_Device_Library\Class\CDC\Src\usbd_cdc.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -111,7 +121,7 @@
 			<Cursor1 position="2376" topLine="40" />
 		</Cursor>
 	</File>
-	<File name="src\bluetooth.c" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\bluetooth.c" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="1198" topLine="3" />
 		</Cursor>
@@ -121,9 +131,9 @@
 			<Cursor1 position="495" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\controller.c" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="-1" zoom_2="0">
+	<File name="src\controller.c" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="-1" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="27609" topLine="645" />
+			<Cursor1 position="27916" topLine="666" />
 		</Cursor>
 	</File>
 	<File name="src\eeprom.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -131,19 +141,19 @@
 			<Cursor1 position="1614" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\main.c" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\main.c" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="3014" topLine="9" />
+			<Cursor1 position="24793" topLine="704" />
 		</Cursor>
 	</File>
-	<File name="src\protocol.c" open="1" top="1" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\protocol.c" open="1" top="1" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="29826" topLine="842" />
+			<Cursor1 position="32133" topLine="870" />
 		</Cursor>
 	</File>
-	<File name="src\sbus.c" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\sbus.c" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="991" topLine="22" />
+			<Cursor1 position="1634" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="src\serial_print.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -183,7 +193,7 @@
 	</File>
 	<File name="src\uart_callback.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="4253" topLine="81" />
+			<Cursor1 position="4253" topLine="37" />
 		</Cursor>
 	</File>
 	<File name="src\usb_device.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -191,9 +201,9 @@
 			<Cursor1 position="1431" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\usbd_cdc_if.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\usbd_cdc_if.c" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="14511" topLine="372" />
+			<Cursor1 position="12622" topLine="320" />
 		</Cursor>
 	</File>
 	<File name="src\usbd_conf.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -208,7 +218,7 @@
 	</File>
 	<File name="src\vesc.c" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2637" topLine="140" />
+			<Cursor1 position="4082" topLine="58" />
 		</Cursor>
 	</File>
 	<File name="stm32f405rg_flash.ld" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">

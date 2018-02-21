@@ -52,7 +52,7 @@ static char * error_string[] = {"other errors",
                                 "eeprom save failed",
                                 "neutral values outside 1400..1600?!?",
                                 "esc direction is either +1 or -1",
-                                "allowed modes are 0..absolute, 1..braking at endpoints, 2..passthrough",
+                                "allowed modes are 1 -> passthrough, 2 -> plus limiter, 3 -> plus endpoints",
                                 "configuration of the bluetooth module failed",
                                 "cannot configure serial bluetooth module from its own serial line",
                                 "invalid value for provided argument(s)"
@@ -74,6 +74,12 @@ void writeProtocolInt(int16_t v, Endpoints endpoint);
 void writeProtocolLong(int32_t v, Endpoints endpoint);
 void writeProtocolHex(uint8_t v, Endpoints endpoint);
 int hexDigitToInt(char digit);
+
+uint8_t check_for_neutral_is_in_the_middle(sbusData_t * rcavg, sbusData_t * rcneutral, uint8_t channel, Endpoints endpoint);
+uint8_t check_for_no_input_change(sbusData_t * rcmin, sbusData_t * rcmax, Endpoints endpoint);
+uint8_t check_for_multiple_channels_changed(sbusData_t * rcmin, sbusData_t * rcmax, uint8_t *channel, Endpoints endpoint);
+void getDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, sbusData_t * rcavg, uint32_t timeout, Endpoints endpoint);
+void printChannelDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, Endpoints endpoint);
 
 void printDebugCycles(Endpoints endpoint);
 
@@ -328,14 +334,14 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
     {
     case PROTOCOL_MAX_ACCEL:
     {
-        int16_t p[2];
-        argument_index = sscanf(&commandlinebuffer[2], "%hd %hd", &p[0], &p[1]);
+        float p[2];
+        argument_index = sscanf(&commandlinebuffer[2], "%f %f", &p[0], &p[1]);
         if (argument_index == 2)
         {
-            if (p[0] > 0 && p[1] > 0)
+            if (p[0] > 0.0f && p[1] > 0.0f && p[0] < 1.0f && p[1] < 1.0f)
             {
-                activesettings.stick_max_accel = p[0];
-                activesettings.stick_max_accel_safemode = p[1];
+                activesettings.stick_max_accel = p[0]*CONTROLLERLOOPTIME_FLOAT;
+                activesettings.stick_max_accel_safemode = p[1]*CONTROLLERLOOPTIME_FLOAT;
                 writeProtocolHead(PROTOCOL_MAX_ACCEL, endpoint);
                 writeProtocolOK(endpoint);
             }
@@ -347,8 +353,8 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         else if (argument_index <= 0)
         {
             writeProtocolHead(PROTOCOL_MAX_ACCEL, endpoint);
-            writeProtocolInt(activesettings.stick_max_accel, endpoint);
-            writeProtocolInt(activesettings.stick_max_accel_safemode, endpoint);
+            writeProtocolFloat(activesettings.stick_max_accel/CONTROLLERLOOPTIME_FLOAT, endpoint);
+            writeProtocolFloat(activesettings.stick_max_accel_safemode/CONTROLLERLOOPTIME_FLOAT, endpoint);
             writeProtocolOK(endpoint);
         }
         else
@@ -359,11 +365,11 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
     }
     case PROTOCOL_MAX_ERROR_DIST:
     {
-        double d;
-        argument_index = sscanf(&commandlinebuffer[2], "%lf", &d);
+        float d;
+        argument_index = sscanf(&commandlinebuffer[2], "%f", &d);
         if (argument_index == 1)
         {
-            if (d > 0.0)
+            if (d > 0.0f)
             {
                 activesettings.max_position_error = d;
                 writeProtocolHead(PROTOCOL_MAX_ERROR_DIST, endpoint);
@@ -377,7 +383,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         else
         {
             writeProtocolHead(PROTOCOL_MAX_ERROR_DIST, endpoint);
-            writeProtocolInt(activesettings.max_position_error, endpoint);
+            writeProtocolFloat(activesettings.max_position_error, endpoint);
             writeProtocolOK(endpoint);
         }
         break;
@@ -387,18 +393,18 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         writeProtocolLong(activesettings.pos_start, endpoint);
         writeProtocolLong(activesettings.pos_end, endpoint);
         writeProtocolLong(getPos(), endpoint);
-        writeProtocolDouble(getSpeedPosDifference(), endpoint);
-        writeProtocolDouble(getSpeedPosSensor(), endpoint);
+        writeProtocolFloat(getSpeedPosDifference(), endpoint);
+        writeProtocolFloat(getSpeedPosSensor(), endpoint);
         writeProtocolOK(endpoint);
         break;
     case PROTOCOL_MAX_SPEED:
     {
-        int16_t p[2];
-        argument_index = sscanf(&commandlinebuffer[2], "%hd %hd", &p[0], &p[1]);
+        float p[2];
+        argument_index = sscanf(&commandlinebuffer[2], "%f %f", &p[0], &p[1]);
 
         if (argument_index == 2)
         {
-            if (p[0] > 0 && p[1] > 0)
+            if (p[0] > 0.0f && p[1] > 0.0f && p[0] <= 1.0f && p[1] < 1.0f)
             {
                 activesettings.stick_max_speed = p[0];
                 activesettings.stick_max_speed_safemode = p[1];
@@ -413,8 +419,8 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         else if (argument_index <= 0)
         {
             writeProtocolHead(PROTOCOL_MAX_SPEED, endpoint);
-            writeProtocolInt(activesettings.stick_max_speed, endpoint);
-            writeProtocolInt(activesettings.stick_max_speed_safemode, endpoint);
+            writeProtocolFloat(activesettings.stick_max_speed, endpoint);
+            writeProtocolFloat(activesettings.stick_max_speed_safemode, endpoint);
             writeProtocolOK(endpoint);
         }
         else
@@ -446,7 +452,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         int16_t p[6];
         argument_index = sscanf(&commandlinebuffer[2], "%hd %hd %hd %hd %hd %hd", &p[0], &p[1], &p[2], &p[3], &p[4], &p[5]);
 
-        if (argument_index >= 3)
+        if (argument_index >= 1)
         {
             if (p[0] > 0 && p[0] <= SBUS_MAX_CHANNEL &&
                     p[1] > 0 && p[1] <= SBUS_MAX_CHANNEL &&
@@ -454,12 +460,33 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                     p[0] != p[1] && p[0] != p[2] && p[1] != p[2])
             {
                 activesettings.rc_channel_speed = p[0]-1;
-                activesettings.rc_channel_programming = p[1]-1;
-                activesettings.rc_channel_endpoint = p[2]-1;
+
                 writeProtocolHead(PROTOCOL_INPUT_CHANNELS, endpoint);
                 writeProtocolInt(activesettings.rc_channel_speed+1, endpoint);
-                writeProtocolInt(activesettings.rc_channel_programming+1, endpoint);
-                writeProtocolInt(activesettings.rc_channel_endpoint+1, endpoint);
+                if (argument_index >= 2)
+                {
+                    if (p[1] > 0 && p[1] <= SBUS_MAX_CHANNEL)
+                    {
+                        activesettings.rc_channel_programming = p[1]-1;
+                        writeProtocolInt(activesettings.rc_channel_programming+1, endpoint);
+                    }
+                    else
+                    {
+                        activesettings.rc_channel_max_accel = 255; // not used
+                    }
+                }
+                if (argument_index >= 4)
+                {
+                    if (p[2] > 0 && p[2] <= SBUS_MAX_CHANNEL)
+                    {
+                        activesettings.rc_channel_endpoint = p[2]-1;
+                        writeProtocolInt(activesettings.rc_channel_endpoint+1, endpoint);
+                    }
+                    else
+                    {
+                        activesettings.rc_channel_max_accel = 255; // not used
+                    }
+                }
                 if (argument_index >= 4)
                 {
                     if (p[3] > 0 && p[3] <= SBUS_MAX_CHANNEL)
@@ -514,13 +541,16 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             writeProtocolInt(activesettings.rc_channel_mode+1, endpoint);
             writeProtocolText("\r\n", endpoint);
 
+            writeProtocolText("last RC signal received", endpoint);
+            writeProtocolLong(HAL_GetTick() - sbusdata.sbusLastValidFrame, endpoint);
+            writeProtocolText("ms ago\r\n", endpoint);
             int i = 0;
             for (i=0; i<SBUS_MAX_CHANNEL; i++)
             {
-                writeProtocolText("last valid RC signal for channel ", endpoint);
+                writeProtocolText("channel", endpoint);
                 writeProtocolInt(i+1, endpoint);
                 writeProtocolText("=", endpoint);
-                writeProtocolInt(getDuty(i), endpoint);
+                writeProtocolInt(sbusdata.servovalues[i].duty, endpoint);
                 if (i == activesettings.rc_channel_speed)
                 {
                     writeProtocolText(" (used as speed signal input)", endpoint);
@@ -595,16 +625,17 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
     }
     case PROTOCOL_ESC_NEUTRAL:
     {
-        int16_t p[2];
-        argument_index = sscanf(&commandlinebuffer[2], "%hd %hd", &p[0], &p[1]);
+        int16_t p[3];
+        argument_index = sscanf(&commandlinebuffer[2], "%hd %hd %hd", &p[0], &p[1], &p[2]);
         if (argument_index == 2)
         {
             if (p[0] > 500 && p[0] < 2000 &&
-                    p[1] > 0 && p[1] < 100)
+                    p[1] > 0 && p[1] < 100 && p[2] > 300 && p[2] < 900)
             {
                 writeProtocolHead(PROTOCOL_ESC_NEUTRAL, endpoint);
                 activesettings.esc_neutral_pos = p[0];
                 activesettings.esc_neutral_range = p[1];
+                activesettings.esc_value_range = p[2];
                 writeProtocolOK(endpoint);
             }
             else
@@ -617,6 +648,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             writeProtocolHead(PROTOCOL_ESC_NEUTRAL, endpoint);
             writeProtocolInt(activesettings.esc_neutral_pos, endpoint);
             writeProtocolInt(activesettings.esc_neutral_range, endpoint);
+            writeProtocolInt(activesettings.esc_value_range, endpoint);
             writeProtocolOK(endpoint);
         }
         else
@@ -634,7 +666,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             if (p == 1 || p == -1 || p == 0)
             {
                 writeProtocolHead(PROTOCOL_ROTATION_DIR, endpoint);
-                activesettings.esc_direction = p;
+                activesettings.esc_direction = (float) p;
                 writeProtocolOK(endpoint);
             }
             else
@@ -645,7 +677,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         else
         {
             writeProtocolHead(PROTOCOL_ROTATION_DIR, endpoint);
-            writeProtocolInt(activesettings.esc_direction, endpoint);
+            writeProtocolInt( (int16_t) activesettings.esc_direction, endpoint);
             writeProtocolOK(endpoint);
         }
         break;
@@ -813,11 +845,11 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
     }
     case PROTOCOL_EXPO_FACTOR:
     {
-        double d;
-        argument_index = sscanf(&commandlinebuffer[2], "%lf", &d);
+        float d;
+        argument_index = sscanf(&commandlinebuffer[2], "%f", &d);
         if (argument_index == 1)
         {
-            if (d > 0.0 && d <= 1.0)
+            if (d > 0.0f && d <= 1.0f)
             {
                 activesettings.expo_factor = d;
                 writeProtocolHead(PROTOCOL_EXPO_FACTOR, endpoint);
@@ -832,92 +864,383 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         else
         {
             writeProtocolHead(PROTOCOL_EXPO_FACTOR, endpoint);
-            writeProtocolDouble(activesettings.expo_factor, endpoint);
+            writeProtocolFloat(activesettings.expo_factor, endpoint);
             writeProtocolOK(endpoint);
         }
         break;
     }
 	case PROTOCOL_BLUETOOTH:
-		{
-			if (endpoint == EndPoint_USB) {
-				writeProtocolHead(PROTOCOL_BLUETOOTH, endpoint);
-				writeProtocolText("configure BT module:", endpoint);
-				if (configure_bt_module() == 1) {
-					writeProtocolOK(endpoint);
-				} else {
-					writeProtocolError(ERROR_BT_CONFIG_FAILED, endpoint);
-				}
-			} else {
-				writeProtocolError(ERROR_BT_NOT_FROM_USB, endpoint);
-			}
-		}
-		break;
-    case PROTOCOL_VESC_STATUS:
-        {
-            /*
-             * The VESC status is requested in every vesc set erpm call, hence the values should be current
-             *      int16_t         temp_fet_10;                // 0x011a
-             *      int16_t         temp_motor_10;              // 0x00f3
-             *  	int32_t         avg_motor_current_100;      // 0x000001ba (7-10)
-             *  	int32_t         avg_input_current_100;      // 0x00000066 (11-14)
-             *      int32_t         avg_id_100;                 // 0x00000000 (15-18)
-             *      int32_t         avg_iq_100;                 // 0xfffffe46 (19-22)
-             *      int16_t         duty_now_1000;              // 0xfef8
-             *      int32_t         rpm_1;                      // 0xffffe02c (25-28)
-             *  	int16_t         v_in_10;                    // 0x0071
-             *      int32_t         amp_hours_10000;            // 0x0000002e (31-34)
-             *      int32_t         amp_hours_charged_10000;    // 0x00000000 (35-38)
-             *      int32_t         watt_hours_10000;           // 0x00000212 (39-42)
-             *      int32_t         watt_hours_charged_10000;   // 0x00000000 (43-46)
-             *      int32_t         tachometer;                 // 0xffffe0bb (47-50)
-             *      int32_t         tachometer_abs;             // 0x00003c2f (51-54)
-             *      vesc_fault_code fault_code;                 // 00
-             */
-            writeProtocolHead(PROTOCOL_VESC_STATUS, endpoint);
-            writeProtocolText("\r\nTempFET[C]:", endpoint);
-            writeProtocolFloat(vesc_get_float(vescvalues.frame.temp_fet_10, 10.0f), endpoint);
-            writeProtocolText("\r\nTempMotor[C]:", endpoint);
-            writeProtocolFloat(vesc_get_float(vescvalues.frame.temp_motor_10, 10.0f), endpoint);
-            writeProtocolText("\r\nAvgMot[A]:", endpoint);
-            writeProtocolDouble(vesc_get_double(vescvalues.frame.avg_motor_current_100, 100.0), endpoint);
-            writeProtocolText("\r\nAvgInput[A]:", endpoint);
-            writeProtocolDouble(vesc_get_double(vescvalues.frame.avg_input_current_100, 100.0), endpoint);
-            writeProtocolText("\r\nDuty[%]:", endpoint);
-            writeProtocolFloat(vesc_get_float(vescvalues.frame.duty_now_1000, 1000.0f), endpoint);
-            writeProtocolText("\r\nrpm:", endpoint);
-            writeProtocolLong(vesc_get_long(vescvalues.frame.rpm_1), endpoint);
-            writeProtocolText("\r\nBatt[V]:", endpoint);
-            writeProtocolFloat(vesc_get_float(vescvalues.frame.v_in_10, 10.0f), endpoint);
-            writeProtocolText("\r\nConsumed[mAh]:", endpoint);
-            writeProtocolDouble(vesc_get_double(vescvalues.frame.amp_hours_10000, 10.0), endpoint);
-            writeProtocolText("\r\nRegenBrake[mAh]:", endpoint);
-            writeProtocolDouble(vesc_get_double(vescvalues.frame.amp_hours_charged_10000, 10.0), endpoint);
-            writeProtocolText("\r\nConsumed[Wh]:", endpoint);
-            writeProtocolDouble(vesc_get_double(vescvalues.frame.watt_hours_10000, 10000.0), endpoint);
-            writeProtocolText("\r\nRegenBrake[Wh]:", endpoint);
-            writeProtocolDouble(vesc_get_double(vescvalues.frame.watt_hours_charged_10000, 10000.0), endpoint);
-            writeProtocolText("\r\nTachometer:", endpoint);
-            writeProtocolLong(vesc_get_long(vescvalues.frame.tachometer), endpoint);
-            writeProtocolText("\r\nTachometerAbs:", endpoint);
-            writeProtocolLong(vesc_get_long(vescvalues.frame.tachometer_abs), endpoint);
-            writeProtocolText("\r\nFault:", endpoint);
-            switch (vescvalues.frame.fault_code)
-            {
-                case FAULT_CODE_NONE:               writeProtocolText(" None\r\n", endpoint); break;
-                case FAULT_CODE_OVER_VOLTAGE:       writeProtocolText(" Overvoltage\r\n", endpoint); break;
-                case FAULT_CODE_UNDER_VOLTAGE:      writeProtocolText(" Undervoltage\r\n", endpoint); break;
-                case FAULT_CODE_DRV8302:            writeProtocolText(" DRV8302\r\n", endpoint); break;
-                case FAULT_CODE_ABS_OVER_CURRENT:   writeProtocolText(" Overcurrent\r\n", endpoint); break;
-                case FAULT_CODE_OVER_TEMP_FET:      writeProtocolText(" OvertempFET\r\n", endpoint); break;
-                case FAULT_CODE_OVER_TEMP_MOTOR:    writeProtocolText(" OvertempMotor\r\n", endpoint); break;
+    {
+        if (endpoint == EndPoint_USB) {
+            writeProtocolHead(PROTOCOL_BLUETOOTH, endpoint);
+            writeProtocolText("configure BT module:", endpoint);
+            if (configure_bt_module() == 1) {
+                writeProtocolOK(endpoint);
+            } else {
+                writeProtocolError(ERROR_BT_CONFIG_FAILED, endpoint);
             }
-			writeProtocolOK(endpoint);
-            break;
+        } else {
+            writeProtocolError(ERROR_BT_NOT_FROM_USB, endpoint);
         }
+    }
+    break;
+	case PROTOCOL_VESC_BRAKE:
+    {
+        int16_t p[3];
+        argument_index = sscanf(&commandlinebuffer[2], "%hd %hd %hd", &p[0], &p[1], &p[2]);
+        if (argument_index == 3)
+        {
+            if (p[0] >= 0 && p[1] >= 0 && p[2] >= 0)
+            {
+                activesettings.vesc_brake_current = p[0];
+                activesettings.vesc_brake_handbrake = p[1];
+                activesettings.vesc_brake_min_speed = p[2];
+                writeProtocolHead(PROTOCOL_VESC_BRAKE, endpoint);
+                writeProtocolOK(endpoint);
+            }
+            else
+            {
+                writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                return;
+            }
+         }
+        else
+        {
+            writeProtocolHead(PROTOCOL_VESC_BRAKE, endpoint);
+            writeProtocolInt(activesettings.vesc_brake_current, endpoint);
+            writeProtocolInt(activesettings.vesc_brake_handbrake, endpoint);
+            writeProtocolInt(activesettings.vesc_brake_min_speed, endpoint);
+            writeProtocolOK(endpoint);
+        }
+        break;
+    }
+    case PROTOCOL_VESC_STATUS:
+    {
+        /*
+         * The VESC status is requested in every vesc set erpm call, hence the values should be current
+         *      int16_t         temp_fet_10;                // 0x011a
+         *      int16_t         temp_motor_10;              // 0x00f3
+         *  	int32_t         avg_motor_current_100;      // 0x000001ba (7-10)
+         *  	int32_t         avg_input_current_100;      // 0x00000066 (11-14)
+         *      int32_t         avg_id_100;                 // 0x00000000 (15-18)
+         *      int32_t         avg_iq_100;                 // 0xfffffe46 (19-22)
+         *      int16_t         duty_now_1000;              // 0xfef8
+         *      int32_t         rpm_1;                      // 0xffffe02c (25-28)
+         *  	int16_t         v_in_10;                    // 0x0071
+         *      int32_t         amp_hours_10000;            // 0x0000002e (31-34)
+         *      int32_t         amp_hours_charged_10000;    // 0x00000000 (35-38)
+         *      int32_t         watt_hours_10000;           // 0x00000212 (39-42)
+         *      int32_t         watt_hours_charged_10000;   // 0x00000000 (43-46)
+         *      int32_t         tachometer;                 // 0xffffe0bb (47-50)
+         *      int32_t         tachometer_abs;             // 0x00003c2f (51-54)
+         *      vesc_fault_code fault_code;                 // 00
+         */
+        writeProtocolHead(PROTOCOL_VESC_STATUS, endpoint);
+        writeProtocolText("\r\nTempFET[C]:", endpoint);
+        writeProtocolFloat(vesc_get_float(vescvalues.frame.temp_fet_10, 10.0f), endpoint);
+        writeProtocolText("\r\nTempMotor[C]:", endpoint);
+        writeProtocolFloat(vesc_get_float(vescvalues.frame.temp_motor_10, 10.0f), endpoint);
+        writeProtocolText("\r\nAvgMot[A]:", endpoint);
+        writeProtocolDouble(vesc_get_double(vescvalues.frame.avg_motor_current_100, 100.0), endpoint);
+        writeProtocolText("\r\nAvgInput[A]:", endpoint);
+        writeProtocolDouble(vesc_get_double(vescvalues.frame.avg_input_current_100, 100.0), endpoint);
+        writeProtocolText("\r\nDuty[%]:", endpoint);
+        writeProtocolFloat(vesc_get_float(vescvalues.frame.duty_now_1000, 1000.0f), endpoint);
+        writeProtocolText("\r\nrpm:", endpoint);
+        writeProtocolLong(vesc_get_long(vescvalues.frame.rpm_1), endpoint);
+        writeProtocolText("\r\nBatt[V]:", endpoint);
+        writeProtocolFloat(vesc_get_float(vescvalues.frame.v_in_10, 10.0f), endpoint);
+        writeProtocolText("\r\nConsumed[mAh]:", endpoint);
+        writeProtocolDouble(vesc_get_double(vescvalues.frame.amp_hours_10000, 10.0), endpoint);
+        writeProtocolText("\r\nRegenBrake[mAh]:", endpoint);
+        writeProtocolDouble(vesc_get_double(vescvalues.frame.amp_hours_charged_10000, 10.0), endpoint);
+        writeProtocolText("\r\nConsumed[Wh]:", endpoint);
+        writeProtocolDouble(vesc_get_double(vescvalues.frame.watt_hours_10000, 10000.0), endpoint);
+        writeProtocolText("\r\nRegenBrake[Wh]:", endpoint);
+        writeProtocolDouble(vesc_get_double(vescvalues.frame.watt_hours_charged_10000, 10000.0), endpoint);
+        writeProtocolText("\r\nTachometer:", endpoint);
+        writeProtocolLong(vesc_get_long(vescvalues.frame.tachometer), endpoint);
+        writeProtocolText("\r\nTachometerAbs:", endpoint);
+        writeProtocolLong(vesc_get_long(vescvalues.frame.tachometer_abs), endpoint);
+        writeProtocolText("\r\nFault:", endpoint);
+        switch (vescvalues.frame.fault_code)
+        {
+            case FAULT_CODE_NONE:               writeProtocolText(" None\r\n", endpoint); break;
+            case FAULT_CODE_OVER_VOLTAGE:       writeProtocolText(" Overvoltage\r\n", endpoint); break;
+            case FAULT_CODE_UNDER_VOLTAGE:      writeProtocolText(" Undervoltage\r\n", endpoint); break;
+            case FAULT_CODE_DRV8302:            writeProtocolText(" DRV8302\r\n", endpoint); break;
+            case FAULT_CODE_ABS_OVER_CURRENT:   writeProtocolText(" Overcurrent\r\n", endpoint); break;
+            case FAULT_CODE_OVER_TEMP_FET:      writeProtocolText(" OvertempFET\r\n", endpoint); break;
+            case FAULT_CODE_OVER_TEMP_MOTOR:    writeProtocolText(" OvertempMotor\r\n", endpoint); break;
+        }
+        writeProtocolOK(endpoint);
+        break;
+    }
+    case PROTOCOL_SETUP:
+    {
+        PrintlnSerial_string("Configure the stick for CableCam movement...", endpoint);
+        PrintlnSerial_string("...disabling RC Inputs", endpoint);
+        controllerstatus.safemode = DISABLE_RC;
+        sbusData_t rcmin;
+        sbusData_t rcmax;
+        sbusData_t rcavg;
+        sbusData_t rcneutral;
+        uint8_t channel = 255;
+        PrintlnSerial_string("...Reading neutral position for 10 seconds...", endpoint);
+        USBPeriodElapsed();
+        getDutyValues(&rcmin, &rcmax, &rcneutral, 10000, endpoint);
+        if (check_for_no_input_change(&rcmin, &rcmax, endpoint))
+        {
+            PrintlnSerial_string("...done.", endpoint);
+            PrintlnSerial(endpoint);
+            PrintlnSerial_string("Speed Channel:", endpoint);
+            PrintlnSerial_string("You have 15 seconds to move the stick controlling the cablecam movements", endpoint);
+            PrintlnSerial_string("to full forward and full reverse at least once...", endpoint);
+            USBPeriodElapsed();
+            getDutyValues(&rcmin, &rcmax, &rcavg, 15000, endpoint);
+            if (check_for_multiple_channels_changed(&rcmin, &rcmax, &channel, endpoint))
+            {
+                if (check_for_neutral_is_in_the_middle(&rcavg, &rcneutral, channel, endpoint))
+                {
+                    PrintSerial_string("...Success. The identified channel is #", endpoint);
+                    PrintlnSerial_int(channel+1, endpoint);
+                    activesettings.rc_channel_speed = channel;
+                    activesettings.stick_neutral_pos = rcneutral.servovalues[channel].duty;
+                    activesettings.stick_neutral_range = 30;
+                    activesettings.stick_value_range = (rcmax.servovalues[channel].duty - rcmin.servovalues[channel].duty)/2 - activesettings.stick_neutral_range;
+                    PrintSerial_string("Neutral position is ", endpoint);
+                    PrintSerial_int(activesettings.stick_neutral_pos, endpoint);
+                    PrintSerial_string("+-", endpoint);
+                    PrintlnSerial_int(activesettings.stick_neutral_range, endpoint);
+                    PrintSerial_string("Stick value range is +-", endpoint);
+                    PrintlnSerial_int(activesettings.stick_value_range, endpoint);
+
+
+                    PrintlnSerial_string("Programming switch:", endpoint);
+                    PrintlnSerial_string("You have 15 seconds to flip the programming switch", endpoint);
+                    getDutyValues(&rcmin, &rcmax, &rcneutral, 10000, endpoint);
+                    if (check_for_multiple_channels_changed(&rcmin, &rcmax, &channel, endpoint))
+                    {
+                        PrintSerial_string("...Success. The identified channel is #", endpoint);
+                        PrintlnSerial_int(channel+1, endpoint);
+                        activesettings.rc_channel_programming = channel;
+                    }
+                    else
+                    {
+                        PrintlnSerial_string("No channel identified - moving to next", endpoint);
+                        activesettings.rc_channel_programming = 255;
+                    }
+
+
+
+                    PrintlnSerial_string("Endpoint tip switch:", endpoint);
+                    PrintlnSerial_string("You have 15 seconds to click the endpoint tip switch", endpoint);
+                    getDutyValues(&rcmin, &rcmax, &rcneutral, 10000, endpoint);
+                    if (check_for_multiple_channels_changed(&rcmin, &rcmax, &channel, endpoint))
+                    {
+                        PrintSerial_string("...Success. The identified channel is #", endpoint);
+                        PrintlnSerial_int(channel+1, endpoint);
+                        activesettings.rc_channel_endpoint = channel;
+                    }
+                    else
+                    {
+                        PrintlnSerial_string("No channel identified - moving to next", endpoint);
+                        activesettings.rc_channel_endpoint = 255;
+                    }
+
+
+                    PrintlnSerial_string("Max Accel dial:", endpoint);
+                    PrintlnSerial_string("You have 15 seconds to move the max accel dial", endpoint);
+                    getDutyValues(&rcmin, &rcmax, &rcneutral, 10000, endpoint);
+                    if (check_for_multiple_channels_changed(&rcmin, &rcmax, &channel, endpoint))
+                    {
+                        PrintSerial_string("...Success. The identified channel is #", endpoint);
+                        PrintlnSerial_int(channel+1, endpoint);
+                        activesettings.rc_channel_max_accel= channel;
+                    }
+                    else
+                    {
+                        PrintlnSerial_string("No channel identified - moving to next", endpoint);
+                        activesettings.rc_channel_max_accel= 255;
+                    }
+
+
+                    PrintlnSerial_string("Max speed dial:", endpoint);
+                    PrintlnSerial_string("You have 15 seconds to move the max speed dial", endpoint);
+                    getDutyValues(&rcmin, &rcmax, &rcneutral, 10000, endpoint);
+                    if (check_for_multiple_channels_changed(&rcmin, &rcmax, &channel, endpoint))
+                    {
+                        PrintSerial_string("...Success. The identified channel is #", endpoint);
+                        PrintlnSerial_int(channel+1, endpoint);
+                        activesettings.rc_channel_max_speed = channel;
+                    }
+                    else
+                    {
+                        PrintlnSerial_string("No channel identified - moving to next", endpoint);
+                        activesettings.rc_channel_max_speed = 255;
+                    }
+
+
+                    PrintlnSerial_string("Mode switch:", endpoint);
+                    PrintlnSerial_string("You have 15 seconds to move the tristate mode switch", endpoint);
+                    getDutyValues(&rcmin, &rcmax, &rcneutral, 10000, endpoint);
+                    if (check_for_multiple_channels_changed(&rcmin, &rcmax, &channel, endpoint))
+                    {
+                        PrintSerial_string("...Success. The identified channel is #", endpoint);
+                        PrintlnSerial_int(channel+1, endpoint);
+                        activesettings.rc_channel_mode = channel;
+                    }
+                    else
+                    {
+                        PrintlnSerial_string("No channel identified - moving to next", endpoint);
+                        activesettings.rc_channel_mode = 255;
+                    }
+
+                }
+            }
+        }
+        PrintlnSerial_string("...enabling RC Inputs", endpoint);
+        PrintlnSerial_string("Don't forget saving the values to make them permanent ($w command)", endpoint);
+        USBPeriodElapsed();
+        controllerstatus.safemode = INVALID_RC;
+        break;
+    }
     default:  // we do not know how to handle the (valid) message, indicate error MSP $M!
         writeProtocolError(ERROR_UNKNOWN_COMMAND, endpoint);
         break;
     }
+}
+
+uint8_t check_for_neutral_is_in_the_middle(sbusData_t * rcavg, sbusData_t * rcneutral, uint8_t channel, Endpoints endpoint)
+{
+    int16_t diff = rcavg->servovalues[channel].duty - rcneutral->servovalues[channel].duty;
+    PrintSerial_string("Midpoint of min/max is ", endpoint);
+    PrintSerial_int(rcavg->servovalues[channel].duty, endpoint);
+    PrintSerial_string(" and stick neutral position is ", endpoint);
+    PrintlnSerial_int(rcneutral->servovalues[channel].duty, endpoint);
+    if (diff > -10 && diff < 10)
+    {
+        PrintlnSerial_string("This is close, hence okay.", endpoint);
+        return 1;
+    }
+    else
+    {
+        PrintlnSerial_string("This is a difference >10 and hence not okay. Check the RC settings: no expo, configured min/max", endpoint);
+        return 0;
+    }
+}
+
+uint8_t check_for_no_input_change(sbusData_t * rcmin, sbusData_t * rcmax, Endpoints endpoint)
+{
+    for (int i=0; i<SBUS_MAX_CHANNEL; i++)
+    {
+        if (rcmax->servovalues[i].duty - rcmin->servovalues[i].duty > 200)
+        {
+            PrintSerial_string("Channel #", endpoint);
+            PrintSerial_int(i+1, endpoint);
+            PrintSerial_string(" has a min/max of ", endpoint);
+            PrintSerial_int(rcmin->servovalues[i].duty, endpoint);
+            PrintSerial_string("/", endpoint);
+            PrintSerial_int(rcmax->servovalues[i].duty, endpoint);
+            PrintlnSerial_string(" but should be constant. Please try again, keeping all in idle for the first 20 seconds.", endpoint);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+uint8_t check_for_multiple_channels_changed(sbusData_t * rcmin, sbusData_t * rcmax, uint8_t *channel, Endpoints endpoint)
+{
+    uint8_t no_channels_with_changes = 0;
+    for (int i=0; i<SBUS_MAX_CHANNEL; i++)
+    {
+        if (rcmax->servovalues[i].duty - rcmin->servovalues[i].duty > 100)
+        {
+            PrintSerial_string("Channel #", endpoint);
+            PrintSerial_int(i+1, endpoint);
+            PrintSerial_string(" has a min/max of ", endpoint);
+            PrintSerial_int(rcmin->servovalues[i].duty, endpoint);
+            PrintSerial_string("/", endpoint);
+            PrintSerial_int(rcmax->servovalues[i].duty, endpoint);
+            PrintlnSerial_string(", so has been moved.", endpoint);
+            *channel = i;
+            no_channels_with_changes++;
+        }
+    }
+    if (no_channels_with_changes == 1)
+    {
+        return 1;
+    }
+    else
+    {
+        PrintlnSerial_string("More than a single channel got moved, don't know which one is the correct one.", endpoint);
+        PrintlnSerial_string("Is there a mixer programmed in the RC maybe?", endpoint);
+        return 0;
+    }
+}
+
+void getDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, sbusData_t * rcavg, uint32_t timeout, Endpoints endpoint)
+{
+    uint32_t lasttick = HAL_GetTick();
+    uint32_t timeoutticks = HAL_GetTick() + timeout;
+    PrintlnSerial(endpoint);
+    for (int i=0; i<SBUS_MAX_CHANNEL; i++)
+    {
+        rcmax->servovalues[i].duty = 0;
+        rcmin->servovalues[i].duty = 0;
+    }
+    while (HAL_GetTick() < timeoutticks)
+    {
+        if (HAL_GetTick() - lasttick > 500)
+        {
+            lasttick = HAL_GetTick();
+            printChannelDutyValues(rcmin, rcmax, endpoint);
+        }
+        for (int i=0; i<SBUS_MAX_CHANNEL; i++)
+        {
+            if (rcmax->servovalues[i].duty < sbusdata.servovalues[i].duty)
+            {
+                rcmax->servovalues[i].duty = sbusdata.servovalues[i].duty;
+            }
+            if (rcmin->servovalues[i].duty > sbusdata.servovalues[i].duty || rcmin->servovalues[i].duty == 0)
+            {
+                rcmin->servovalues[i].duty = sbusdata.servovalues[i].duty;
+            }
+        }
+    }
+    for (int i=0; i<SBUS_MAX_CHANNEL; i++)
+    {
+        rcavg->servovalues[i].duty = (rcmax->servovalues[i].duty + rcmin->servovalues[i].duty)/2;
+    }
+    PrintlnSerial(endpoint);
+}
+
+void printChannelDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, Endpoints endpoint)
+{
+    PrintSerial_char('\r', endpoint);
+    for (int i=0; i<SBUS_MAX_CHANNEL; i++)
+    {
+        if (i != 0)
+        {
+            PrintSerial_string(", ", endpoint);
+        }
+
+        // Highlight all changed channels for better readability
+        if (rcmax->servovalues[i].duty - rcmin->servovalues[i].duty > 200)
+        {
+            PrintSerial_string("***", endpoint);
+        }
+        PrintSerial_char('#', endpoint);
+        PrintSerial_int(i+1, endpoint);
+        PrintSerial_char(':', endpoint);
+        PrintSerial_int(sbusdata.servovalues[i].duty, endpoint);
+
+        if (rcmax->servovalues[i].duty - rcmin->servovalues[i].duty > 200)
+        {
+            PrintSerial_string("***", endpoint);
+        }
+    }
+    USBPeriodElapsed();
 }
 
 void printHelp(Endpoints endpoint)
@@ -955,8 +1278,8 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("$B                                      Configure the HC-05 Bluetooth module on FlexiPort (RX3/TX3)", endpoint);
     PrintlnSerial_string("$e [<long>]                             set or print maximum eRPMs as set in the VESC speed controller. 100% stick = this eRPM", endpoint);
     PrintlnSerial_string("$E                                      print the status of the VESC ESC", endpoint);
-    PrintlnSerial_string("$g [<double>]                           set or print the max positional error -> exceeding it causes an emergency stop", endpoint);
-    PrintlnSerial_string("$i [[[[<int> <int> <int>]               set or print input channels for Speed, Programming Switch, Endpoint Switch,...", endpoint);
+    PrintlnSerial_string("$g [<float>]                            set or print the max positional error -> exceeding it causes an emergency stop", endpoint);
+    PrintlnSerial_string("$i [[[[[[<int>] <int>] <int>]           set or print input channels for Speed, Programming Switch, Endpoint Switch,...", endpoint);
     PrintlnSerial_string("      <int>] <int>] <int>]                                              ...Max Accel, Max Speed, Mode", endpoint);
     PrintlnSerial_string("$I [<int>]                              set or print input source 0..SumPPM", endpoint);
     PrintlnSerial_string("                                                                  1..SBus", endpoint);
@@ -967,13 +1290,13 @@ void printHelp(Endpoints endpoint)
     USBPeriodElapsed();
 
     PrintlnSerial_string("$n [<int> <int> <int>]                  set or print receiver neutral pos and +-neutral range and +-max range", endpoint);
-    PrintlnSerial_string("$N [<int> <int>]                        set or print ESC output neutral pos and +-range", endpoint);
+    PrintlnSerial_string("$N [<int> <int> <int>]                  set or print ESC output neutral pos and +-range and the +-max range", endpoint);
     PrintlnSerial_string("$p                                      print positions", endpoint);
     PrintlnSerial_string("$r [<int>]                              set or print rotation direction of the ESC output, either +1 or -1", endpoint);
     PrintlnSerial_string("$S                                      print all settings", endpoint);
-    PrintlnSerial_string("$v [<int> <int>]                        set or print maximum allowed speed in normal and programming mode", endpoint);
+    PrintlnSerial_string("$v [<int> <int>]                        set or print maximum allowed stick % in normal and programming mode", endpoint);
     PrintlnSerial_string("$w                                      write settings to eeprom", endpoint);
-    PrintlnSerial_string("$x [<double>]                           expo factor 1.0 means linear, everything between 1 and 0 is a exponential input", endpoint);
+    PrintlnSerial_string("$x [<float>]                            expo factor 1.0 means linear, everything between 1 and 0 is a exponential input", endpoint);
 
 }
 
@@ -1051,10 +1374,10 @@ void printActiveSettings(Endpoints endpoint)
         PrintlnSerial_string(" does not use the accel and speed limits", endpoint);
     }
     PrintSerial_string("  Limit stick changes to ", endpoint);
-    PrintSerial_int(activesettings.stick_max_accel, endpoint);
+    PrintSerial_float(activesettings.stick_max_accel, endpoint);
     PrintSerial_string(" per second", endpoint);
     PrintSerial_string(" and the absolute max stick is +-", endpoint);
-    PrintSerial_int(activesettings.stick_max_speed, endpoint);
+    PrintSerial_float(activesettings.stick_max_speed, endpoint);
     PrintlnSerial_string(" around its neutral range", endpoint);
     PrintlnSerial(endpoint);
 
@@ -1070,10 +1393,10 @@ void printActiveSettings(Endpoints endpoint)
         PrintlnSerial(endpoint);
     }
     PrintSerial_string("  Limit stick changes to ", endpoint);
-    PrintSerial_int(activesettings.stick_max_accel_safemode, endpoint);
+    PrintSerial_float(activesettings.stick_max_accel_safemode, endpoint);
     PrintSerial_string(" per second", endpoint);
     PrintSerial_string(" and the absolute max stick is +-", endpoint);
-    PrintSerial_int(activesettings.stick_max_speed_safemode, endpoint);
+    PrintSerial_float(activesettings.stick_max_speed_safemode, endpoint);
     PrintlnSerial_string(" around its neutral range", endpoint);
     PrintlnSerial(endpoint);
     PrintlnSerial(endpoint);
@@ -1092,12 +1415,17 @@ void printActiveSettings(Endpoints endpoint)
     PrintlnSerial_string("overshot the end point, pulling the stick in reverse direction to get the CableCam back between", endpoint);
     PrintlnSerial_string("the end points should be allowed, moving it further out should not. But which direction is it?", endpoint);
     PrintSerial_string("  Motor/ESC direction:", endpoint);
-    PrintSerial_int(activesettings.esc_direction, endpoint);
-    switch (activesettings.esc_direction)
+    PrintSerial_float(activesettings.esc_direction, endpoint);
+    if (activesettings.esc_direction == 1.0f)
     {
-        case 1: PrintSerial_string("(positive stick = hall sensor counts up)", endpoint); break;
-        case -1: PrintSerial_string("(positive stick = hall sensor counts down)", endpoint); break;
-        default: PrintSerial_string("(not yet decided, drive to pos>500 on a horizontal rope to set it automatically)", endpoint); break;
+        PrintSerial_string("(positive stick = hall sensor counts up)", endpoint);
+    }
+    else if (activesettings.esc_direction == -1.0f)
+    {
+        PrintSerial_string("(positive stick = hall sensor counts down)", endpoint);
+    } else
+    {
+        PrintSerial_string("(not yet decided, drive to pos>500 on a horizontal rope to set it automatically)", endpoint);
     }
     PrintlnSerial(endpoint);
     PrintlnSerial(endpoint);
@@ -1129,9 +1457,9 @@ void printDebugCycles(Endpoints endpoint)
             PrintSerial_long(sample->tick, endpoint);
             PrintSerial_int(sample->stick, endpoint);
             PrintSerial_int(sample->esc, endpoint);
-            PrintSerial_double(sample->speed, endpoint);
-            PrintSerial_double(sample->pos, endpoint);
-            PrintlnSerial_double(sample->distance_to_stop, endpoint);
+            PrintSerial_float(sample->speed, endpoint);
+            PrintSerial_float(sample->pos, endpoint);
+            PrintlnSerial_float(sample->distance_to_stop, endpoint);
             if (i % 20 == 0)
             {
                 USBPeriodElapsed(); // it is too much data, we need to flush once a while
@@ -1145,9 +1473,9 @@ void printDebugCycles(Endpoints endpoint)
         PrintSerial_long(sample->tick, endpoint);
         PrintSerial_int(sample->stick, endpoint);
         PrintSerial_int(sample->esc, endpoint);
-        PrintSerial_double(sample->speed, endpoint);
-        PrintSerial_double(sample->pos, endpoint);
-        PrintlnSerial_double(sample->distance_to_stop, endpoint);
+        PrintSerial_float(sample->speed, endpoint);
+        PrintSerial_float(sample->pos, endpoint);
+        PrintlnSerial_float(sample->distance_to_stop, endpoint);
         if (i % 20 == 0)
         {
             USBPeriodElapsed(); // it is too much data, we need to flush once a while

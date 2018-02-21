@@ -4,6 +4,7 @@
 #include "config.h"
 #include "sbus.h"
 #include "protocol.h"
+#include "math.h"
 
 
 /*
@@ -79,47 +80,63 @@ void setServoValues()
 }
 
 /*
- * getDuty() returns the current duty value, that is 172...992...1811.
- * It returns 0 in case the value is too old or the RC does not send a valid channel value or a wrong channel is requested.
+ * getDuty() returns the current duty value as percentage of the full stick range, removing the neutral range.
+ * It returns NAN in case the value is too old or the RC does not send a valid channel value or a wrong channel is requested.
  */
-int16_t getDuty(uint8_t channel)
+float getDuty(uint8_t channel)
 {
     if (HAL_GetTick() - sbusdata.sbusLastValidFrame > 3000L || sbusdata.failsafeactive)
     {
-        return 0;
+        // No valid signal for more than 3 seconds --> invalid reading
+        return NAN;
     }
-    else if (channel < SBUS_MAX_CHANNEL)
+    else if (channel < SBUS_MAX_CHANNEL && controllerstatus.safemode != DISABLE_RC)
     {
         int16_t val = 0;
-        if (sbusdata.servovalues[channel].duty == 0)
+        if (sbusdata.servovalues[channel].duty != 0)
         {
-            return 0;
+            // realign the uint16 sbus data to be centered around zero, e.g. sbusdata = 1300, neutral_pos = 1000 --> val = +300
+            val = sbusdata.servovalues[channel].duty - activesettings.stick_neutral_pos;
+            if (val >= 0)
+            {
+                if (val <= activesettings.stick_neutral_range)
+                {
+                    // Values from 0...<neutral> are considered as idle --> val = 0
+                    return 0;
+                }
+                else
+                {
+                    // The return value does not have a neutral range, so eliminate that
+                    val -= activesettings.stick_neutral_range;
+                    if (val > activesettings.stick_value_range)
+                    {
+                        // The percentage cannot be higher than +1.00
+                        val = activesettings.stick_value_range;
+                    }
+                }
+            }
+            else
+            {
+                // The val is something between -<stick_vale_range>...-1
+                if (val >= -activesettings.stick_neutral_range)
+                {
+                    // Within neutral range
+                    return 0;
+                }
+                else
+                {
+                    val += activesettings.stick_neutral_range;
+                    if (val < -activesettings.stick_value_range)
+                    {
+                        // The percentage cannot be lower than -1.00
+                        val = -activesettings.stick_value_range;
+                    }
+                }
+            }
+            return ((float) val)/activesettings.stick_value_range;
         }
-        else if (sbusdata.receivertype == RECEIVER_TYPE_SERVO)
-        {
-            // 900 .. 1500 .. 2050
-            val = sbusdata.servovalues[channel].duty-500;
-        }
-        else
-        {
-            val = sbusdata.servovalues[channel].duty;
-        }
-
-        if (val >= activesettings.stick_neutral_pos - activesettings.stick_value_range - activesettings.stick_neutral_range &&
-            val <= activesettings.stick_neutral_pos + activesettings.stick_neutral_range + activesettings.stick_value_range)
-        {
-            return val;
-        }
-        else
-        {
-            return 0;
-        }
-
     }
-    else
-    {
-        return 0;
-    }
+    return NAN;
 }
 
 uint8_t* getSBUSFrameAddress(void)

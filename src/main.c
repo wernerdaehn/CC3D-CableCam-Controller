@@ -51,6 +51,7 @@
 #include "usb_device.h"
 #include "controller.h"
 #include "protocol.h"
+#include "config.h"
 
 #include "clock_50Hz.h"
 #include "sbus.h"
@@ -152,45 +153,34 @@ int main(void)
         Error_Handler();
     }
 
+    strcpy(activesettings.version, "20180221");
     activesettings.esc_direction = 0;
-    activesettings.noop1 = 0.0f;
-    activesettings.noop2 = 0.0f;
-    activesettings.noop3 = 0.0f;
     activesettings.max_position_error = 100.0f;
     activesettings.mode = MODE_PASSTHROUGH;
-    activesettings.pos_end = (double) POS_END_NOT_SET;
-    activesettings.pos_start = (double) -POS_END_NOT_SET;
-    activesettings.rc_channel_endpoint = 6;
-    activesettings.rc_channel_programming = 5;
-    activesettings.rc_channel_speed = 0;
-    activesettings.stick_max_accel = 100;
-    activesettings.stick_max_accel_safemode = 200;
-    activesettings.stick_max_speed = 500;
-    activesettings.stick_max_speed_safemode = 100;
-    activesettings.stick_neutral_pos = 992;
-    activesettings.stick_neutral_range = 30;
-    strcpy(activesettings.version, "20171210");
-    activesettings.noop4 = 0.00f;
+    activesettings.pos_end = (float) POS_END_NOT_SET;
+    activesettings.pos_start = (float) -POS_END_NOT_SET;
     activesettings.receivertype = RECEIVER_TYPE_SUMPPM;
-
-    // 20170815
-    activesettings.esc_neutral_pos = 1500;
-    activesettings.esc_neutral_range = 30;
-
-    // 20170817
+    activesettings.rc_channel_endpoint = 255;
+    activesettings.rc_channel_programming = 255;
+    activesettings.rc_channel_speed = 0;
     activesettings.rc_channel_max_accel = 255;
     activesettings.rc_channel_max_speed = 255;
-
-    // 20171029
     activesettings.rc_channel_mode = 255;
-
-    // 20171209
+    activesettings.stick_max_accel = 0.01;
+    activesettings.stick_max_accel_safemode = 0.001f;
+    activesettings.stick_max_speed = 1.0f;
+    activesettings.stick_max_speed_safemode = 0.25f;
+    activesettings.stick_neutral_pos = 992;
+    activesettings.stick_neutral_range = 30;
+    activesettings.esc_value_range = 700;
+    activesettings.esc_neutral_pos = 1500;
+    activesettings.esc_neutral_range = 30;
     activesettings.stick_value_range = 800;
     activesettings.vesc_max_erpm = 50000;
-
-    // 20171210
     activesettings.expo_factor = 0.1f;
-
+    activesettings.vesc_brake_handbrake = 1;
+    activesettings.vesc_brake_current = 100;
+    activesettings.vesc_brake_min_speed = 1;
 
     eeprom_read_sector((uint8_t *)&defaultsettings, sizeof(defaultsettings), EEPROM_SECTOR_FOR_SETTINGS);
     if (strncmp(activesettings.version, defaultsettings.version, sizeof(activesettings.version)) == 0)
@@ -199,6 +189,10 @@ int main(void)
         memcpy(&activesettings, &defaultsettings, sizeof(defaultsettings));
         strcpy(controllerstatus.boottext_eeprom, "defaults loaded from eeprom");
     }
+    else if (strncmp("2017", defaultsettings.version, 4) == 0)
+    {
+        strcpy(controllerstatus.boottext_eeprom, "Values in the EEPROM outdated, please setup all again");
+    }
     else if (strncmp("20", defaultsettings.version, 2) == 0)
     {
         // Version stored is valid but older, hence copy the structure and set the previously unknown values to defaults
@@ -206,39 +200,6 @@ int main(void)
         strcpy(defaultsettings.version, activesettings.version);
         memcpy(&activesettings, &defaultsettings, sizeof(defaultsettings));
         strcpy(controllerstatus.boottext_eeprom, "defaults loaded from eeprom using an older version");
-        // With firmware 20170815 the esc neutral pos and range got added
-        if (activesettings.esc_neutral_pos <= 0)
-        {
-            activesettings.esc_neutral_pos = 1500;
-            activesettings.esc_neutral_range = 30;
-        }
-
-        // With firmware 20170817 the rc_channel_max_accel and rc_channel_max_speed got added
-        if (activesettings.rc_channel_max_accel <= 0)
-        {
-            activesettings.rc_channel_max_accel = 255;
-            activesettings.rc_channel_max_speed = 255;
-        }
-
-        // With firmware 20171029 the rc_channel_mode got added
-        if (activesettings.rc_channel_mode <= 0)
-        {
-            activesettings.rc_channel_mode = 255;
-        }
-
-
-        // With firmware 20171209 the stick_value_range and vesc_max_erpm got added
-        if (activesettings.stick_value_range <= 0 || activesettings.vesc_max_erpm <= 0)
-        {
-            activesettings.stick_value_range = 800;
-            activesettings.vesc_max_erpm = 50000;
-        }
-
-        // With firmware 20171210 the expo_factor got added
-        if (activesettings.expo_factor <= 0.0 || activesettings.expo_factor > 1.0 || isnan(activesettings.expo_factor))
-        {
-            activesettings.expo_factor = 0.1;
-        }
     }
     else
     {
@@ -267,7 +228,7 @@ int main(void)
          * Every time 20 ms have passed, the clock50Hz gets increased by one
          * and hence provides a stable information for slow frequency operations.
          */
-        if (HAL_GetTick() - lasttick > 20)
+        if (HAL_GetTick() - lasttick > CONTROLLERLOOPTIME_MS)
         {
             lasttick = HAL_GetTick();
             tickCounter();
@@ -330,8 +291,7 @@ void SystemClock_Config(void)
 
     /**Initializes the CPU, AHB and APB bus clocks
     */
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI
-                                       |RCC_OSCILLATORTYPE_HSE;
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_HSE;
     RCC_OscInitStruct.HSEState = RCC_HSE_ON;
     RCC_OscInitStruct.HSIState = RCC_HSI_ON;
     RCC_OscInitStruct.HSICalibrationValue = 16;
@@ -696,11 +656,6 @@ void initSBusReceiver()
     /* Turn on SBUS Inverter */
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
 
-    /*
-     * The esc_output is based on the SBus signal (+- 800) and hence has to be scaled properly to be in +-700 range.
-     * The formula is 10/12 = 800*10/12 = 667
-     */
-    activesettings.esc_scale = ESC_STICK_SCALE*12/10;
     initSBusData(RECEIVER_TYPE_SBUS);
 }
 
@@ -715,11 +670,6 @@ void initPPMReceiver()
 
     HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_3);
     HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_4);
-    /*
-     * The esc_output is based on the SumPPM signal (+-400) and hence has to be scaled properly to be in +-700 range.
-     * The formula is 10/6 = 400*10/6 = 667
-     */
-    activesettings.esc_scale = ESC_STICK_SCALE*6/10;
     initSBusData(RECEIVER_TYPE_SUMPPM);  // In case it is a servo only, the Timer Interrupt will recognize that and change the value
 }
 

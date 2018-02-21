@@ -42,7 +42,20 @@ void PrintSerial_double(double v, Endpoints endpoint)
     }
     else
     {
-        snprintf(printbuf, sizeof(printbuf), " %7.3f", v);
+        snprintf(printbuf, sizeof(printbuf), " %7.3lf", v);
+        SendString(printbuf, endpoint);
+    }
+}
+
+void PrintSerial_float(float v, Endpoints endpoint)
+{
+    if (v > 999999.0f || v < -999999.0f)
+    {
+        SendString("????.???", endpoint);
+    }
+    else
+    {
+        snprintf(printbuf, sizeof(printbuf), " %7.3lf", (double) v);
         SendString(printbuf, endpoint);
     }
 }
@@ -95,11 +108,23 @@ void PrintlnSerial_double(double v, Endpoints endpoint)
     }
     else
     {
-        snprintf(printbuf, sizeof(printbuf), " %7.3f\r\n", v);
+        snprintf(printbuf, sizeof(printbuf), " %7.3lf\r\n", v);
         SendString(printbuf, endpoint);
     }
 }
 
+void PrintlnSerial_float(float v, Endpoints endpoint)
+{
+    if (v > 999999.0f || v < -999999.0f)
+    {
+        SendString("????.??? \r\n", endpoint);
+    }
+    else
+    {
+        snprintf(printbuf, sizeof(printbuf), " %7.3lf\r\n", (double) v);
+        SendString(printbuf, endpoint);
+    }
+}
 
 void PrintlnSerial(Endpoints endpoint)
 {

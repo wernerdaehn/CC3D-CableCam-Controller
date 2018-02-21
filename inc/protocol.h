@@ -7,6 +7,8 @@
 
 #define PROTOCOL_MAX_ACCEL        'a'   // 1 float argument
 #define PROTOCOL_BINARY           'b'   // Hidden command to print the binary active settings or play them back (Useful to quickly transfer settings)
+#define PROTOCOL_BLUETOOTH        'B'   // no argument
+#define PROTOCOL_VESC_BRAKE       'c'
 #define PROTOCOL_VESC_MAX_ERPM    'e'   // 1 int argument, the maximum eRPM value set in the VESC. Goal is that 100% throttle = this eRPM value
 #define PROTOCOL_VESC_STATUS      'E'   // no argument
 #define PROTOCOL_MAX_ERROR_DIST   'g'   // 1 float argument
@@ -21,9 +23,10 @@
 #define PROTOCOL_SETTINGS         'S'   // no argument
 #define PROTOCOL_EEPROM_WRITE     'w'   // no argument
 #define PROTOCOL_MAX_SPEED        'v'   // 1 float argument
-#define PROTOCOL_D_CYCLES         'z'   // Hidden command to print the debug information about the values for each cycle
 #define PROTOCOL_EXPO_FACTOR      'x'   // 1 float argument
-#define PROTOCOL_BLUETOOTH        'B'   // no argument
+#define PROTOCOL_D_CYCLES         'z'   // Hidden command to print the debug information about the values for each cycle
+#define PROTOCOL_SETUP            '1'
+
 
 #define MODE_PASSTHROUGH		1
 #define MODE_LIMITER			2
@@ -51,7 +54,8 @@ typedef enum {
 	OPERATIONAL = 0,  			// we can move as freely as we want, limiters enabled
 	PROGRAMMING,		        // reduced speed and ready to set end points via the RC
 	INVALID_RC,					// the starting point, when either no RC signal had been received at all or there is a speed != 0 at the beginning
-	NOT_NEUTRAL_AT_STARTUP      // valid readings but the position is not in neutral - print the problem and wait
+	NOT_NEUTRAL_AT_STARTUP,     // valid readings but the position is not in neutral - print the problem and wait
+	DISABLE_RC
 } SAFE_MODE_t;
 
 /** \brief Monitoring info how the cablecam can be moved currently
@@ -81,44 +85,43 @@ typedef enum {
 typedef struct
 {
     char version[11];
-    double noop1;
-    double noop2;
-    double noop3;
     uint8_t debuglevel;
-    int8_t esc_direction;
+    float esc_direction;
     int16_t stick_neutral_pos;
     int16_t stick_neutral_range;
-    int16_t stick_max_accel;
-    int16_t stick_max_speed;
-    int16_t stick_max_accel_safemode;
-    int16_t stick_max_speed_safemode;
+    int16_t stick_value_range;
     uint8_t rc_channel_speed;
     uint8_t rc_channel_programming;
     uint8_t rc_channel_endpoint;
-    uint8_t mode;
-    double max_position_error;
-    double pos_start;
-    double pos_end;
-    double noop4;
-    uint8_t receivertype;
-    int16_t esc_neutral_pos;
-    int16_t esc_neutral_range;
-    int16_t esc_scale;
     uint8_t rc_channel_max_accel;
     uint8_t rc_channel_max_speed;
     uint8_t rc_channel_mode;
-    int16_t stick_value_range;
+    uint8_t mode;
+    float max_position_error;
+    float pos_start;
+    float pos_end;
+    uint8_t receivertype;
+    int16_t esc_neutral_pos;
+    int16_t esc_neutral_range;
+    int16_t esc_value_range;
     int32_t vesc_max_erpm;
-    double expo_factor;
+    float expo_factor;
+    float stick_max_accel;
+    float stick_max_speed;
+    float stick_max_accel_safemode;
+    float stick_max_speed_safemode;
+    int16_t vesc_brake_current;
+    int16_t vesc_brake_handbrake;
+    int16_t vesc_brake_min_speed;
 } settings_t;
 
 
 typedef struct
 {
-    double pos;
+    float pos;
     int16_t stick;
-    double distance_to_stop;
-    double speed;
+    float distance_to_stop;
+    float speed;
     uint16_t esc;
     uint32_t tick;
 } cyclemonitor_t;

@@ -4,6 +4,7 @@
 #include "serial_print.h"
 #include "protocol.h"
 #include "clock_50hz.h"
+#include "math.h"
 
 extern settings_t activesettings;
 
@@ -53,7 +54,7 @@ getvalues_t vescvalues;
 uint8_t vesc_rxbuffer[VESC_RXBUFFER_SIZE];
 uint32_t vesc_packet_start_timestamp;
 int32_t tacho_old;
-float handbrake_current = 15.0f;
+int16_t handbrake_current = 15;
 
 extern UART_HandleTypeDef huart2;
 
@@ -108,39 +109,39 @@ int16_t vesc_get_int(uint16_t uartfield)
 }
 
 
-void VESC_Output(int32_t esc_output)
+void VESC_Output(float esc_output)
 {
     VESC_request_values();
     int32_t tacho_current = (int32_t) __REV(vescvalues.frame.tachometer_abs);
-    if (esc_output == 0)
+    if (esc_output == 0.0f || isnan(esc_output))
     {
-        float diff = (float) (tacho_current - tacho_old);
-        if (diff > 10.0f)
+        int32_t diff = (float) (tacho_current - tacho_old);
+        if (diff > activesettings.vesc_brake_min_speed)
         {
             // We are moving fast and the target speed is zero, e.g. due to an emergency brake
             // Therefore kick in the VESC brake first before enabling the handbrake
-            VESC_set_currentbrake_current(50.0f);
+            VESC_set_currentbrake_current(activesettings.vesc_brake_current);
         }
         else
         {
-            handbrake_current += diff - 0.1f;
+            handbrake_current += diff- 1;
 
-            if (handbrake_current > 15.0f)
+            if (handbrake_current > activesettings.vesc_brake_handbrake)
             {
-                handbrake_current = 15.0f;
+                handbrake_current = activesettings.vesc_brake_handbrake;
             }
-            else if (handbrake_current < 10.0f)
+            else if (handbrake_current < 1)
             {
-                handbrake_current = 10.0f;
+                handbrake_current = 1;
             }
             VESC_set_handbrake_current(handbrake_current);
         }
     }
     else
     {
-        int32_t vesc_erpm = (esc_output / ESC_STICK_SCALE) * activesettings.vesc_max_erpm / (activesettings.stick_value_range - activesettings.stick_neutral_range);
+        int32_t vesc_erpm = (int32_t) ((esc_output * ((float) activesettings.vesc_max_erpm)));
         VESC_set_rpm(vesc_erpm);
-        handbrake_current = 15.0f;
+        handbrake_current = 15;
     }
     tacho_old = tacho_current;
 }
@@ -153,17 +154,17 @@ void VESC_set_rpm(int32_t erpm)
     HAL_UART_Transmit(&huart2, rpmpacket.bytes, sizeof(rpmpacket.bytes), 1000);
 }
 
-void VESC_set_handbrake_current(float brake_current)
+void VESC_set_handbrake_current(int32_t brake_current)
 {
-    handbrakepacket.frame.brakecurrent_1000 = __REV((int32_t) (brake_current*1000.0f));
+    handbrakepacket.frame.brakecurrent_1000 = __REV(brake_current*1000);
     handbrakepacket.frame.crc = __REV16(crc16(&handbrakepacket.bytes[2], handbrakepacket.frame.length));
 
     HAL_UART_Transmit(&huart2, handbrakepacket.bytes, sizeof(handbrakepacket.bytes), 1000);
 }
 
-void VESC_set_currentbrake_current(float brake_current)
+void VESC_set_currentbrake_current(int32_t brake_current)
 {
-    currentbrakepacket.frame.brakecurrent_1000 = __REV((int32_t) (brake_current*1000.0f));
+    currentbrakepacket.frame.brakecurrent_1000 = __REV(brake_current*1000);
     currentbrakepacket.frame.crc = __REV16(crc16(&currentbrakepacket.bytes[2], currentbrakepacket.frame.length));
 
     HAL_UART_Transmit(&huart2, currentbrakepacket.bytes, sizeof(currentbrakepacket.bytes), 1000);

@@ -4,24 +4,22 @@
 #include "stm32f4xx.h"
 
 #define APP_TX_BUF_SIZE 512
-#define ESC_STICK_SCALE 50
 
 
-void setServoNeutralRange(uint16_t forward, uint16_t reverse);
 void initController(void);
 void controllercycle(void);
 
 int32_t getTargetPos(void);
 int32_t getPos(void);
-int16_t getStick(void);
+float getStick(void);
 
-uint16_t getProgrammingSwitch(void);
-uint16_t getEndPointSwitch(void);
-uint16_t getMaxAccelPoti(void);
-uint16_t getMaxSpeedPoti(void);
-uint16_t getModeSwitch(void);
+float getProgrammingSwitch(void);
+float getEndPointSwitch(void);
+float getMaxAccelPoti(void);
+float getMaxSpeedPoti(void);
+float getModeSwitch(void);
 
-double getSpeedPosSensor(void);
-double getSpeedPosDifference(void);
+float getSpeedPosSensor(void);
+float getSpeedPosDifference(void);
 
 #endif

@@ -17,12 +17,14 @@ void PrintSerial_char(char v, Endpoints endpoint);
 void PrintSerial_string(char * v, Endpoints endpoint);
 void PrintSerial_long(int32_t v, Endpoints endpoint);
 void PrintSerial_double(double v, Endpoints endpoint);
+void PrintSerial_float(float v, Endpoints endpoint);
 void PrintSerial_hexchar(char v, Endpoints endpoint);
 void PrintlnSerial_int(int16_t v, Endpoints endpoint);
 void PrintlnSerial_char(char v, Endpoints endpoint);
 void PrintlnSerial_string(char * v, Endpoints endpoint);
 void PrintlnSerial_long(int32_t v, Endpoints endpoint);
 void PrintlnSerial_double(double v, Endpoints endpoint);
+void PrintlnSerial_float(float v, Endpoints endpoint);
 void PrintlnSerial_hexstring(uint8_t v[], uint8_t len, Endpoints endpoint);
 void PrintlnSerial(Endpoints endpoint);
 #endif

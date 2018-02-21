@@ -10,10 +10,10 @@
 
 
 void VESC_init(void);
-void VESC_Output(int32_t esc_output);
+void VESC_Output(float esc_output);
 void VESC_set_rpm(int32_t erpm);
-void VESC_set_handbrake_current(float brake_current);
-void VESC_set_currentbrake_current(float brake_current);
+void VESC_set_handbrake_current(int32_t brake_current);
+void VESC_set_currentbrake_current(int32_t brake_current);
 void VESC_request_values(void);
 void VESC_IRQHandler(UART_HandleTypeDef *huart);
 uint8_t* getRequestValuePacketFrameAddress(void);
