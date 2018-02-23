@@ -21,6 +21,7 @@ uint32_t possensorduration = 0;
 uint32_t last_possensortick = 0;
 
 float speed_current = 0.0f;
+static float stickintegral = 0.0f;
 
 
 int32_t pos_current_old = 0L;
@@ -472,6 +473,7 @@ float stickCycle(float pos, float brakedistance)
 
 
 
+    stickintegral += value;
     /*
      * Evaluate the End Point Programming switch
      */
@@ -484,24 +486,82 @@ float stickCycle(float pos, float brakedistance)
             activesettings.pos_start = pos;
             endpointclicks = 1;
             PrintlnSerial_string("Point 1 set", EndPoint_All);
+            stickintegral = 0.0f;
         }
         else
         {
             /*
-             * Subsequent selections of the endpoint just moves the 2nd Endpoint around. Else there
+             * Subsequent selections of the endpoint just move the 2nd Endpoint around. Else there
              * is the danger the user selects point 1 at zero, then travels to 1000 and selects that as endpoint. Then clicks again
-             * and therefore the range is from 1000 to 1000, so no range at all. To avoid that, force to leave the programming mode
-             * temporarily for setting both points again.
+             * for the third time. This logic therefore just updates the 2nd point but never the first.
+             * If the first point has to be changed, then the programming mode needs to be left and reengaged.
+             *
+             * Below logic has multiple loop holes that might occur.
+             * 1. Possensor not working or setting start and endpoint without moving the cablecam. In that case the range is zero and the
+             *    cablecam would stop moving. It is better this way than assuming everything was in order and the end points are unset.
+             * 2. When the esc direction is unset the code tries to guess the direction. It sums up the stick input values and if the value is
+             *    positive and the possensor did count up (or it is negative and the possensor did count down), then the direction is +1, else
+             *    it is -1. But what if the cablecam did roll downhill and the stick was used to slow down its movement? Then the values would
+             *    be with the wrong sign. Let's hope this never happens during the initial setup. That is also the reason why the esc direction
+             *    is calculated only if the esc direction is unset yet.
              */
             PrintlnSerial_string("Point 2 set", EndPoint_All);
             if (activesettings.pos_start < pos)
             {
                 activesettings.pos_end = pos;
+                /*
+                 * Autoconfigure the esc direction, answering the question in what direction the stick is pushed in order to drive from the start point
+                 * to the end point, forward or backward?
+                 * In this case the stick was pushed either forward or reverse and that resulted to pos sensor increasing while driving to the end point.
+                 */
+                PrintSerial_string("Drove forward from", EndPoint_All);
+                PrintSerial_float(activesettings.pos_start, EndPoint_All);
+                PrintSerial_string(" to", EndPoint_All);
+                PrintlnSerial_float(activesettings.pos_end, EndPoint_All);
+                if (activesettings.esc_direction == 0.0f)
+                {
+                    PrintSerial_string("Stick was moved overall", EndPoint_All);
+                    PrintSerial_float(stickintegral, EndPoint_All);
+                    PrintSerial_string(" hence setting esc direction $r ", EndPoint_All);
+                    if (stickintegral > 0.0f)
+                    {
+                        activesettings.esc_direction = 1.0f;
+                    }
+                    else
+                    {
+                        activesettings.esc_direction = -1.0f;
+                    }
+                    PrintlnSerial_float(activesettings.esc_direction, EndPoint_All);
+               }
             }
             else
             {
                 activesettings.pos_end = activesettings.pos_start;
                 activesettings.pos_start = pos;
+                /*
+                 * Autoconfigure the esc direction, answering the question in what direction the stick is pushed in order to drive from the start point
+                 * to the end point, forward or backward?
+                 * In this case the stick was pushed either forward or reverse and that resulted to pos sensor decreasing while driving to the end point.
+                 */
+                PrintSerial_string("Drove backward from endpoint", EndPoint_All);
+                PrintSerial_float(activesettings.pos_end, EndPoint_All);
+                PrintSerial_string(" to startpoint", EndPoint_All);
+                PrintlnSerial_float(activesettings.pos_start, EndPoint_All);
+                if (activesettings.esc_direction == 0.0f)
+                {
+                    PrintSerial_string("Stick was moved overall", EndPoint_All);
+                    PrintSerial_float(stickintegral, EndPoint_All);
+                    PrintSerial_string(" hence setting esc direction $r ", EndPoint_All);
+                    if (stickintegral > 0.0f)
+                    {
+                        activesettings.esc_direction = -1.0f;
+                    }
+                    else if (stickintegral < 0.0f)
+                    {
+                        activesettings.esc_direction = 1.0f;
+                    }
+                    PrintlnSerial_float(activesettings.esc_direction, EndPoint_All);
+                }
             }
         }
     }

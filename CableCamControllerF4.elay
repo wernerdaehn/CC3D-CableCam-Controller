@@ -133,7 +133,7 @@
 	</File>
 	<File name="src\controller.c" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="-1" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="21328" topLine="497" />
+			<Cursor1 position="21311" topLine="497" />
 		</Cursor>
 	</File>
 	<File name="src\eeprom.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -148,7 +148,7 @@
 	</File>
 	<File name="src\protocol.c" open="1" top="1" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="30855" topLine="865" />
+			<Cursor1 position="30855" topLine="866" />
 		</Cursor>
 	</File>
 	<File name="src\sbus.c" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -218,7 +218,7 @@
 	</File>
 	<File name="src\vesc.c" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="5049" topLine="103" />
+			<Cursor1 position="3128" topLine="40" />
 		</Cursor>
 	</File>
 	<File name="stm32f405rg_flash.ld" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
