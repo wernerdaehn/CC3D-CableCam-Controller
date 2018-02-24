@@ -892,8 +892,8 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         {
             if (p[0] >= 0 && p[1] >= 0 && p[2] >= 0)
             {
-                activesettings.vesc_brake_current = p[0];
-                activesettings.vesc_brake_handbrake = p[1];
+                activesettings.vesc_brake_handbrake_max = p[0];
+                activesettings.vesc_brake_handbrake_min = p[1];
                 activesettings.vesc_brake_min_speed = p[2];
                 writeProtocolHead(PROTOCOL_VESC_BRAKE, endpoint);
                 writeProtocolOK(endpoint);
@@ -907,8 +907,8 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         else
         {
             writeProtocolHead(PROTOCOL_VESC_BRAKE, endpoint);
-            writeProtocolInt(activesettings.vesc_brake_current, endpoint);
-            writeProtocolInt(activesettings.vesc_brake_handbrake, endpoint);
+            writeProtocolInt(activesettings.vesc_brake_handbrake_max, endpoint);
+            writeProtocolInt(activesettings.vesc_brake_handbrake_min, endpoint);
             writeProtocolInt(activesettings.vesc_brake_min_speed, endpoint);
             writeProtocolOK(endpoint);
         }

@@ -178,8 +178,8 @@ int main(void)
     activesettings.stick_value_range = 800;
     activesettings.vesc_max_erpm = 50000;
     activesettings.expo_factor = 0.1f;
-    activesettings.vesc_brake_handbrake = 1;
-    activesettings.vesc_brake_current = 100;
+    activesettings.vesc_brake_handbrake_max = 60;
+    activesettings.vesc_brake_handbrake_min = 10;
     activesettings.vesc_brake_min_speed = 1;
 
     eeprom_read_sector((uint8_t *)&defaultsettings, sizeof(defaultsettings), EEPROM_SECTOR_FOR_SETTINGS);

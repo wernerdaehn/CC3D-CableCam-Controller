@@ -110,8 +110,8 @@ typedef struct
     float stick_max_speed;
     float stick_max_accel_safemode;
     float stick_max_speed_safemode;
-    int16_t vesc_brake_current;
-    int16_t vesc_brake_handbrake;
+    int16_t vesc_brake_handbrake_min;
+    int16_t vesc_brake_handbrake_max;
     int16_t vesc_brake_min_speed;
 } settings_t;
 

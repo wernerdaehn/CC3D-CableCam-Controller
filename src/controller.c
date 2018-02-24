@@ -576,11 +576,17 @@ float stickCycle(float pos, float brakedistance)
     {
         /*
          * The value for max_accel coming from the dial can be anything between -1.0 and +1.0. As we want the full range
-         * this is shifted to 0.0 to 2.0. But how quickly should the stick move? In 5 seconds from 0 to +1.0? That would be an acceleration value of 1/5/50=0.004.
-         * Hence rescaling it by dividing by 500.
-         * And a minimum value of 0.00 does not make sense either as it would mean no stick movement at all. The absolute minimum is 0.001 which would represent a 1/(0.001*50) = 20sec time from 0 to 1.0
-          */
-        activesettings.stick_max_accel = (1.0f + max_accel)/500.0f+0.001f;
+         * this is shifted to 0.0 to 2.0. But how quickly should the stick move? In 2 seconds from 0 to +1.0? That would be an acceleration value of 1/2/50=0.01 (Assuming 50Hz controller cycles).
+         * And a minimum value of 0.00 does not make sense either as it would mean no stick movement at all. The absolute minimum shall be 20secs, so a value of 1/20/50 = 0.001
+         *
+         *
+         * 50Hz = 1/CONTROLLERLOOPTIME_FLOAT
+         *
+         * low  ((1.0f - 1.0f)/4.444f + 0.05)*CONTROLLERLOOPTIME_FLOAT = 0.001
+         * mid  ((1.0f + 0.0f)/4.444f + 0.05)*CONTROLLERLOOPTIME_FLOAT = 0.0055
+         * high ((1.0f + 1.0f)/4.444f + 0.05)*CONTROLLERLOOPTIME_FLOAT = 0.01
+         */
+        activesettings.stick_max_accel = ((1.0f + max_accel)/4.444f + 0.05f)*CONTROLLERLOOPTIME_FLOAT;
     }
 
     /*

@@ -54,7 +54,7 @@ getvalues_t vescvalues;
 uint8_t vesc_rxbuffer[VESC_RXBUFFER_SIZE];
 uint32_t vesc_packet_start_timestamp;
 int32_t tacho_old;
-int16_t handbrake_current = 15;
+int16_t handbrake_current;
 
 extern UART_HandleTypeDef huart2;
 
@@ -79,6 +79,8 @@ void VESC_init()
     currentbrakepacket.frame.length = 0x05;
     currentbrakepacket.frame.command = COMM_SET_CURRENT_BRAKE;
     currentbrakepacket.frame.stop = 0x03;
+
+    handbrake_current = activesettings.vesc_brake_handbrake_max;
 }
 
 uint8_t* getRequestValuePacketFrameAddress(void)
@@ -119,20 +121,20 @@ void VESC_Output(float esc_output)
         if (diff > activesettings.vesc_brake_min_speed)
         {
             // We are moving fast and the target speed is zero, e.g. due to an emergency brake
-            // Therefore kick in the VESC brake first before enabling the handbrake
-            VESC_set_currentbrake_current(activesettings.vesc_brake_current);
+            // Therefore brake as hard as you can before enabling the handbrake
+            VESC_set_rpm(0);
         }
         else
         {
-            handbrake_current += diff- 1;
+            handbrake_current += diff - 1;
 
-            if (handbrake_current > activesettings.vesc_brake_handbrake)
+            if (handbrake_current > activesettings.vesc_brake_handbrake_max)
             {
-                handbrake_current = activesettings.vesc_brake_handbrake;
+                handbrake_current = activesettings.vesc_brake_handbrake_max;
             }
-            else if (handbrake_current < 1)
+            else if (handbrake_current < activesettings.vesc_brake_handbrake_min)
             {
-                handbrake_current = 1;
+                handbrake_current = activesettings.vesc_brake_handbrake_min;
             }
             VESC_set_handbrake_current(handbrake_current);
         }
@@ -141,7 +143,7 @@ void VESC_Output(float esc_output)
     {
         int32_t vesc_erpm = (int32_t) ((esc_output * ((float) activesettings.vesc_max_erpm)));
         VESC_set_rpm(vesc_erpm);
-        handbrake_current = 15;
+        handbrake_current = activesettings.vesc_brake_handbrake_max;
     }
     tacho_old = tacho_current;
 }
