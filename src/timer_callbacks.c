@@ -8,7 +8,6 @@
 static int8_t current_virtual_channel = 0;
 static uint16_t lastrising = 0;
 
-extern sbusData_t sbusdata;
 extern uint32_t possensorduration;
 uint32_t possensortick_old = 0;
 extern uint32_t last_possensortick;

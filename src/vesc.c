@@ -6,8 +6,6 @@
 #include "clock_50hz.h"
 #include "math.h"
 
-extern settings_t activesettings;
-
 uint16_t crc16(uint8_t *buf, uint16_t len);
 
 // CRC Table

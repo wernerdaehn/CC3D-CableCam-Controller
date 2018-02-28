@@ -7,10 +7,11 @@
 #include "vesc.h"
 #include "math.h"
 
-extern sbusData_t sbusdata;
-
 void printControlLoop(int16_t input, float speed, float pos, float brakedistance, uint16_t esc, Endpoints endpoint);
 float stickCycle(float pos, float brakedistance);
+float getStickPositionRaw(void);
+float abs_d(float v);
+
 
 /*
  * Preserve the previous filtered stick value to calculate the acceleration
@@ -320,10 +321,10 @@ float stickCycle(float pos, float brakedistance)
                      * Only if the stick is in the reverse direction already, accept the value. Else you cannot maneuver
                      * back into the safe zone.
                      */
-                    if (((float) activesettings.esc_direction) * value > 0.0f)
+                    if (activesettings.esc_direction * value > 0.0f)
                     {
-                        value = stick_last_value - (maxaccel * ((float) activesettings.esc_direction)); // reduce speed at full allowed acceleration
-                        if (value * ((float) activesettings.esc_direction) < 0.0f) // watch out to not get into reverse.
+                        value = stick_last_value - (maxaccel * activesettings.esc_direction); // reduce speed at full allowed acceleration
+                        if (value * activesettings.esc_direction < 0.0f) // watch out to not get into reverse.
                         {
                             value = 0.0f;
                         }
@@ -377,10 +378,10 @@ float stickCycle(float pos, float brakedistance)
                      * Only if the stick is in the reverse direction already, accept the value. Else you cannot maneuver
                      * back into the safe zone.
                      */
-                    if (((float) activesettings.esc_direction) * value < 0.0f)
+                    if (activesettings.esc_direction * value < 0.0f)
                     {
-                        value = stick_last_value + (maxaccel * ((float) activesettings.esc_direction)); // reduce speed at full allowed acceleration
-                        if (value * ((float) activesettings.esc_direction) > 0.0f) // watch out to not get into reverse.
+                        value = stick_last_value + (maxaccel * activesettings.esc_direction); // reduce speed at full allowed acceleration
+                        if (value * activesettings.esc_direction > 0.0f) // watch out to not get into reverse.
                         {
                             value = 0.0f;
                         }
@@ -480,7 +481,6 @@ float stickCycle(float pos, float brakedistance)
     float currentendpointswitch = getEndPointSwitch();
     if (currentendpointswitch > 0.8f && controllerstatus.safemode == PROGRAMMING && lastendpointswitch <= 0.8f && !isnan(lastendpointswitch))
     {
-        int32_t pos = ENCODER_VALUE;
         if (endpointclicks == 0)
         {
             activesettings.pos_start = pos;
@@ -709,7 +709,7 @@ void controllercycle()
      * Log the last CYCLEMONITOR_SAMPLE_COUNT events in memory.
      * If neither the cablecam moves nor should move (esc_output == 0), then there is nothing interesting to log
      */
-    if (speed != 0.0f || stick_filtered_value != 0.0f)
+    /* if (speed != 0.0f || stick_filtered_value != 0.0f)
     {
         cyclemonitor_t * sample = &controllerstatus.cyclemonitor[controllerstatus.cyclemonitor_position];
         sample->distance_to_stop = distance_to_stop;
@@ -723,7 +723,7 @@ void controllercycle()
         {
             controllerstatus.cyclemonitor_position = 0;
         }
-    }
+    } */
 
 
     pos_current_old = pos_current; // required for the actual speed calculation

@@ -51,7 +51,6 @@
 extern SPI_HandleTypeDef hspi3;
 
 void sFLASH_StartReadSequence(uint32_t ReadAddr);
-uint32_t sFLASH_VerifyWrite(uint8_t* pBuffer, uint32_t ReadAddr, uint32_t NumByteToRead);
 
 uint8_t command[4];
 

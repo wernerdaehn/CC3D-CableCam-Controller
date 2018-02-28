@@ -73,7 +73,7 @@
 /* USER CODE BEGIN EXPORTED_DEFINES */
 
 #define CDC_POLLING_INTERVAL             5 /* in ms. The max is 65 and the min is 1 */
-#define RXBUFFERSIZE	512
+#define RXBUFFERSIZE	512u
 
 /* USER CODE END EXPORTED_DEFINES */
 
@@ -121,7 +121,7 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
 /* USER CODE BEGIN EXPORTED_FUNCTIONS */
 uint8_t  CDC_TransmitBuffer(uint8_t *ptr, uint32_t len);
 uint16_t USB_ReceiveString();
-uint8_t  CDC_TransmitString(char *ptr);
+uint8_t  CDC_TransmitString(const char *ptr);
 void USBPeriodElapsed(void);
 
 /* USER CODE END EXPORTED_FUNCTIONS */

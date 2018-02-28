@@ -41,7 +41,7 @@
 #define ERROR_BT_NOT_FROM_USB		 13
 #define ERROR_INVALID_VALUE 		 14
 
-static char * error_string[] = {"other errors",
+static const char * error_string[] = {"other errors",
                                 "max size of argument exceeded",
                                 "max number of arguments exceeded",
                                 "linefeed char premature",
@@ -69,10 +69,16 @@ static uint8_t checksum_response;
 void evaluateCommand(Endpoints endpoint, char commandlinebuffer[]);
 void writeProtocolError(uint8_t, Endpoints endpoint);
 void writeProtocolErrorText(char *, Endpoints endpoint);
+void writeProtocolHead(char command, Endpoints endpoint);
+void writeProtocolChar(char c, Endpoints endpoint);
+void writeProtocolDouble(double v, Endpoints endpoint);
+void writeProtocolFloat(float v, Endpoints endpoint);
+
 void writeProtocolOK(Endpoints endpoint);
 void writeProtocolInt(int16_t v, Endpoints endpoint);
 void writeProtocolLong(int32_t v, Endpoints endpoint);
 void writeProtocolHex(uint8_t v, Endpoints endpoint);
+void writeProtocolText(const char * text, Endpoints endpoint);
 int hexDigitToInt(char digit);
 
 uint8_t check_for_neutral_is_in_the_middle(sbusData_t * rcavg, sbusData_t * rcneutral, uint8_t channel, Endpoints endpoint);
@@ -125,7 +131,7 @@ void writeProtocolHead(char command, Endpoints endpoint)
     checksum_response = command;
 }
 
-void writeProtocolText(char * text, Endpoints endpoint)
+void writeProtocolText(const char * text, Endpoints endpoint)
 {
     int i = 0;
     while(i<40 && text[i] != 0)
@@ -778,13 +784,13 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         }
         break;
     }
-    case PROTOCOL_SETTINGS:
+    /* case PROTOCOL_SETTINGS:
     {
         writeProtocolHead(PROTOCOL_SETTINGS, endpoint);
         writeProtocolOK(endpoint);
         printActiveSettings(endpoint);
         break;
-    }
+    } */
     case PROTOCOL_D_CYCLES:
     {
         printDebugCycles(endpoint);
@@ -1455,7 +1461,7 @@ void printDebugCycles(Endpoints endpoint)
         if (sample->tick != 0)
         {
             PrintSerial_long(sample->tick, endpoint);
-            PrintSerial_int(sample->stick, endpoint);
+            PrintSerial_float(sample->stick, endpoint);
             PrintSerial_int(sample->esc, endpoint);
             PrintSerial_float(sample->speed, endpoint);
             PrintSerial_float(sample->pos, endpoint);
@@ -1471,7 +1477,7 @@ void printDebugCycles(Endpoints endpoint)
     {
         cyclemonitor_t * sample = & controllerstatus.cyclemonitor[i];
         PrintSerial_long(sample->tick, endpoint);
-        PrintSerial_int(sample->stick, endpoint);
+        PrintSerial_float(sample->stick, endpoint);
         PrintSerial_int(sample->esc, endpoint);
         PrintSerial_float(sample->speed, endpoint);
         PrintSerial_float(sample->pos, endpoint);
@@ -1484,7 +1490,7 @@ void printDebugCycles(Endpoints endpoint)
 }
 
 
-char * getSafeModeLabel()
+const char * getSafeModeLabel()
 {
     switch (controllerstatus.safemode)
     {
@@ -1496,7 +1502,7 @@ char * getSafeModeLabel()
     }
 }
 
-char * getCurrentModeLabel(uint8_t mode)
+const char * getCurrentModeLabel(uint8_t mode)
 {
     switch (mode)
     {

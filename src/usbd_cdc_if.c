@@ -99,7 +99,7 @@
   */
 
 char usb_commandlinebuffer[RXBUFFERSIZE];
-int16_t usb_commandlinebuffer_pos = 0;
+uint16_t usb_commandlinebuffer_pos = 0;
 
 /* Create buffer for reception and transmission           */
 /* It's up to user to redefine and/or remove those define */
@@ -398,7 +398,7 @@ uint16_t USB_ReceiveString()
         if (c == '\n' || c == '\r')
         {
             last_string_start_pos = usb_bytes_scanned; // next string starts here
-            if (usb_commandlinebuffer_pos < RXBUFFERSIZE-1)   // in case the string does not fit into the commandlinebuffer, the entire line is ignored
+            if (usb_commandlinebuffer_pos < RXBUFFERSIZE-1u)   // in case the string does not fit into the commandlinebuffer, the entire line is ignored
             {
                 usb_commandlinebuffer[usb_commandlinebuffer_pos++] = c;
                 usb_commandlinebuffer_pos = 0;
@@ -415,11 +415,9 @@ uint16_t USB_ReceiveString()
              * User deleted char 0x68, hence instead of moving the commandlinebuffer_pos one ahead, it is
              * moved backwards by one step.
              */
-            usb_commandlinebuffer_pos--;
-            if (usb_commandlinebuffer_pos < 0)
+            if (usb_commandlinebuffer_pos > 0)
             {
-                // Obviously, extra backspace chars have to be ignored
-                usb_commandlinebuffer_pos = 0;
+                usb_commandlinebuffer_pos--;
             }
         }
         else
@@ -491,7 +489,7 @@ uint8_t  CDC_TransmitBuffer(uint8_t *ptr, uint32_t len)
     return USBD_OK;
 }
 
-uint8_t  CDC_TransmitString(char *ptr)
+uint8_t  CDC_TransmitString(const char *ptr)
 {
     return CDC_TransmitBuffer((uint8_t *)ptr, strlen(ptr));
 }

@@ -93,10 +93,21 @@ Everything can be configured via commands and the current settings and states be
 The format to enter commands is to start with a _$_ sign, followed by the program character, optional parameters and a final \r and/or \n char.
 For example $h follwoed by the return key would print the help text.
 
+The first thing to do is selecting the RC receiver type, SBus (1) or SumPPM (0..default). So enter the command _$I_ to see the current setting and _$I 1_ to switch it to SBus.
+Using the command $1 invokes a guided setup of the input channels and hte neutral range with many sanity checks. Make sure the RC sender does output something on the desired switches and no mixers are enabled.
+
+### Bluetooth
+To simplify using the controller all settings can be done via bluetooth as well. It assumes the bluetooth module is connected to RX3/TX3 of the CC3D Revo and runs at 38400,8,n,1. In case the module is a HC-05, using the command _$B_ does everything to setup the module correctly, figureing out the current baud rate, changing it, give the module the name _cablecam_ and set the security Pin to 1234. 
+
+
+### Command Reference
+
 Command | Description
 ------- | -----------
+_$1_ | Guided setup through for the receiver once _$I_ was used to select the receiver type. This command sets the same values as _$i_ and _$n_ does.
 _$a_ | Shows the two acceleration values, the first is the max acceleration in operational mode, the second in programming mode
 _$a int int_ | sets the two acceleration values. Default is _$a 20 10_
+_$B_ | Configure the HC-05 bluetooth module connected to RX3/TX3 pin
 _$e_ | Print the maximum eRPMs as defined in the VESC ESC.
 _$e int_ | Set the maximum eRPMs as defined in the VESC ESC.
 _$g_ | Print the maximum positional error before going into an emergency brake. In case moving the stick slowly towards neutral does not apply enough brake power and hence the endpoint will be overshot by more than this value, the ESC output is reset to neutral forcefully. Thus applying the maximum brake power the ESC can apply. Default is 100 Hall sensor steps.
@@ -185,4 +196,4 @@ EEPROM | SPI for Flash 16MBit and optional RF Module (not used) | PC11 | SPI3_MI
 EEPROM | SPI for Flash 16MBit and optional RF Module (not used) | PC12 | SPI3_MOSI
 EEPROM | Select for Flash 16MBit | PB3 | GPIO
 Bluetooth | TX3 on Flexiport | PB10 | USART3_TX
-Bleutooth | RX3 on Flexiport | PB11 | USART3_RX
+Bluetooth | RX3 on Flexiport | PB11 | USART3_RX

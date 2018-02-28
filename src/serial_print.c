@@ -8,7 +8,7 @@ char printbuf[80];
 
 extern UART_HandleTypeDef huart3;
 
-void SendString(char * ptr, Endpoints endpoint);
+void SendString(const char * ptr, Endpoints endpoint);
 
 
 void PrintSerial_int(int16_t v, Endpoints endpoint)
@@ -23,7 +23,7 @@ void PrintSerial_char(char v, Endpoints endpoint)
     SendString(printbuf, endpoint);
 }
 
-void PrintSerial_string(char * v, Endpoints endpoint)
+void PrintSerial_string(const char * v, Endpoints endpoint)
 {
     SendString(v, endpoint);
 }
@@ -88,7 +88,7 @@ void PrintlnSerial_char(char v, Endpoints endpoint)
     SendString(printbuf, endpoint);
 }
 
-void PrintlnSerial_string(char * v, Endpoints endpoint)
+void PrintlnSerial_string(const char * v, Endpoints endpoint)
 {
     SendString(v, endpoint);
     PrintlnSerial(endpoint);
@@ -131,7 +131,7 @@ void PrintlnSerial(Endpoints endpoint)
     SendString("\r\n", endpoint);
 }
 
-void SendString(char * ptr, Endpoints endpoint)
+void SendString(const char * ptr, Endpoints endpoint)
 {
     if (endpoint == EndPoint_UART3 || endpoint == EndPoint_All)
     {

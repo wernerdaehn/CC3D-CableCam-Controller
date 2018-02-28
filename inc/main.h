@@ -64,7 +64,7 @@
 void initSBusReceiver(void);
 void initPPMReceiver(void);
 
-void _Error_Handler(char *, int);
+void _Error_Handler(const char *, int);
 
 #define Error_Handler() _Error_Handler(__FILE__, __LINE__)
 

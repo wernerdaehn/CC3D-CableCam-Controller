@@ -39,6 +39,7 @@
 
 
 void setServoValues(void);
+uint32_t getInvalidFrameCount(void);
 
 static sbusFrame_t sbusFrame;
 

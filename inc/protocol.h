@@ -119,7 +119,7 @@ typedef struct
 typedef struct
 {
     float pos;
-    int16_t stick;
+    float stick;
     float distance_to_stop;
     float speed;
     uint16_t esc;
@@ -155,8 +155,8 @@ void serialCom(Endpoints endpoint, char commandlinebuffer[]);
 void printHelp(Endpoints endpoint);
 void printActiveSettings(Endpoints endpoint);
 
-char * getSafeModeLabel();
-char * getCurrentModeLabel(uint8_t mode);
+const char * getSafeModeLabel(void);
+const char * getCurrentModeLabel(uint8_t mode);
 
 
 #endif /* PROTOCOL_H_ */

@@ -681,11 +681,20 @@ void initPPMReceiver()
   * @param  None
   * @retval None
   */
-void _Error_Handler(char * file, int line)
+void _Error_Handler(const char * file, int line)
 {
-    /* In case of an error set both servo outputs to idle */
+    /* In case of an error set ESC outputs to idle */
     TIM3->CCR3 = activesettings.esc_neutral_pos;
-    TIM3->CCR4 = activesettings.esc_neutral_pos;
+
+
+    PrintSerial_string("[Error Handler]\n", EndPoint_All);
+
+    PrintSerial_string(file, EndPoint_All);
+    PrintSerial_string(", line =", EndPoint_All);
+    PrintlnSerial_int(line, EndPoint_All);
+
+    USBPeriodElapsed();
+
     while(1)
     {
     }
@@ -708,6 +717,54 @@ void assert_failed(uint8_t* file, uint32_t line)
 }
 
 #endif
+
+void hard_fault_handler_c(unsigned int * hardfault_args, unsigned int r4, unsigned int r5, unsigned int r6)
+{
+    PrintSerial_string("[Hard Fault]\n", EndPoint_All);
+
+    PrintSerial_string("r0 =", EndPoint_All);
+    PrintSerial_int(hardfault_args[0], EndPoint_All);
+    PrintSerial_string(", r1 =", EndPoint_All);
+    PrintSerial_int(hardfault_args[1], EndPoint_All);
+    PrintSerial_string(", r2 =", EndPoint_All);
+    PrintSerial_int(hardfault_args[2], EndPoint_All);
+    PrintSerial_string(", r3 =", EndPoint_All);
+    PrintlnSerial_int(hardfault_args[3], EndPoint_All);
+
+    PrintSerial_string("r4 =", EndPoint_All);
+    PrintSerial_int(r4, EndPoint_All);
+    PrintSerial_string(", r5 =", EndPoint_All);
+    PrintSerial_int(r5, EndPoint_All);
+    PrintSerial_string(", r6 =", EndPoint_All);
+    PrintSerial_int(r6, EndPoint_All);
+    PrintSerial_string(", sp =", EndPoint_All);
+    PrintlnSerial_int((unsigned int)&hardfault_args[8], EndPoint_All);
+
+    PrintSerial_string("r12 =", EndPoint_All);
+    PrintSerial_int(hardfault_args[4], EndPoint_All);
+    PrintSerial_string(", lr =", EndPoint_All);
+    PrintSerial_int(hardfault_args[5], EndPoint_All);
+    PrintSerial_string(", pc =", EndPoint_All);
+    PrintSerial_int(hardfault_args[6], EndPoint_All);
+    PrintSerial_string(", psr =", EndPoint_All);
+    PrintlnSerial_int(hardfault_args[7], EndPoint_All);
+
+    PrintSerial_string("bfar =", EndPoint_All);
+    PrintSerial_int(*((volatile unsigned int *)(0xE000ED38)), EndPoint_All);
+    PrintSerial_string(", cfsr =", EndPoint_All);
+    PrintSerial_int(*((volatile unsigned int *)(0xE000ED28)), EndPoint_All);
+    PrintSerial_string(", hfsr =", EndPoint_All);
+    PrintSerial_int(*((volatile unsigned int *)(0xE000ED2C)), EndPoint_All);
+    PrintSerial_string(", dfsr =", EndPoint_All);
+    PrintSerial_int(*((volatile unsigned int *)(0xE000ED30)), EndPoint_All);
+    PrintSerial_string(", afsr=", EndPoint_All);
+    PrintlnSerial_int(*((volatile unsigned int *)(0xE000ED3C)), EndPoint_All);
+
+
+    USBPeriodElapsed();
+
+    while(1);
+}
 
 /**
   * @}
