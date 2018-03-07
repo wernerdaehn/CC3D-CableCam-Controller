@@ -633,7 +633,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
     {
         int16_t p[3];
         argument_index = sscanf(&commandlinebuffer[2], "%hd %hd %hd", &p[0], &p[1], &p[2]);
-        if (argument_index == 2)
+        if (argument_index == 3)
         {
             if (p[0] > 500 && p[0] < 2000 &&
                     p[1] > 0 && p[1] < 100 && p[2] > 300 && p[2] < 900)
@@ -784,18 +784,18 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         }
         break;
     }
-    /* case PROTOCOL_SETTINGS:
+    case PROTOCOL_SETTINGS:
     {
         writeProtocolHead(PROTOCOL_SETTINGS, endpoint);
         writeProtocolOK(endpoint);
         printActiveSettings(endpoint);
         break;
-    } */
-    case PROTOCOL_D_CYCLES:
+    }
+    /* case PROTOCOL_D_CYCLES:
     {
         printDebugCycles(endpoint);
         break;
-    }
+    } */
     case PROTOCOL_BINARY:
     {
         uint8_t * tempsettingspointer;

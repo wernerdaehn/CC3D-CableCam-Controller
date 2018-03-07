@@ -691,11 +691,11 @@ void controllercycle()
      */
     if (stick_filtered_value > 0.0f)
     {
-        TIM3->CCR3 = activesettings.esc_neutral_pos + activesettings.esc_neutral_range + ((int16_t) (stick_filtered_value * 700.0f));
+        TIM3->CCR3 = activesettings.esc_neutral_pos + activesettings.esc_neutral_range + ((int16_t) (stick_filtered_value * ((float) activesettings.esc_value_range)));
     }
     else if (stick_filtered_value < 0.0f)
     {
-        TIM3->CCR3 = activesettings.esc_neutral_pos - activesettings.esc_neutral_range + ((int16_t) (stick_filtered_value * 700.0f));
+        TIM3->CCR3 = activesettings.esc_neutral_pos - activesettings.esc_neutral_range + ((int16_t) (stick_filtered_value * ((float) activesettings.esc_value_range)));
     }
     else
     {
