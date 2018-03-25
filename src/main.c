@@ -153,7 +153,7 @@ int main(void)
         Error_Handler();
     }
 
-    strcpy(activesettings.version, "20180221");
+    strcpy(activesettings.version, "20180325");
     activesettings.esc_direction = 0;
     activesettings.max_position_error = 100.0f;
     activesettings.mode = MODE_PASSTHROUGH;
@@ -181,6 +181,10 @@ int main(void)
     activesettings.vesc_brake_handbrake_max = 60;
     activesettings.vesc_brake_handbrake_min = 10;
     activesettings.vesc_brake_min_speed = 1;
+    activesettings.rc_channel_aux = 255;
+    activesettings.rc_channel_yaw = 255;
+    activesettings.rc_channel_pitch = 255;
+    activesettings.rc_channel_roll = 255;
 
     eeprom_read_sector((uint8_t *)&defaultsettings, sizeof(defaultsettings), EEPROM_SECTOR_FOR_SETTINGS);
     if (strncmp(activesettings.version, defaultsettings.version, sizeof(activesettings.version)) == 0)
@@ -718,6 +722,7 @@ void assert_failed(uint8_t* file, uint32_t line)
 
 #endif
 
+/*
 void hard_fault_handler_c(unsigned int * hardfault_args, unsigned int r4, unsigned int r5, unsigned int r6)
 {
     PrintSerial_string("[Hard Fault]\n", EndPoint_All);
@@ -765,6 +770,7 @@ void hard_fault_handler_c(unsigned int * hardfault_args, unsigned int r4, unsign
 
     while(1);
 }
+*/
 
 /**
   * @}

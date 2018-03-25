@@ -113,18 +113,11 @@ typedef struct
     int16_t vesc_brake_handbrake_min;
     int16_t vesc_brake_handbrake_max;
     int16_t vesc_brake_min_speed;
+    uint8_t rc_channel_aux;
+    uint8_t rc_channel_yaw;
+    uint8_t rc_channel_pitch;
+    uint8_t rc_channel_roll;
 } settings_t;
-
-
-typedef struct
-{
-    float pos;
-    float stick;
-    float distance_to_stop;
-    float speed;
-    uint16_t esc;
-    uint32_t tick;
-} cyclemonitor_t;
 
 
 extern settings_t activesettings;
@@ -140,7 +133,6 @@ typedef struct
     char boottext_eeprom[81];
     SAFE_MODE_t safemode;
 //    CONTROLLER_MONITOR_t monitor;
-    cyclemonitor_t cyclemonitor[CYCLEMONITOR_SAMPLE_COUNT];
     int16_t cyclemonitor_position;
     bool accel_limiter;
     bool speed_limiter;

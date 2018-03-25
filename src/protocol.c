@@ -87,9 +87,6 @@ uint8_t check_for_multiple_channels_changed(sbusData_t * rcmin, sbusData_t * rcm
 void getDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, sbusData_t * rcavg, uint32_t timeout, Endpoints endpoint);
 void printChannelDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, Endpoints endpoint);
 
-void printDebugCycles(Endpoints endpoint);
-
-
 /*
 int16_t rev16(uint16_t input)
 {
@@ -455,8 +452,8 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         /*
          * Note, the protocol does remap channel1 to chan0
          */
-        int16_t p[6];
-        argument_index = sscanf(&commandlinebuffer[2], "%hd %hd %hd %hd %hd %hd", &p[0], &p[1], &p[2], &p[3], &p[4], &p[5]);
+        int16_t p[7];
+        argument_index = sscanf(&commandlinebuffer[2], "%hd %hd %hd %hd %hd %hd %hd", &p[0], &p[1], &p[2], &p[3], &p[4], &p[5], &p[6]);
 
         if (argument_index >= 1)
         {
@@ -481,7 +478,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                         activesettings.rc_channel_max_accel = 255; // not used
                     }
                 }
-                if (argument_index >= 4)
+                if (argument_index >= 3)
                 {
                     if (p[2] > 0 && p[2] <= SBUS_MAX_CHANNEL)
                     {
@@ -529,6 +526,18 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                         activesettings.rc_channel_mode = 255; // not used
                     }
                 }
+                if (argument_index >= 7)
+                {
+                    if (p[6] > 0 && p[6] <= SBUS_MAX_CHANNEL)
+                    {
+                        activesettings.rc_channel_aux = p[6]-1;
+                        writeProtocolInt(activesettings.rc_channel_aux+1, endpoint);
+                    }
+                    else
+                    {
+                        activesettings.rc_channel_aux = 255; // not used
+                    }
+                }
                 writeProtocolOK(endpoint);
             }
             else
@@ -545,6 +554,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             writeProtocolInt(activesettings.rc_channel_max_accel+1, endpoint);
             writeProtocolInt(activesettings.rc_channel_max_speed+1, endpoint);
             writeProtocolInt(activesettings.rc_channel_mode+1, endpoint);
+            writeProtocolInt(activesettings.rc_channel_aux+1, endpoint);
             writeProtocolText("\r\n", endpoint);
 
             writeProtocolText("last RC signal received", endpoint);
@@ -580,6 +590,10 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                 else if (i == activesettings.rc_channel_mode)
                 {
                     writeProtocolText(" (used as mode selector)", endpoint);
+                }
+                else if (i == activesettings.rc_channel_aux)
+                {
+                    writeProtocolText(" (used as aux input)", endpoint);
                 }
                 writeProtocolText("\r\n", endpoint);
             }
@@ -1285,8 +1299,8 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("$e [<long>]                             set or print maximum eRPMs as set in the VESC speed controller. 100% stick = this eRPM", endpoint);
     PrintlnSerial_string("$E                                      print the status of the VESC ESC", endpoint);
     PrintlnSerial_string("$g [<float>]                            set or print the max positional error -> exceeding it causes an emergency stop", endpoint);
-    PrintlnSerial_string("$i [[[[[[<int>] <int>] <int>]           set or print input channels for Speed, Programming Switch, Endpoint Switch,...", endpoint);
-    PrintlnSerial_string("      <int>] <int>] <int>]                                              ...Max Accel, Max Speed, Mode", endpoint);
+    PrintlnSerial_string("$i [[[[[[[<int>] <int>] <int>]          set or print input channels for Speed, Programming Switch, Endpoint Switch,...", endpoint);
+    PrintlnSerial_string("      <int>] <int>] <int>] <int>]                                       ...Max Accel, Max Speed, Mode, Aux", endpoint);
     PrintlnSerial_string("$I [<int>]                              set or print input source 0..SumPPM", endpoint);
     PrintlnSerial_string("                                                                  1..SBus", endpoint);
     PrintlnSerial_string("$m [<int>]                              set or print the mode 1..passthrough", endpoint);
@@ -1447,46 +1461,6 @@ void printActiveSettings(Endpoints endpoint)
     PrintlnSerial(endpoint);
     PrintlnSerial(endpoint);
     PrintlnSerial(endpoint);
-}
-
-void printDebugCycles(Endpoints endpoint)
-{
-    /*
-     * Oldest values first, if there are any
-     */
-     int16_t last = controllerstatus.cyclemonitor_position;
-    for (int i=last; i < CYCLEMONITOR_SAMPLE_COUNT; i++)
-    {
-        cyclemonitor_t * sample = & controllerstatus.cyclemonitor[i];
-        if (sample->tick != 0)
-        {
-            PrintSerial_long(sample->tick, endpoint);
-            PrintSerial_float(sample->stick, endpoint);
-            PrintSerial_int(sample->esc, endpoint);
-            PrintSerial_float(sample->speed, endpoint);
-            PrintSerial_float(sample->pos, endpoint);
-            PrintlnSerial_float(sample->distance_to_stop, endpoint);
-            if (i % 20 == 0)
-            {
-                USBPeriodElapsed(); // it is too much data, we need to flush once a while
-            }
-        }
-    }
-
-    for (int i=0; i<last; i++)
-    {
-        cyclemonitor_t * sample = & controllerstatus.cyclemonitor[i];
-        PrintSerial_long(sample->tick, endpoint);
-        PrintSerial_float(sample->stick, endpoint);
-        PrintSerial_int(sample->esc, endpoint);
-        PrintSerial_float(sample->speed, endpoint);
-        PrintSerial_float(sample->pos, endpoint);
-        PrintlnSerial_float(sample->distance_to_stop, endpoint);
-        if (i % 20 == 0)
-        {
-            USBPeriodElapsed(); // it is too much data, we need to flush once a while
-        }
-    }
 }
 
 

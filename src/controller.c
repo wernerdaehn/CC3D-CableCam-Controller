@@ -26,7 +26,6 @@ static float stickintegral = 0.0f;
 
 
 int32_t pos_current_old = 0L;
-float pos_target = 0.0f, pos_target_old = 0.0f;
 
 uint8_t endpointclicks = 0;
 float lastendpointswitch = 0.0f;
@@ -57,11 +56,6 @@ float getSpeedPosSensor(void)
 float getSpeedPosDifference(void)
 {
     return speed_current;
-}
-
-int32_t getTargetPos(void)
-{
-    return pos_target;
 }
 
 
@@ -115,6 +109,11 @@ float getMaxSpeedPoti()
 float getModeSwitch()
 {
     return getDuty(activesettings.rc_channel_mode);
+}
+
+float getAuxInput()
+{
+    return getDuty(activesettings.rc_channel_aux);
 }
 
 /*
@@ -576,17 +575,17 @@ float stickCycle(float pos, float brakedistance)
     {
         /*
          * The value for max_accel coming from the dial can be anything between -1.0 and +1.0. As we want the full range
-         * this is shifted to 0.0 to 2.0. But how quickly should the stick move? In 2 seconds from 0 to +1.0? That would be an acceleration value of 1/2/50=0.01 (Assuming 50Hz controller cycles).
+         * this is shifted to 0.0 to 2.0. But how quickly should the stick move? In 1 second from 0 to +1.0? That would be an acceleration value of 1/1/50=0.02 (Assuming 50Hz controller cycles).
          * And a minimum value of 0.00 does not make sense either as it would mean no stick movement at all. The absolute minimum shall be 20secs, so a value of 1/20/50 = 0.001
          *
          *
          * 50Hz = 1/CONTROLLERLOOPTIME_FLOAT
          *
-         * low  ((1.0f - 1.0f)/4.444f + 0.05)*CONTROLLERLOOPTIME_FLOAT = 0.001
-         * mid  ((1.0f + 0.0f)/4.444f + 0.05)*CONTROLLERLOOPTIME_FLOAT = 0.0055
-         * high ((1.0f + 1.0f)/4.444f + 0.05)*CONTROLLERLOOPTIME_FLOAT = 0.01
+         * low  ((1.0f - 1.0f)/2.1f + 0.05)*CONTROLLERLOOPTIME_FLOAT = 0.001
+         * mid  ((1.0f + 0.0f)/2.1f + 0.05)*CONTROLLERLOOPTIME_FLOAT = 0.01
+         * high ((1.0f + 1.0f)/2.1f + 0.05)*CONTROLLERLOOPTIME_FLOAT = 0.02
          */
-        activesettings.stick_max_accel = ((1.0f + max_accel)/4.444f + 0.05f)*CONTROLLERLOOPTIME_FLOAT;
+        activesettings.stick_max_accel = ((1.0f + max_accel)/2.1f + 0.05f)*CONTROLLERLOOPTIME_FLOAT;
     }
 
     /*
@@ -703,6 +702,7 @@ void controllercycle()
     }
     VESC_Output(stick_filtered_value);
 
+    TIM3->CCR4 = activesettings.esc_neutral_pos - activesettings.esc_neutral_range + ((int16_t) (getAuxInput() * ((float) activesettings.esc_value_range)));
 
 
     /*

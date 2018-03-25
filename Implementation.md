@@ -113,7 +113,7 @@ _$e int_ | Set the maximum eRPMs as defined in the VESC ESC.
 _$g_ | Print the maximum positional error before going into an emergency brake. In case moving the stick slowly towards neutral does not apply enough brake power and hence the endpoint will be overshot by more than this value, the ESC output is reset to neutral forcefully. Thus applying the maximum brake power the ESC can apply. Default is 100 Hall sensor steps.
 _$g int_ | Set the max error.
 _$i_ | Print the the current channel assignments and a overview of all channels with their current values as received from the RC receiver. A value of 0 means no valid data received.
-_$i int int int int int_ | Assign the input channels to functions in the order of speed, programmng switch, endpoint button, max acceleration dial, max speed dial. A value of 256 for the last two is allowed in order to disable those.
+_$i int int int int int int int_ | Assign the input channels to functions in the order of speed, programming switch, endpoint button, max acceleration dial, max speed dial, mode selector, Aux Channel input. A value of 256 is allowed in order to disable those RC functions.
 _$I_ | shows which type of receiver signal is expected
 _$I 0_ | SumPPM receiver. Note: Changing it requires the setting to be written with $w and to reboot the board.
 _$I 1_ | SBus receiver. Note: Changing it requires the setting to be written with $w and to reboot the board.
@@ -177,7 +177,7 @@ And as a second precaution, as soon as the end point was overshot, the stick is 
 Connector Pin | Description | MCU Pin | MCU function
 ------------- | ----------- | ------- | ------------
 Servo1 | Servo Output to the ESC; Connect the ESC to it in order to feed it with valid PPM servo signals | PB0 | TIM3_CH3
-Servo2 | Servo Output (not used yet) | PB1 | TIM3_CH4 
+Servo2 | Servo Output for Aux Input | PB1 | TIM3_CH4 
 Servo3 | ESC Output via UART | PA3 | USART2_RX
 Servo4 | ESC Output via UART | PA2 | USART2_TX
 Servo5 | 32Bit Quadruple Encoder used for Hall Sensor input | PA0 | TIM5_CH1
