@@ -68,5 +68,8 @@ void printSBUSChannels(Endpoints endpoint);
 float getDuty(uint8_t channel);
 uint8_t* getSBUSFrameAddress(void);
 void initSBusData(uint8_t receivertype);
+void setGimbalValues(float channel_values[]);
+void SBusSendCycle(void);
+
 
 #endif

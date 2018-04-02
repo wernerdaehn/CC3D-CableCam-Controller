@@ -11,7 +11,7 @@ void printControlLoop(int16_t input, float speed, float pos, float brakedistance
 float stickCycle(float pos, float brakedistance);
 float getStickPositionRaw(void);
 float abs_d(float v);
-
+float getGimbalDuty(uint8_t channel);
 
 /*
  * Preserve the previous filtered stick value to calculate the acceleration
@@ -30,6 +30,8 @@ int32_t pos_current_old = 0L;
 uint8_t endpointclicks = 0;
 float lastendpointswitch = 0.0f;
 uint8_t lastmodeswitchsetting = 255;
+
+float gimbalout[8];
 
 
 float getSpeedPosSensor(void)
@@ -111,6 +113,11 @@ float getModeSwitch()
     return getDuty(activesettings.rc_channel_mode);
 }
 
+float getPlaySwitch()
+{
+    return getDuty(activesettings.rc_channel_play);
+}
+
 float getAuxInput()
 {
     return getDuty(activesettings.rc_channel_aux);
@@ -165,6 +172,64 @@ float getStickPositionRaw()
             }
             return 0.0f;
         }
+        else
+        {
+            int32_t pos_current = ENCODER_VALUE;
+            if (controllerstatus.safemode == OPERATIONAL &&
+                controllerstatus.play_running != 0 &&
+                activesettings.mode == MODE_LIMITER_ENDPOINTS &&
+                value == 0.0f &&
+                activesettings.pos_start != -POS_END_NOT_SET &&
+                activesettings.pos_end != POS_END_NOT_SET)
+            {
+                /*
+                 * The condition to play a preprogrammed movement is very narrow. It requires that
+                 * - end points are set
+                 * - stick is in neutral
+                 * - mode is the limiter with endpoints mode
+                 * - not in the programming mode
+                 * - and of course the play command was triggered
+                 */
+                if (HAL_GetTick() - controllerstatus.play_time_lastsignal < 2000L)
+                {
+                    /*
+                     * Only when the play signal is sent continuously, we actually play the program. If the RC or app is disconnected, we don't.
+                     */
+                    if (controllerstatus.play_direction == -activesettings.esc_direction)
+                    {
+                        if (activesettings.pos_start < pos_current)
+                        {
+                            value = -activesettings.stick_max_speed;
+                            controllerstatus.play_endpoint_reached_at = HAL_GetTick();
+                        }
+                        else
+                        {
+                            value = 0.0f;
+                            if (HAL_GetTick() - controllerstatus.play_endpoint_reached_at > 5000L) // wait for 5 seconds at the start point
+                            {
+                                controllerstatus.play_direction = 1;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (activesettings.pos_end > pos_current)
+                        {
+                            value = activesettings.stick_max_speed;
+                            controllerstatus.play_endpoint_reached_at = HAL_GetTick();
+                        }
+                        else
+                        {
+                            value = 0.0f;
+                            if (HAL_GetTick() - controllerstatus.play_endpoint_reached_at > 5000L)  // wait for 5 seconds at the end point
+                            {
+                                controllerstatus.play_direction = -1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     return value;
 }
@@ -196,11 +261,10 @@ float getStickPositionRaw()
 float stickCycle(float pos, float brakedistance)
 {
     float stickpercent = getStickPositionRaw();
+
+
     // output = ( (1 - factor) x input^3 ) + ( factor x input )     with input and output between -1 and +1
-
     float value = ((1.0f - (float) activesettings.expo_factor) * stickpercent * stickpercent * stickpercent) + (activesettings.expo_factor * stickpercent);
-
-    int32_t speed = ENCODER_VALUE - pos_current_old; // When the current pos is greater than the previous, speed is positive
 
     // In passthrough mode the returned value is the raw value
     if (activesettings.mode != MODE_PASSTHROUGH)
@@ -341,6 +405,24 @@ float stickCycle(float pos, float brakedistance)
                             stick_last_value = 0.0f;
                             return 0.0f;
                         }
+
+                        /*
+                         * Failsafe: If, at the current speed the end point will be overshot significantly, ignore the ramp logic and request a full brake by setting speed=0.
+                         */
+                        if (pos + brakedistance >= activesettings.pos_end + activesettings.max_position_error)
+                        {
+                            /*
+                             * We are in danger to overshoot the end point by max_position_error. Hence kick in the emergency brake.
+                             */
+                            if (controllerstatus.emergencybrake == false)
+                            {
+                                PrintlnSerial_string("Emergency brake on ", EndPoint_All);
+                            }
+                            controllerstatus.emergencybrake = true;
+                            LED_WARN_ON;
+                            stick_last_value = value;
+                            return 0.0f;
+                        }
                     }
                     else
                     {
@@ -349,24 +431,6 @@ float stickCycle(float pos, float brakedistance)
                         LED_WARN_OFF;
                     }
 
-                    /*
-                     * Failsafe: No matter what the user did going way over the endpoint at speed causes this function to return a speed=0 request.
-                     */
-                    if (pos + brakedistance >= activesettings.pos_end + activesettings.max_position_error && speed > 0)
-                    {
-                        /*
-                         * We are in danger to overshoot the end point by max_position_error because we are moving with a speed > 0 towards
-                         * the end point. Hence kick in the emergency brake.
-                         */
-                        if (controllerstatus.emergencybrake == false)
-                        {
-                            PrintlnSerial_string("Emergency brake on ", EndPoint_All);
-                        }
-                        controllerstatus.emergencybrake = true;
-                        LED_WARN_ON;
-                        stick_last_value = value;
-                        return 0.0f;
-                    }
                 }
 
 
@@ -398,31 +462,30 @@ float stickCycle(float pos, float brakedistance)
                             stick_last_value = 0.0f;
                             return 0.0f;
                         }
+
+                        /*
+                         * Failsafe: If, at the current speed the end point will be overshot significantly, ignore the ramp logic and request a full brake by setting speed=0.
+                         */
+                        if (pos - brakedistance <= activesettings.pos_start - activesettings.max_position_error)
+                        {
+                            /*
+                             * We are in danger to overshoot the start point by max_position_error. Hence kick in the emergency brake.
+                             */
+                            if (controllerstatus.emergencybrake == false)
+                            {
+                                PrintlnSerial_string("Emergency brake on ", EndPoint_All);
+                            }
+                            controllerstatus.emergencybrake = true;
+                            LED_WARN_ON;
+                            stick_last_value = value;
+                            return 0.0f;
+                        }
                     }
                     else
                     {
                         controllerstatus.endpointbrake = false;
                         controllerstatus.emergencybrake = false;
                         LED_WARN_OFF;
-                    }
-
-                    /*
-                     * Failsafe: No matter what the user did going way over the endpoint at speed causes this function to return a speed=0 request.
-                     */
-                    if (pos - brakedistance <= activesettings.pos_start - activesettings.max_position_error && speed < 0)
-                    {
-                        /*
-                         * We are in danger to overshoot the end point by max_position_error because we are moving with a speed > 0 towards
-                         * the end point. Hence kick in the emergency brake.
-                         */
-                        if (controllerstatus.emergencybrake == false)
-                        {
-                            PrintlnSerial_string("Emergency brake on ", EndPoint_All);
-                        }
-                        controllerstatus.emergencybrake = true;
-                        LED_WARN_ON;
-                        stick_last_value = value;
-                        return 0.0f;
                     }
                 }
             }
@@ -631,6 +694,17 @@ float stickCycle(float pos, float brakedistance)
 
     }
 
+    float playswitch = getPlaySwitch();
+    if (!isnan(playswitch) && playswitch > 0.8f)
+    {
+        controllerstatus.play_running = 1;
+        controllerstatus.play_time_lastsignal = HAL_GetTick();
+    }
+    else
+    {
+        controllerstatus.play_running = 0;
+    }
+
     return value;
 }
 
@@ -702,35 +776,41 @@ void controllercycle()
     }
     VESC_Output(stick_filtered_value);
 
-    TIM3->CCR4 = activesettings.esc_neutral_pos - activesettings.esc_neutral_range + ((int16_t) (getAuxInput() * ((float) activesettings.esc_value_range)));
 
-
-    /*
-     * Log the last CYCLEMONITOR_SAMPLE_COUNT events in memory.
-     * If neither the cablecam moves nor should move (esc_output == 0), then there is nothing interesting to log
-     */
-    /* if (speed != 0.0f || stick_filtered_value != 0.0f)
+    float aux = getAuxInput();
+    if (aux > 0.0f)
     {
-        cyclemonitor_t * sample = &controllerstatus.cyclemonitor[controllerstatus.cyclemonitor_position];
-        sample->distance_to_stop = distance_to_stop;
-        sample->esc = TIM3->CCR3;
-        sample->pos = pos;
-        sample->speed = speed;
-        sample->stick = getStick();
-        sample->tick = HAL_GetTick();
-        controllerstatus.cyclemonitor_position++;
-        if (controllerstatus.cyclemonitor_position > CYCLEMONITOR_SAMPLE_COUNT)
-        {
-            controllerstatus.cyclemonitor_position = 0;
-        }
-    } */
+        TIM3->CCR4 = activesettings.esc_neutral_pos + activesettings.esc_neutral_range + ((int16_t) (aux * ((float) activesettings.esc_value_range)));
+    }
+    else if (aux < 0.0f)
+    {
+        TIM3->CCR4 = activesettings.esc_neutral_pos - activesettings.esc_neutral_range + ((int16_t) (aux * ((float) activesettings.esc_value_range)));
+    }
+    else
+    {
+        TIM3->CCR4 = activesettings.esc_neutral_pos;
+    }
+
+    for (int ch=0; ch<8 ; ch++)
+    {
+        gimbalout[ch] = getGimbalDuty(ch);
+    }
+    setGimbalValues(gimbalout);
 
 
     pos_current_old = pos_current; // required for the actual speed calculation
 
-    if (is1Hz())
+}
+
+float getGimbalDuty(uint8_t channel)
+{
+    if (activesettings.rc_channel_sbus_out_mapping[channel] == 255)
     {
-        // printControlLoop(stick_filtered_value, speed, pos, distance_to_stop, controllerstatus.monitor, TIM3->CCR3, EndPoint_USB);
+        return NAN;
+    }
+    else
+    {
+        return sbusdata.servovalues[activesettings.rc_channel_sbus_out_mapping[channel]].duty;
     }
 }
 

@@ -157,3 +157,19 @@ uint16_t UART3_ReceiveString()
     }
     return 0;
 }
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    UNUSED(huart);
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    UNUSED(huart);
+}
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+    UNUSED(huart);
+}
+

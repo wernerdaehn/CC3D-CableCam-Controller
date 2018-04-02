@@ -17,6 +17,7 @@ float getEndPointSwitch(void);
 float getMaxAccelPoti(void);
 float getMaxSpeedPoti(void);
 float getModeSwitch(void);
+float getPlaySwitch(void);
 float getAuxInput(void);
 
 float getSpeedPosSensor(void);

@@ -73,7 +73,7 @@
 /* USER CODE BEGIN EXPORTED_DEFINES */
 
 #define CDC_POLLING_INTERVAL             5 /* in ms. The max is 65 and the min is 1 */
-#define RXBUFFERSIZE	512u
+#define RXBUFFERSIZE	512
 
 /* USER CODE END EXPORTED_DEFINES */
 

@@ -6,27 +6,30 @@
 #include "stdbool.h"
 
 #define PROTOCOL_MAX_ACCEL        'a'   // 1 float argument
+#define PROTOCOL_AUX              'A'   // 1 int argument, the AUX channel assignment
 #define PROTOCOL_BINARY           'b'   // Hidden command to print the binary active settings or play them back (Useful to quickly transfer settings)
 #define PROTOCOL_BLUETOOTH        'B'   // no argument
 #define PROTOCOL_VESC_BRAKE       'c'
 #define PROTOCOL_VESC_MAX_ERPM    'e'   // 1 int argument, the maximum eRPM value set in the VESC. Goal is that 100% throttle = this eRPM value
 #define PROTOCOL_VESC_STATUS      'E'   // no argument
 #define PROTOCOL_MAX_ERROR_DIST   'g'   // 1 float argument
+#define PROTOCOL_INPUT_GIMBAL     'G'   // up to 8 int arguments, the gimbal channel assignments used for output via SBus TX
 #define PROTOCOL_HELP		      'h'	// help
 #define PROTOCOL_INPUT_CHANNELS   'i'   // 3-5 int arguments for speed, command switch, end point button, max acceleration poti, may speed poti
 #define PROTOCOL_INPUT_SOURCE     'I'   // 1 int arguments for the input, SumPPM or SBus
+#define PROTOCOL_INPUT_SINGLE     'j'   // 1 int argument, the channel assignment for the play button
 #define PROTOCOL_MODE             'm'
 #define PROTOCOL_NEUTRAL          'n'	// 3 int neutral microseconds, +-neutral range microseconds, +- 100% throttle
 #define PROTOCOL_ESC_NEUTRAL      'N'	// 2 int neutral microseconds, +-range microseconds
 #define PROTOCOL_POS              'p'
+#define PROTOCOL_PLAY             'P'   // 1 int argument, play=1 or don't play
 #define PROTOCOL_ROTATION_DIR     'r'   // 1 int argument
 #define PROTOCOL_SETTINGS         'S'   // no argument
 #define PROTOCOL_EEPROM_WRITE     'w'   // no argument
 #define PROTOCOL_MAX_SPEED        'v'   // 1 float argument
 #define PROTOCOL_EXPO_FACTOR      'x'   // 1 float argument
-#define PROTOCOL_D_CYCLES         'z'   // Hidden command to print the debug information about the values for each cycle
 #define PROTOCOL_SETUP            '1'
-
+#define PROTOCOL_READ_ERRORHANDLER 'H'  // Error handler hidden command
 
 #define MODE_PASSTHROUGH		1
 #define MODE_LIMITER			2
@@ -37,8 +40,6 @@
 #define RECEIVER_TYPE_SUMPPM    0
 #define RECEIVER_TYPE_SBUS      1
 #define RECEIVER_TYPE_SERVO      2
-
-#define CYCLEMONITOR_SAMPLE_COUNT 1024
 
 /** \brief Controller-Mode State Machine
  *
@@ -117,6 +118,9 @@ typedef struct
     uint8_t rc_channel_yaw;
     uint8_t rc_channel_pitch;
     uint8_t rc_channel_roll;
+    uint8_t rc_channel_play;
+    uint8_t rc_channel_sbus_out_mapping[8];
+    uint16_t structure_length;
 } settings_t;
 
 
@@ -132,12 +136,15 @@ typedef struct
 {
     char boottext_eeprom[81];
     SAFE_MODE_t safemode;
-//    CONTROLLER_MONITOR_t monitor;
     int16_t cyclemonitor_position;
     bool accel_limiter;
     bool speed_limiter;
     bool endpointbrake;
     bool emergencybrake;
+    uint8_t play_running;
+    int8_t play_direction;
+    uint32_t play_time_lastsignal; // Failsafe. If the play signal is not received for a given amount of time, stop playing the program. RC or app seems to be disconnected.
+    uint32_t play_endpoint_reached_at; // Used to calculate the pause before running into the other direction
 } controllerstatus_t;
 
 extern controllerstatus_t controllerstatus;

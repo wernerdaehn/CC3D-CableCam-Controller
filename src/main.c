@@ -78,6 +78,8 @@ UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
 
+UART_HandleTypeDef huart6;
+
 
 /* Private variables ---------------------------------------------------------*/
 uint32_t lasttick;
@@ -96,10 +98,9 @@ static void MX_TIM3_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART3_UART_Init(void);
+static void MX_USART6_UART_Init(void);
 static void MX_TIM5_Init(void);
 static void MX_TIM1_Init(void);
-
-void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 int main(void)
 {
@@ -123,6 +124,7 @@ int main(void)
     MX_USB_DEVICE_Init();
     MX_USART2_UART_Init();
     MX_TIM5_Init();
+    MX_USART6_UART_Init();
 
     /* Disable Half Transfer Interrupt */
     /* __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT); */
@@ -153,7 +155,7 @@ int main(void)
         Error_Handler();
     }
 
-    strcpy(activesettings.version, "20180325");
+    strcpy(activesettings.version, "20180401");
     activesettings.esc_direction = 0;
     activesettings.max_position_error = 100.0f;
     activesettings.mode = MODE_PASSTHROUGH;
@@ -185,6 +187,12 @@ int main(void)
     activesettings.rc_channel_yaw = 255;
     activesettings.rc_channel_pitch = 255;
     activesettings.rc_channel_roll = 255;
+    activesettings.rc_channel_play = 255;
+    for (int i=0; i<8; i++)
+    {
+        activesettings.rc_channel_sbus_out_mapping[i] = 255;
+    }
+    activesettings.structure_length = sizeof(activesettings);
 
     eeprom_read_sector((uint8_t *)&defaultsettings, sizeof(defaultsettings), EEPROM_SECTOR_FOR_SETTINGS);
     if (strncmp(activesettings.version, defaultsettings.version, sizeof(activesettings.version)) == 0)
@@ -199,10 +207,18 @@ int main(void)
     }
     else if (strncmp("20", defaultsettings.version, 2) == 0)
     {
-        // Version stored is valid but older, hence copy the structure and set the previously unknown values to defaults
-        // Also make set the old version number to the new one
+        /*
+         * Version stored is valid but older, hence copy the old structure over the activestructure.
+         * If the structure_length argument (introduced later) is valid, this will fill the activesettings with
+         * values and leave the new ones untouched, hence the defaults from above.
+         */
         strcpy(defaultsettings.version, activesettings.version);
-        memcpy(&activesettings, &defaultsettings, sizeof(defaultsettings));
+        uint16_t structuresize = defaultsettings.structure_length;
+        if (structuresize == 0 || structuresize > sizeof(defaultsettings))
+        {
+            structuresize = sizeof(defaultsettings);
+        }
+        memcpy(&activesettings, &defaultsettings, structuresize);
         strcpy(controllerstatus.boottext_eeprom, "defaults loaded from eeprom using an older version");
     }
     else
@@ -276,6 +292,7 @@ int main(void)
         {
             serialCom(EndPoint_UART3, uart3_commandlinebuffer);
         }
+        SBusSendCycle();
     }
 }
 
@@ -603,6 +620,25 @@ static void MX_USART3_UART_Init(void)
     }
 }
 
+/* USART1 init function */
+/*
+ * The SBus receiver
+ */
+static void MX_USART6_UART_Init(void)
+{
+    huart6.Instance = USART6;
+    huart6.Init.BaudRate = 100000;
+    huart6.Init.WordLength = UART_WORDLENGTH_9B;
+    huart6.Init.StopBits = UART_STOPBITS_2;
+    huart6.Init.Parity = UART_PARITY_EVEN;
+    huart6.Init.Mode = UART_MODE_TX;
+    huart6.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    huart6.Init.OverSampling = UART_OVERSAMPLING_8;
+    if (HAL_UART_Init(&huart6) != HAL_OK)
+    {
+        _Error_Handler(__FILE__, __LINE__);
+    }
+}
 
 /** Configure pins as
         * Analog
@@ -690,14 +726,11 @@ void _Error_Handler(const char * file, int line)
     /* In case of an error set ESC outputs to idle */
     TIM3->CCR3 = activesettings.esc_neutral_pos;
 
+    uint8_t buffer[4096];
+    memcpy(&buffer[0], &line, 2);
+    memcpy(&buffer[2], file, strlen(file)+1);
 
-    PrintSerial_string("[Error Handler]\n", EndPoint_All);
-
-    PrintSerial_string(file, EndPoint_All);
-    PrintSerial_string(", line =", EndPoint_All);
-    PrintlnSerial_int(line, EndPoint_All);
-
-    USBPeriodElapsed();
+    eeprom_write_sector_safe(buffer, 4096, 1);
 
     while(1)
     {

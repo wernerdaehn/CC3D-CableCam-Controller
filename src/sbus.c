@@ -36,12 +36,16 @@
 #define SBUS_FLAG_SIGNAL_LOSS       (1 << 2)
 #define SBUS_FLAG_FAILSAFE_ACTIVE   (1 << 3)
 
-
+extern UART_HandleTypeDef huart1;
+extern UART_HandleTypeDef huart6;
 
 void setServoValues(void);
 uint32_t getInvalidFrameCount(void);
+uint16_t convertDutyIntoSBus(float duty);
 
 static sbusFrame_t sbusFrame;
+static sbusFrame_t sBusFrameGimbal;
+uint32_t lastsbussend = 0;
 
 sbusData_t sbusdata;
 
@@ -49,6 +53,42 @@ void initSBusData(uint8_t receivertype)
 {
     sbusdata.sbusLastValidFrame = 0L;
     sbusdata.receivertype = receivertype;
+
+    sBusFrameGimbal.frame.chan8 = 0;
+    sBusFrameGimbal.frame.chan9 = 0;
+    sBusFrameGimbal.frame.chan10 = 0;
+    sBusFrameGimbal.frame.chan11 = 0;
+    sBusFrameGimbal.frame.chan12 = 0;
+    sBusFrameGimbal.frame.chan13 = 0;
+    sBusFrameGimbal.frame.chan14 = 0;
+    sBusFrameGimbal.frame.chan15 = 0;
+    sBusFrameGimbal.frame.flags = 0;
+    sBusFrameGimbal.frame.syncByte = SBUS_FRAME_BEGIN_BYTE;
+    sBusFrameGimbal.frame.endByte = SBUS_FRAME_END_BYTE;
+}
+
+void setGimbalValues(float channel_values[])
+{
+    sBusFrameGimbal.frame.chan0 = convertDutyIntoSBus(channel_values[0]);
+    sBusFrameGimbal.frame.chan1 = convertDutyIntoSBus(channel_values[1]);
+    sBusFrameGimbal.frame.chan2 = convertDutyIntoSBus(channel_values[2]);
+    sBusFrameGimbal.frame.chan3 = convertDutyIntoSBus(channel_values[3]);
+    sBusFrameGimbal.frame.chan4 = convertDutyIntoSBus(channel_values[4]);
+    sBusFrameGimbal.frame.chan5 = convertDutyIntoSBus(channel_values[5]);
+    sBusFrameGimbal.frame.chan6 = convertDutyIntoSBus(channel_values[6]);
+    sBusFrameGimbal.frame.chan7 = convertDutyIntoSBus(channel_values[7]);
+}
+
+uint16_t convertDutyIntoSBus(float duty)
+{
+    if (isnan(duty))
+    {
+        return 0;
+    }
+    else
+    {
+        return ((uint16_t) (duty * 450.0f)) + 992;
+    }
 }
 
 void setServoValues()
@@ -286,5 +326,13 @@ void printSBUSChannels(Endpoints endpoint)
 }
 
 
-
+void SBusSendCycle()
+{
+    uint32_t currenttick = HAL_GetTick();
+    if (currenttick - lastsbussend >= 14)
+    {
+        HAL_UART_Transmit_IT(&huart6, &sBusFrameGimbal.bytes[0], SBUS_FRAME_SIZE);
+        lastsbussend = currenttick;
+    }
+}
 

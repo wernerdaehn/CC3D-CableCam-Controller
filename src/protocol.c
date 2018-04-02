@@ -87,12 +87,8 @@ uint8_t check_for_multiple_channels_changed(sbusData_t * rcmin, sbusData_t * rcm
 void getDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, sbusData_t * rcavg, uint32_t timeout, Endpoints endpoint);
 void printChannelDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, Endpoints endpoint);
 
-/*
-int16_t rev16(uint16_t input)
-{
-    return ((input) >> 8) | ((input) << 8);
-}
-*/
+void printCurrentRCInput(Endpoints endpoint);
+
 
 void initProtocol()
 {
@@ -148,7 +144,7 @@ void writeProtocolChar(char c, Endpoints endpoint)
 void writeProtocolDouble(double v, Endpoints endpoint)
 {
     char bufpd[80];
-    snprintf(bufpd, sizeof(bufpd), " %7.3lf", v);
+    snprintf(bufpd, sizeof(bufpd), " %1.3lf", v);
     int k = 0;
     while(k < 40 && bufpd[k] != 0)
     {
@@ -161,7 +157,7 @@ void writeProtocolDouble(double v, Endpoints endpoint)
 void writeProtocolFloat(float v, Endpoints endpoint)
 {
     char bufpd[80];
-    snprintf(bufpd, sizeof(bufpd), " %7.3f", (double) v);
+    snprintf(bufpd, sizeof(bufpd), " %1.3f", (double) v);
     int k = 0;
     while(k < 40 && bufpd[k] != 0)
     {
@@ -475,7 +471,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                     }
                     else
                     {
-                        activesettings.rc_channel_max_accel = 255; // not used
+                        // activesettings.rc_channel_max_accel = 255; // not used
                     }
                 }
                 if (argument_index >= 3)
@@ -487,7 +483,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                     }
                     else
                     {
-                        activesettings.rc_channel_max_accel = 255; // not used
+                        // activesettings.rc_channel_max_accel = 255; // not used
                     }
                 }
                 if (argument_index >= 4)
@@ -499,7 +495,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                     }
                     else
                     {
-                        activesettings.rc_channel_max_accel = 255; // not used
+                        // activesettings.rc_channel_max_accel = 255; // not used
                     }
                 }
                 if (argument_index >= 5)
@@ -511,7 +507,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                     }
                     else
                     {
-                        activesettings.rc_channel_max_speed = 255; // not used
+                        // activesettings.rc_channel_max_speed = 255; // not used
                     }
                 }
                 if (argument_index >= 6)
@@ -523,7 +519,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                     }
                     else
                     {
-                        activesettings.rc_channel_mode = 255; // not used
+                        // activesettings.rc_channel_mode = 255; // not used
                     }
                 }
                 if (argument_index >= 7)
@@ -535,7 +531,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                     }
                     else
                     {
-                        activesettings.rc_channel_aux = 255; // not used
+                        // activesettings.rc_channel_aux = 255; // not used
                     }
                 }
                 writeProtocolOK(endpoint);
@@ -555,52 +551,9 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             writeProtocolInt(activesettings.rc_channel_max_speed+1, endpoint);
             writeProtocolInt(activesettings.rc_channel_mode+1, endpoint);
             writeProtocolInt(activesettings.rc_channel_aux+1, endpoint);
-            writeProtocolText("\r\n", endpoint);
-
-            writeProtocolText("last RC signal received", endpoint);
-            writeProtocolLong(HAL_GetTick() - sbusdata.sbusLastValidFrame, endpoint);
-            writeProtocolText("ms ago\r\n", endpoint);
-            int i = 0;
-            for (i=0; i<SBUS_MAX_CHANNEL; i++)
-            {
-                writeProtocolText("channel", endpoint);
-                writeProtocolInt(i+1, endpoint);
-                writeProtocolText("=", endpoint);
-                writeProtocolInt(sbusdata.servovalues[i].duty, endpoint);
-                if (i == activesettings.rc_channel_speed)
-                {
-                    writeProtocolText(" (used as speed signal input)", endpoint);
-                }
-                else if (i == activesettings.rc_channel_programming)
-                {
-                    writeProtocolText(" (used as programming switch)", endpoint);
-                }
-                else if (i == activesettings.rc_channel_endpoint)
-                {
-                    writeProtocolText(" (used as endpoint switch)", endpoint);
-                }
-                else if (i == activesettings.rc_channel_max_accel)
-                {
-                    writeProtocolText(" (used as max acceleration value selector)", endpoint);
-                }
-                else if (i == activesettings.rc_channel_max_speed)
-                {
-                    writeProtocolText(" (used as max speed selector)", endpoint);
-                 }
-                else if (i == activesettings.rc_channel_mode)
-                {
-                    writeProtocolText(" (used as mode selector)", endpoint);
-                }
-                else if (i == activesettings.rc_channel_aux)
-                {
-                    writeProtocolText(" (used as aux input)", endpoint);
-                }
-                writeProtocolText("\r\n", endpoint);
-            }
-            writeProtocolText("current ESC out signal Servo 1 = ", endpoint);
-            writeProtocolInt(TIM3->CCR3, endpoint);
-            writeProtocolText("\r\n", endpoint);
             writeProtocolOK(endpoint);
+
+            printCurrentRCInput(endpoint);
         }
         else
         {
@@ -1125,6 +1078,168 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         controllerstatus.safemode = INVALID_RC;
         break;
     }
+    case PROTOCOL_READ_ERRORHANDLER:
+    {
+        uint8_t buffer[4096];
+        int line;
+        eeprom_read_sector(buffer, 4096, 1);
+        PrintSerial_string("Line :", endpoint);
+        memcpy(&line, &buffer[0], 2);
+        PrintlnSerial_int(line, endpoint);
+        PrintSerial_string("at: ", endpoint);
+        buffer[256] = 0; // Just to make sure the string ends somewhere
+        PrintlnSerial_string( (const char *) &buffer[2], endpoint);
+        break;
+    }
+    case PROTOCOL_INPUT_GIMBAL:
+    {
+        int16_t p[8];
+        argument_index = sscanf(&commandlinebuffer[2], "%hd %hd %hd %hd %hd %hd %hd %hd", &p[0], &p[1], &p[2], &p[3], &p[4], &p[5], &p[6], &p[7]);
+
+        if (argument_index >= 1)
+        {
+            for (int i=0; i<7; i++)
+            {
+                if (i<argument_index && p[i] > 0 && p[i] <= 256)
+                {
+                    activesettings.rc_channel_sbus_out_mapping[i] = p[i]-1;
+                }
+                else
+                {
+                    activesettings.rc_channel_sbus_out_mapping[i] = 255;
+                }
+            }
+            writeProtocolHead(PROTOCOL_INPUT_GIMBAL, endpoint);
+            writeProtocolOK(endpoint);
+        }
+        else
+        {
+            writeProtocolHead(PROTOCOL_INPUT_GIMBAL, endpoint);
+            for (int i=0; i<7; i++)
+            {
+                writeProtocolInt(activesettings.rc_channel_sbus_out_mapping[i]+1, endpoint);
+            }
+            writeProtocolOK(endpoint);
+        }
+        break;
+    }
+    case PROTOCOL_INPUT_SINGLE:
+        {
+            char c;
+            int16_t p;
+            argument_index = sscanf(&commandlinebuffer[2], "%1s %hd", &c, &p);
+            if (argument_index == 2)
+            {
+                if (p > 0 && p <= 256)
+                {
+                    switch (c)
+                    {
+                    case 'a':
+                        activesettings.rc_channel_aux = p-1;
+                        break;
+                    case 'm':
+                        activesettings.rc_channel_mode = p-1;
+                        break;
+                    case 'p':
+                        activesettings.rc_channel_play = p-1;
+                        break;
+                    case 'e':
+                        activesettings.rc_channel_endpoint = p-1;
+                        break;
+                    case 'A':
+                        activesettings.rc_channel_max_accel = p-1;
+                        break;
+                    case 'V':
+                        activesettings.rc_channel_max_speed = p-1;
+                        break;
+                    case 'P':
+                        activesettings.rc_channel_programming = p-1;
+                        break;
+                    case 'v':
+                        activesettings.rc_channel_speed = p-1;
+                        break;
+                    default:
+                        writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                        return;
+                    }
+                    writeProtocolHead(PROTOCOL_INPUT_SINGLE, endpoint);
+                    writeProtocolOK(endpoint);
+                }
+                else
+                {
+                    writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                    return;
+                }
+            }
+            else if (argument_index == 1)
+            {
+                switch (c)
+                {
+                case 'a':
+                    p = activesettings.rc_channel_aux;
+                    break;
+                case 'm':
+                    p = activesettings.rc_channel_mode;
+                    break;
+                case 'p':
+                    p = activesettings.rc_channel_play;
+                    break;
+                case 'e':
+                    p = activesettings.rc_channel_endpoint;
+                    break;
+                case 'A':
+                    p = activesettings.rc_channel_max_accel;
+                    break;
+                case 'V':
+                    p = activesettings.rc_channel_max_speed;
+                    break;
+                case 'P':
+                    p = activesettings.rc_channel_programming;
+                    break;
+                case 'v':
+                    p = activesettings.rc_channel_speed;
+                    break;
+                default:
+                    p = -1;
+                }
+                if (p == -1)
+                {
+                    writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                }
+                else
+                {
+                    writeProtocolHead(PROTOCOL_INPUT_SINGLE, endpoint);
+                    writeProtocolChar(c, endpoint);
+                    writeProtocolInt(p+1, endpoint);
+                    writeProtocolOK(endpoint);
+                }
+            }
+            else
+            {
+                writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+                return;
+            }
+            break;
+        }
+    case PROTOCOL_PLAY:
+        {
+            int16_t p;
+            argument_index = sscanf(&commandlinebuffer[2], "%hd", &p);
+            if (argument_index == 1)
+            {
+                writeProtocolHead(PROTOCOL_PLAY, endpoint);
+                controllerstatus.play_running = p;
+                controllerstatus.play_time_lastsignal = HAL_GetTick();
+                writeProtocolInt(controllerstatus.play_running, endpoint);
+                writeProtocolOK(endpoint);
+            }
+            else
+            {
+                writeProtocolHead(PROTOCOL_PLAY, endpoint);
+                writeProtocolInt(controllerstatus.play_running, endpoint);
+                writeProtocolOK(endpoint);
+            }
+        }
     default:  // we do not know how to handle the (valid) message, indicate error MSP $M!
         writeProtocolError(ERROR_UNKNOWN_COMMAND, endpoint);
         break;
@@ -1266,9 +1381,60 @@ void printChannelDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, Endpoints en
 void printHelp(Endpoints endpoint)
 {
     PrintlnSerial(endpoint);
+    PrintlnSerial_string("Possible commands are", endpoint);
+    PrintlnSerial(endpoint);
+
+    USBPeriodElapsed();
+
+    PrintlnSerial_string("$a [<int> <int>]                        set or print maximum allowed acceleration in normal and programming mode", endpoint);
+    PrintlnSerial_string("$A [<int>]                              set or print the AUX channel assignment", endpoint);
+    PrintlnSerial_string("$B                                      Configure the HC-05 Bluetooth module on FlexiPort (RX3/TX3)", endpoint);
+    PrintlnSerial_string("$e [<long>]                             set or print maximum eRPMs as set in the VESC speed controller. 100% stick = this eRPM", endpoint);
+    PrintlnSerial_string("$E                                      print the status of the VESC ESC", endpoint);
+    PrintlnSerial_string("$g [<float>]                            set or print the max positional error -> exceeding it causes an emergency stop", endpoint);
+    PrintlnSerial_string("$G [<int1> ... <int8>]                  set or print gimbal channel mapping", endpoint);
+    PrintlnSerial_string("$i [[[[[[[<int>] <int>] <int>]          set or print input channels for Speed, Programming Switch, Endpoint Switch,...", endpoint);
+    PrintlnSerial_string("      <int>] <int>] <int>] <int>]                                       ...Max Accel, Max Speed, Mode, Aux", endpoint);
+    PrintlnSerial_string("$I [<int>]                              set or print input source 0..SumPPM", endpoint);
+    PrintlnSerial_string("                                                                  1..SBus", endpoint);
+    USBPeriodElapsed();
+    PrintlnSerial_string("$j <char> [<int>]                       set or print the channel assignment for a given function. Chars can be...", endpoint);
+    PrintlnSerial_string("                                        v...ESC channel", endpoint);
+    PrintlnSerial_string("                                        m...Modeswitch channel", endpoint);
+    PrintlnSerial_string("                                        P...Endpoint Programmingswitch channel", endpoint);
+    PrintlnSerial_string("                                        e...Endpoint Setbutton channel", endpoint);
+    PrintlnSerial_string("                                        A...Max Accel Poti channel", endpoint);
+    PrintlnSerial_string("                                        V...Max Speed Poti channel", endpoint);
+    PrintlnSerial_string("                                        a...Aux input channel", endpoint);
+    PrintlnSerial_string("                                        p...Playswitch channel", endpoint);
+    PrintlnSerial_string("$m [<int>]                              set or print the mode 1..passthrough", endpoint);
+    PrintlnSerial_string("                                                              2..passthrough with speed limits", endpoint);
+    PrintlnSerial_string("                                                              3..passthrough with speed limits & end points", endpoint);
+
+    USBPeriodElapsed();
+
+    PrintlnSerial_string("$n [<int> <int> <int>]                  set or print receiver neutral pos and +-neutral range and +-max range", endpoint);
+    PrintlnSerial_string("$N [<int> <int> <int>]                  set or print ESC output neutral pos and +-range and the +-max range", endpoint);
+    PrintlnSerial_string("$p                                      print positions", endpoint);
+    PrintlnSerial_string("$P <int>                                turn the Play command (automatic movement) on (1) or off (0) for the next 2 seconds. Send frequently.", endpoint);
+    PrintlnSerial_string("$r [<int>]                              set or print rotation direction of the ESC output, either +1 or -1", endpoint);
+    PrintlnSerial_string("$S                                      print all settings", endpoint);
+    PrintlnSerial_string("$v [<int> <int>]                        set or print maximum allowed stick % in normal and programming mode", endpoint);
+    PrintlnSerial_string("$w                                      write settings to eeprom", endpoint);
+    PrintlnSerial_string("$x [<float>]                            expo factor 1.0 means linear, everything between 1 and 0 is a exponential input", endpoint);
+
+}
+
+
+void printActiveSettings(Endpoints endpoint)
+{
     PrintlnSerial(endpoint);
 
     PrintlnSerial_string(controllerstatus.boottext_eeprom, endpoint);
+    PrintSerial_string("Version of the stored settings: ", endpoint);
+    PrintlnSerial_string(activesettings.version, endpoint);
+    PrintlnSerial(endpoint);
+
     PrintSerial_string("Current Mode: ", endpoint);
     PrintlnSerial_string(getCurrentModeLabel(activesettings.mode), endpoint);
 
@@ -1283,60 +1449,12 @@ void printHelp(Endpoints endpoint)
     }
 
     PrintSerial_string("Current CableCam operation mode: ", endpoint);
-    PrintSerial_string(getSafeModeLabel(), endpoint);
-
-    PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
-    PrintlnSerial_string("Possible commands are", endpoint);
-    PrintlnSerial(endpoint);
-
-    USBPeriodElapsed();
-
-    PrintlnSerial_string("$a [<int> <int>]                        set or print maximum allowed acceleration in normal and programming mode", endpoint);
-    PrintlnSerial_string("$B                                      Configure the HC-05 Bluetooth module on FlexiPort (RX3/TX3)", endpoint);
-    PrintlnSerial_string("$e [<long>]                             set or print maximum eRPMs as set in the VESC speed controller. 100% stick = this eRPM", endpoint);
-    PrintlnSerial_string("$E                                      print the status of the VESC ESC", endpoint);
-    PrintlnSerial_string("$g [<float>]                            set or print the max positional error -> exceeding it causes an emergency stop", endpoint);
-    PrintlnSerial_string("$i [[[[[[[<int>] <int>] <int>]          set or print input channels for Speed, Programming Switch, Endpoint Switch,...", endpoint);
-    PrintlnSerial_string("      <int>] <int>] <int>] <int>]                                       ...Max Accel, Max Speed, Mode, Aux", endpoint);
-    PrintlnSerial_string("$I [<int>]                              set or print input source 0..SumPPM", endpoint);
-    PrintlnSerial_string("                                                                  1..SBus", endpoint);
-    PrintlnSerial_string("$m [<int>]                              set or print the mode 1..passthrough", endpoint);
-    PrintlnSerial_string("                                                              2..passthrough with speed limits", endpoint);
-    PrintlnSerial_string("                                                              3..passthrough with speed limits & end points", endpoint);
-
-    USBPeriodElapsed();
-
-    PrintlnSerial_string("$n [<int> <int> <int>]                  set or print receiver neutral pos and +-neutral range and +-max range", endpoint);
-    PrintlnSerial_string("$N [<int> <int> <int>]                  set or print ESC output neutral pos and +-range and the +-max range", endpoint);
-    PrintlnSerial_string("$p                                      print positions", endpoint);
-    PrintlnSerial_string("$r [<int>]                              set or print rotation direction of the ESC output, either +1 or -1", endpoint);
-    PrintlnSerial_string("$S                                      print all settings", endpoint);
-    PrintlnSerial_string("$v [<int> <int>]                        set or print maximum allowed stick % in normal and programming mode", endpoint);
-    PrintlnSerial_string("$w                                      write settings to eeprom", endpoint);
-    PrintlnSerial_string("$x [<float>]                            expo factor 1.0 means linear, everything between 1 and 0 is a exponential input", endpoint);
-
-}
-
-void printActiveSettings(Endpoints endpoint)
-{
-    PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
-    PrintlnSerial_string("Active settings", endpoint);
-    PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
-
-    PrintSerial_string("Version of the stored settings: ", endpoint);
-    PrintlnSerial_string(activesettings.version, endpoint);
-    PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
+    PrintlnSerial_string(getSafeModeLabel(), endpoint);
 
     PrintlnSerial_string("Currently the endpoint limits are configured as ", endpoint);
     int32_t pos = ENCODER_VALUE;
 
+    // ------- Endpoint
     if (activesettings.pos_start > activesettings.pos_end)
     {
         /* start is always smaller than end anyway but below prints rely on that, hence doublecheck. */
@@ -1365,72 +1483,43 @@ void printActiveSettings(Endpoints endpoint)
         PrintSerial_long(pos, endpoint);
     }
     PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
 
-    PrintlnSerial_string("Neutral position and range of the RC:", endpoint);
-    PrintSerial_string("  Neutral point:", endpoint);
-    PrintSerial_int(activesettings.stick_neutral_pos, endpoint);
-    PrintSerial_string(" +-", endpoint);
-    PrintlnSerial_int(activesettings.stick_neutral_range, endpoint);
-    PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
+    USBPeriodElapsed();
 
 
+    // ------- Ramp
     PrintlnSerial_string("Ramp filter:", endpoint);
-    PrintSerial_string("  Operational mode ", endpoint);
+
+    PrintSerial_string("  In Operational mode ", endpoint);
     if (controllerstatus.safemode == OPERATIONAL)
     {
-        PrintlnSerial_string("(active)", endpoint);
+        PrintSerial_string("(is active) ", endpoint);
     }
-    else
-    {
-        PrintlnSerial(endpoint);
-    }
-    if (activesettings.mode != MODE_LIMITER && activesettings.mode != MODE_LIMITER_ENDPOINTS)
-    {
-        PrintSerial_string("Current mode ", endpoint);
-        PrintSerial_string(getSafeModeLabel(), endpoint);
-        PrintlnSerial_string(" does not use the accel and speed limits", endpoint);
-    }
-    PrintSerial_string("  Limit stick changes to ", endpoint);
+    PrintSerial_string("the stick changes from 0% to 100% in", endpoint);
+    PrintSerial_float(CONTROLLERLOOPTIME_FLOAT/activesettings.stick_max_accel, endpoint);
+    PrintSerial_string(" seconds (=", endpoint);
+    PrintSerial_float(CONTROLLERLOOPTIME_FLOAT, endpoint);
+    PrintSerial_string("/", endpoint);
     PrintSerial_float(activesettings.stick_max_accel, endpoint);
-    PrintSerial_string(" per second", endpoint);
-    PrintSerial_string(" and the absolute max stick is +-", endpoint);
-    PrintSerial_float(activesettings.stick_max_speed, endpoint);
-    PrintlnSerial_string(" around its neutral range", endpoint);
+    PrintSerial_string(") and is limited to +-", endpoint);
+    PrintSerial_int(activesettings.stick_max_speed*100.0f, endpoint);
+    PrintlnSerial_string("%", endpoint);
+
+    PrintSerial_string("  In Programming mode ", endpoint);
+    if (controllerstatus.safemode == PROGRAMMING)
+    {
+        PrintSerial_string("(active) ", endpoint);
+    }
+    PrintSerial_string("the stick changes from 0% to 100% in", endpoint);
+    PrintSerial_float(CONTROLLERLOOPTIME_FLOAT/activesettings.stick_max_accel_safemode, endpoint);
+    PrintSerial_string(" seconds and is limited to +-", endpoint);
+    PrintSerial_int(activesettings.stick_max_speed_safemode*100.0f, endpoint);
+    PrintlnSerial_string("%", endpoint);
     PrintlnSerial(endpoint);
 
     USBPeriodElapsed();
 
-    PrintSerial_string("  Programming mode ", endpoint);
-    if (controllerstatus.safemode == PROGRAMMING)
-    {
-        PrintlnSerial_string("(active)", endpoint);
-    }
-    else
-    {
-        PrintlnSerial(endpoint);
-    }
-    PrintSerial_string("  Limit stick changes to ", endpoint);
-    PrintSerial_float(activesettings.stick_max_accel_safemode, endpoint);
-    PrintSerial_string(" per second", endpoint);
-    PrintSerial_string(" and the absolute max stick is +-", endpoint);
-    PrintSerial_float(activesettings.stick_max_speed_safemode, endpoint);
-    PrintlnSerial_string(" around its neutral range", endpoint);
-    PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
-
-
-    PrintlnSerial_string("ESC output signal is generated around the neutral position with range", endpoint);
-    PrintSerial_string("  Neutral point:", endpoint);
-    PrintSerial_int(activesettings.esc_neutral_pos, endpoint);
-    PrintSerial_string(" +-", endpoint);
-    PrintlnSerial_int(activesettings.esc_neutral_range, endpoint);
-    PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
-
-
+    // ------- ESC direction
     PrintlnSerial_string("The sensor direction and the motor direction might not be the same. If the CableCam", endpoint);
     PrintlnSerial_string("overshot the end point, pulling the stick in reverse direction to get the CableCam back between", endpoint);
     PrintlnSerial_string("the end points should be allowed, moving it further out should not. But which direction is it?", endpoint);
@@ -1438,29 +1527,46 @@ void printActiveSettings(Endpoints endpoint)
     PrintSerial_float(activesettings.esc_direction, endpoint);
     if (activesettings.esc_direction == 1.0f)
     {
-        PrintSerial_string("(positive stick = hall sensor counts up)", endpoint);
+        PrintlnSerial_string(" (positive stick = hall sensor counts up)", endpoint);
     }
     else if (activesettings.esc_direction == -1.0f)
     {
-        PrintSerial_string("(positive stick = hall sensor counts down)", endpoint);
+        PrintlnSerial_string(" (positive stick = hall sensor counts down)", endpoint);
     } else
     {
-        PrintSerial_string("(not yet decided, drive to pos>500 on a horizontal rope to set it automatically)", endpoint);
+        PrintlnSerial_string(" (not yet decided, drive to pos>500 on a horizontal rope to set it automatically)", endpoint);
     }
     PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
 
+    USBPeriodElapsed();
 
-    PrintlnSerial_string("The controller mode.", endpoint);
-    PrintSerial_string("  Mode", endpoint);
-    PrintSerial_int(activesettings.mode, endpoint);
-    PrintSerial_string("...", endpoint);
-    PrintlnSerial_string(getCurrentModeLabel(activesettings.mode), endpoint);
+    // ------- States
+    if (controllerstatus.play_running == 1)
+    {
+        PrintSerial_string("Play program requested ", endpoint);
+        if (controllerstatus.safemode != OPERATIONAL)
+        {
+            PrintlnSerial_string("but inactive as not in OPERATIONAL mode", endpoint);
+        }
+        else if (activesettings.mode != MODE_LIMITER_ENDPOINTS)
+        {
+            PrintlnSerial_string("but inactive as not in ENDPOINTS mode", endpoint);
+        }
+        else if (getDuty(activesettings.rc_channel_speed) != 0.0f)
+        {
+            PrintlnSerial_string("but inactive as speed is overridden by RC", endpoint);
+        }
+        else if (activesettings.pos_start == -POS_END_NOT_SET || activesettings.pos_end == POS_END_NOT_SET)
+        {
+            PrintlnSerial_string("but inactive as endpoints have never been set", endpoint);
+        }
+        else
+        {
+            PrintlnSerial_string("and active", endpoint);
+        }
+    }
 
-    PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
-    PrintlnSerial(endpoint);
+    printCurrentRCInput(endpoint);
 }
 
 
@@ -1485,4 +1591,70 @@ const char * getCurrentModeLabel(uint8_t mode)
         case MODE_PASSTHROUGH: return "passthrough";
         default : return "????current mode???";
     }
+}
+
+void printCurrentRCInput(Endpoints endpoint)
+{
+    PrintSerial_string("Last RC signal received", endpoint);
+    PrintSerial_long(HAL_GetTick() - sbusdata.sbusLastValidFrame, endpoint);
+    PrintlnSerial_string("ms ago", endpoint);
+
+    PrintlnSerial_string("Value ranges configured are", endpoint);
+    PrintSerial_int(activesettings.stick_neutral_pos - activesettings.stick_neutral_range - activesettings.stick_value_range, endpoint);
+    PrintSerial_string(" .... ",endpoint);
+    PrintSerial_int(activesettings.stick_neutral_pos - activesettings.stick_neutral_range, endpoint);
+    PrintSerial_string(" neutral ",endpoint);
+    PrintSerial_int(activesettings.stick_neutral_pos, endpoint);
+    PrintSerial_string(" neutral ",endpoint);
+    PrintSerial_int(activesettings.stick_neutral_pos + activesettings.stick_neutral_range, endpoint);
+    PrintSerial_string(" .... ",endpoint);
+    PrintlnSerial_int(activesettings.stick_neutral_pos + activesettings.stick_neutral_range + activesettings.stick_value_range, endpoint);
+    PrintlnSerial(endpoint);
+
+    int i = 0;
+    for (i=0; i<SBUS_MAX_CHANNEL; i++)
+    {
+        PrintSerial_string("channel", endpoint);
+        PrintSerial_int(i+1, endpoint);
+        PrintSerial_string(" =", endpoint);
+        PrintSerial_int(sbusdata.servovalues[i].duty, endpoint);
+        if (i == activesettings.rc_channel_speed)
+        {
+            PrintSerial_string(" (used as speed signal input)", endpoint);
+        }
+        else if (i == activesettings.rc_channel_programming)
+        {
+            PrintSerial_string(" (used as programming switch)", endpoint);
+        }
+        else if (i == activesettings.rc_channel_endpoint)
+        {
+            PrintSerial_string(" (used as endpoint switch)", endpoint);
+        }
+        else if (i == activesettings.rc_channel_max_accel)
+        {
+            PrintSerial_string(" (used as max acceleration value selector)", endpoint);
+        }
+        else if (i == activesettings.rc_channel_max_speed)
+        {
+            PrintSerial_string(" (used as max speed selector)", endpoint);
+         }
+        else if (i == activesettings.rc_channel_mode)
+        {
+            PrintSerial_string(" (used as mode selector)", endpoint);
+        }
+        else if (i == activesettings.rc_channel_aux)
+        {
+            PrintSerial_string(" (used as aux input)", endpoint);
+        }
+        else if (i == activesettings.rc_channel_play)
+        {
+            PrintSerial_string(" (used as play on/off switch)", endpoint);
+        }
+        PrintlnSerial(endpoint);
+    }
+    PrintlnSerial(endpoint);
+    PrintSerial_string("current ESC out signal Servo 1 = ", endpoint);
+    PrintlnSerial_int(TIM3->CCR3, endpoint);
+    PrintSerial_string("current AUX out signal Servo 2 = ", endpoint);
+    PrintlnSerial_int(TIM3->CCR4, endpoint);
 }
