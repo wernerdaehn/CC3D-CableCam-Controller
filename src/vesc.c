@@ -116,7 +116,7 @@ void VESC_Output(float esc_output)
     if (esc_output == 0.0f || isnan(esc_output))
     {
         int32_t diff = (float) (tacho_current - tacho_old);
-        if (diff > activesettings.vesc_brake_min_speed)
+        if (diff >= activesettings.vesc_brake_min_speed)
         {
             // We are moving fast and the target speed is zero, e.g. due to an emergency brake
             // Therefore brake as hard as you can before enabling the handbrake

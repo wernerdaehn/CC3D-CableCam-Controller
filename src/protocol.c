@@ -448,8 +448,8 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         /*
          * Note, the protocol does remap channel1 to chan0
          */
-        int16_t p[7];
-        argument_index = sscanf(&commandlinebuffer[2], "%hd %hd %hd %hd %hd %hd %hd", &p[0], &p[1], &p[2], &p[3], &p[4], &p[5], &p[6]);
+        int16_t p[8];
+        argument_index = sscanf(&commandlinebuffer[2], "%hd %hd %hd %hd %hd %hd %hd %hd", &p[0], &p[1], &p[2], &p[3], &p[4], &p[5], &p[6], &p[7]);
 
         if (argument_index >= 1)
         {
@@ -469,10 +469,6 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                         activesettings.rc_channel_programming = p[1]-1;
                         writeProtocolInt(activesettings.rc_channel_programming+1, endpoint);
                     }
-                    else
-                    {
-                        // activesettings.rc_channel_max_accel = 255; // not used
-                    }
                 }
                 if (argument_index >= 3)
                 {
@@ -480,10 +476,6 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                     {
                         activesettings.rc_channel_endpoint = p[2]-1;
                         writeProtocolInt(activesettings.rc_channel_endpoint+1, endpoint);
-                    }
-                    else
-                    {
-                        // activesettings.rc_channel_max_accel = 255; // not used
                     }
                 }
                 if (argument_index >= 4)
@@ -493,10 +485,6 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                         activesettings.rc_channel_max_accel = p[3]-1;
                         writeProtocolInt(activesettings.rc_channel_max_accel+1, endpoint);
                     }
-                    else
-                    {
-                        // activesettings.rc_channel_max_accel = 255; // not used
-                    }
                 }
                 if (argument_index >= 5)
                 {
@@ -504,10 +492,6 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                     {
                         activesettings.rc_channel_max_speed = p[4]-1;
                         writeProtocolInt(activesettings.rc_channel_max_speed+1, endpoint);
-                    }
-                    else
-                    {
-                        // activesettings.rc_channel_max_speed = 255; // not used
                     }
                 }
                 if (argument_index >= 6)
@@ -517,10 +501,6 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                         activesettings.rc_channel_mode = p[5]-1;
                         writeProtocolInt(activesettings.rc_channel_mode+1, endpoint);
                     }
-                    else
-                    {
-                        // activesettings.rc_channel_mode = 255; // not used
-                    }
                 }
                 if (argument_index >= 7)
                 {
@@ -529,9 +509,13 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                         activesettings.rc_channel_aux = p[6]-1;
                         writeProtocolInt(activesettings.rc_channel_aux+1, endpoint);
                     }
-                    else
+                }
+                if (argument_index >= 8)
+                {
+                    if (p[7] > 0 && p[7] <= SBUS_MAX_CHANNEL)
                     {
-                        // activesettings.rc_channel_aux = 255; // not used
+                        activesettings.rc_channel_play= p[7]-1;
+                        writeProtocolInt(activesettings.rc_channel_play+1, endpoint);
                     }
                 }
                 writeProtocolOK(endpoint);
@@ -551,6 +535,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             writeProtocolInt(activesettings.rc_channel_max_speed+1, endpoint);
             writeProtocolInt(activesettings.rc_channel_mode+1, endpoint);
             writeProtocolInt(activesettings.rc_channel_aux+1, endpoint);
+            writeProtocolInt(activesettings.rc_channel_play+1, endpoint);
             writeProtocolOK(endpoint);
 
             printCurrentRCInput(endpoint);
@@ -1393,8 +1378,8 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("$E                                      print the status of the VESC ESC", endpoint);
     PrintlnSerial_string("$g [<float>]                            set or print the max positional error -> exceeding it causes an emergency stop", endpoint);
     PrintlnSerial_string("$G [<int1> ... <int8>]                  set or print gimbal channel mapping", endpoint);
-    PrintlnSerial_string("$i [[[[[[[<int>] <int>] <int>]          set or print input channels for Speed, Programming Switch, Endpoint Switch,...", endpoint);
-    PrintlnSerial_string("      <int>] <int>] <int>] <int>]                                       ...Max Accel, Max Speed, Mode, Aux", endpoint);
+    PrintlnSerial_string("$i [<int> ..... ]                       set or print input channels for Speed, Programmingswitch, Endpointswitch,...", endpoint);
+    PrintlnSerial_string("                                                  ...Max Accel, Max Speed, Mode, Aux, Playswitch", endpoint);
     PrintlnSerial_string("$I [<int>]                              set or print input source 0..SumPPM", endpoint);
     PrintlnSerial_string("                                                                  1..SBus", endpoint);
     USBPeriodElapsed();

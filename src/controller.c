@@ -272,14 +272,8 @@ float stickCycle(float pos, float brakedistance)
         /*
          * In all other modes than Passthroug the accel and speed limiters are turned on
          */
-        float maxaccel = activesettings.stick_max_accel;
-        float maxspeed = activesettings.stick_max_speed;
-
-        if (controllerstatus.safemode != OPERATIONAL)
-        {
-            maxaccel = activesettings.stick_max_accel_safemode;
-            maxspeed = activesettings.stick_max_speed_safemode;
-        }
+        float maxaccel = controllerstatus.stick_max_accel;
+        float maxspeed = controllerstatus.stick_max_speed;
 
         float diff = value - stick_last_value;
 
@@ -630,35 +624,55 @@ float stickCycle(float pos, float brakedistance)
     lastendpointswitch = currentendpointswitch; // Needed to identify a raising flank on the tip switch
 
 
+    float max_accel_scale;
+    float max_speed_scale;
+    if (controllerstatus.safemode != OPERATIONAL)
+    {
+        max_accel_scale = activesettings.stick_max_accel_safemode;
+        max_speed_scale = activesettings.stick_max_speed_safemode;
+    }
+    else
+    {
+        max_accel_scale = activesettings.stick_max_accel;
+        max_speed_scale = activesettings.stick_max_speed;
+    }
+
     /*
      * Evaluate the Max Acceleration Potentiometer
      */
-    float max_accel = getMaxAccelPoti();
-    if (!isnan(max_accel))
+    float max_accel_poti = getMaxAccelPoti();
+    if (!isnan(max_accel_poti))
     {
         /*
          * The value for max_accel coming from the dial can be anything between -1.0 and +1.0. As we want the full range
-         * this is shifted to 0.0 to 2.0. But how quickly should the stick move? In 1 second from 0 to +1.0? That would be an acceleration value of 1/1/50=0.02 (Assuming 50Hz controller cycles).
-         * And a minimum value of 0.00 does not make sense either as it would mean no stick movement at all. The absolute minimum shall be 20secs, so a value of 1/20/50 = 0.001
+         * this is shifted to 0.0 to 2.0. But how quickly should the stick move? In 1 second from 0 to +1.0? That would
+         * be an acceleration value of 1/1/50=0.02 (Assuming 50Hz controller cycles).
+         * And a minimum value of 0.00 does not make sense either as it would mean no stick movement at all.
+         * The absolute minimum shall be 20secs, so a value of 1/20/50 = 0.001
+         * The maximum value should be the activesettings.stick_max_accel value or stick_max_accel_safemode - see above
          *
-         *
-         * 50Hz = 1/CONTROLLERLOOPTIME_FLOAT
-         *
-         * low  ((1.0f - 1.0f)/2.1f + 0.05)*CONTROLLERLOOPTIME_FLOAT = 0.001
-         * mid  ((1.0f + 0.0f)/2.1f + 0.05)*CONTROLLERLOOPTIME_FLOAT = 0.01
-         * high ((1.0f + 1.0f)/2.1f + 0.05)*CONTROLLERLOOPTIME_FLOAT = 0.02
+         * Example: poti reads +1 -> (1.0+1.0)/2 * max_accel_scale + 0.001 = max_accel_scale + 0.001
          */
-        activesettings.stick_max_accel = ((1.0f + max_accel)/2.1f + 0.05f)*CONTROLLERLOOPTIME_FLOAT;
+        controllerstatus.stick_max_accel = (1.0f + max_accel_poti)/2.0f * max_accel_scale + 0.001f;
+    }
+    else
+    {
+        // If the poti is not providing a value value, the max_accel is the absolute maximum as defined.
+        controllerstatus.stick_max_accel = max_accel_scale;
     }
 
     /*
      * Evaluate the Max Speed Potentiometer
      */
-    float max_speed = getMaxSpeedPoti();
-    if (!isnan(max_speed))
+    float max_speed_poti = getMaxSpeedPoti();
+    if (!isnan(max_speed_poti))
     {
         // Again, the full range of the poti from -1.0 to +1.0 should result in a value range of 0.1 to 1.0
-        activesettings.stick_max_speed = (1.0f + max_speed)/2.223f + 0.1f;
+        controllerstatus.stick_max_speed = (1.0f + max_speed_poti)/2.0f * max_speed_scale + 0.1f;
+    }
+    else
+    {
+        controllerstatus.stick_max_speed = max_speed_scale;
     }
 
     /*
@@ -754,7 +768,7 @@ void controllercycle()
         speed = speed_timer;
     }
 
-    float time_to_stop = abs_d(getStick()/activesettings.stick_max_accel);
+    float time_to_stop = abs_d(getStick()/controllerstatus.stick_max_accel);
 
     float distance_to_stop = speed * time_to_stop / 2.0f;
     float stick_filtered_value = stickCycle(pos, distance_to_stop); // go through the stick position calculation with its limiters, max accel etc

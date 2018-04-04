@@ -145,6 +145,8 @@ typedef struct
     int8_t play_direction;
     uint32_t play_time_lastsignal; // Failsafe. If the play signal is not received for a given amount of time, stop playing the program. RC or app seems to be disconnected.
     uint32_t play_endpoint_reached_at; // Used to calculate the pause before running into the other direction
+    float stick_max_accel;
+    float stick_max_speed;
 } controllerstatus_t;
 
 extern controllerstatus_t controllerstatus;
