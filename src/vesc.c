@@ -139,7 +139,8 @@ void VESC_Output(float esc_output)
     }
     else
     {
-        int32_t vesc_erpm = (int32_t) ((esc_output * ((float) activesettings.vesc_max_erpm)));
+        // controllerstatus.stick_max_speed reduces the vesc erpm by this factor at stick=100%
+        int32_t vesc_erpm = (int32_t) ((esc_output * controllerstatus.stick_max_speed * ((float) activesettings.vesc_max_erpm)));
         VESC_set_rpm(vesc_erpm);
         handbrake_current = activesettings.vesc_brake_handbrake_max;
     }

@@ -273,7 +273,6 @@ float stickCycle(float pos, float brakedistance)
          * In all other modes than Passthroug the accel and speed limiters are turned on
          */
         float maxaccel = controllerstatus.stick_max_accel;
-        float maxspeed = controllerstatus.stick_max_speed;
 
         float diff = value - stick_last_value;
 
@@ -298,30 +297,6 @@ float stickCycle(float pos, float brakedistance)
             // Example: last time: +1.00; now stick: +0.20 --> diff: -0.80; max change is 0.01 per cycle --> new value: +1.00-0.01=+0.99 as the limiter kicks in
             value = stick_last_value - maxaccel;
         }
-
-        /*
-         * It is important to calculate the new value based on the acceleration first, then we have the new target speed,
-         * now it is limited to an absolute value.
-         */
-        if (value > maxspeed || value < -maxspeed)
-        {
-            controllerstatus.speed_limiter = true;
-        }
-        else
-        {
-            controllerstatus.speed_limiter = false;
-        }
-
-        if (value > maxspeed)
-        {
-            value = maxspeed;
-        }
-        else if (value < -maxspeed)
-        {
-            value = -maxspeed;
-        }
-
-
 
         if (controllerstatus.safemode == OPERATIONAL && activesettings.mode != MODE_PASSTHROUGH && activesettings.mode != MODE_LIMITER)
         {
@@ -653,7 +628,7 @@ float stickCycle(float pos, float brakedistance)
          *
          * Example: poti reads +1 -> (1.0+1.0)/2 * max_accel_scale + 0.001 = max_accel_scale + 0.001
          */
-        controllerstatus.stick_max_accel = (1.0f + max_accel_poti)/2.0f * max_accel_scale + 0.001f;
+        controllerstatus.stick_max_accel = (1.0f + max_accel_poti)/2.0f * (max_accel_scale - 0.001f) + 0.001f;
     }
     else
     {
@@ -668,7 +643,7 @@ float stickCycle(float pos, float brakedistance)
     if (!isnan(max_speed_poti))
     {
         // Again, the full range of the poti from -1.0 to +1.0 should result in a value range of 0.1 to 1.0
-        controllerstatus.stick_max_speed = (1.0f + max_speed_poti)/2.0f * max_speed_scale + 0.1f;
+        controllerstatus.stick_max_speed = (1.0f + max_speed_poti)/2.0f * (max_speed_scale - 0.1f) + 0.1f;
     }
     else
     {
@@ -775,20 +750,22 @@ void controllercycle()
 
     /*
      * PPM output is rescaled to +-700 and adding the ESC's neutral range to get an immediate output.
+     * However the controllerstatus.stick_max_speed plays a role as well. If that is a value of 50%, then the stick_filtered_value is rescaled to this.
+     * Example: stick: 100%; max_speed: 50% --> esc_valuerange * 1.00 * 0.5 --> Stick of 100% means 50% output
      */
     if (stick_filtered_value > 0.0f)
     {
-        TIM3->CCR3 = activesettings.esc_neutral_pos + activesettings.esc_neutral_range + ((int16_t) (stick_filtered_value * ((float) activesettings.esc_value_range)));
+        TIM3->CCR3 = activesettings.esc_neutral_pos + activesettings.esc_neutral_range + ((int16_t) (stick_filtered_value * controllerstatus.stick_max_speed *((float) activesettings.esc_value_range)));
     }
     else if (stick_filtered_value < 0.0f)
     {
-        TIM3->CCR3 = activesettings.esc_neutral_pos - activesettings.esc_neutral_range + ((int16_t) (stick_filtered_value * ((float) activesettings.esc_value_range)));
+        TIM3->CCR3 = activesettings.esc_neutral_pos - activesettings.esc_neutral_range + ((int16_t) (stick_filtered_value * controllerstatus.stick_max_speed * ((float) activesettings.esc_value_range)));
     }
     else
     {
         TIM3->CCR3 = activesettings.esc_neutral_pos;
     }
-    VESC_Output(stick_filtered_value);
+    VESC_Output(stick_filtered_value); // controllerstatus.stick_max_speed is handled inside
 
 
     float aux = getAuxInput();

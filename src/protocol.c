@@ -388,6 +388,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         break;
     }
     case PROTOCOL_POS:
+    {
         writeProtocolHead(PROTOCOL_POS, endpoint);
         writeProtocolLong(activesettings.pos_start, endpoint);
         writeProtocolLong(activesettings.pos_end, endpoint);
@@ -396,6 +397,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         writeProtocolFloat(getSpeedPosSensor(), endpoint);
         writeProtocolOK(endpoint);
         break;
+    }
     case PROTOCOL_MAX_SPEED:
     {
         float p[2];
@@ -1224,6 +1226,14 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                 writeProtocolInt(controllerstatus.play_running, endpoint);
                 writeProtocolOK(endpoint);
             }
+            break;
+        }
+    case PROTOCOL_VERSION:
+        {
+            writeProtocolHead(PROTOCOL_VERSION, endpoint);
+            writeProtocolText(activesettings.version, endpoint);
+            writeProtocolOK(endpoint);
+            break;
         }
     default:  // we do not know how to handle the (valid) message, indicate error MSP $M!
         writeProtocolError(ERROR_UNKNOWN_COMMAND, endpoint);
@@ -1439,7 +1449,7 @@ void printActiveSettings(Endpoints endpoint)
     PrintlnSerial_string("Currently the endpoint limits are configured as ", endpoint);
     int32_t pos = ENCODER_VALUE;
 
-    // ------- Endpoint
+     // ------- Endpoint
     if (activesettings.pos_start > activesettings.pos_end)
     {
         /* start is always smaller than end anyway but below prints rely on that, hence doublecheck. */
@@ -1475,34 +1485,12 @@ void printActiveSettings(Endpoints endpoint)
     // ------- Ramp
     PrintlnSerial_string("Ramp filter:", endpoint);
 
-    PrintSerial_string("  In Operational mode ", endpoint);
-    if (controllerstatus.safemode == OPERATIONAL)
-    {
-        PrintSerial_string("(is active) ", endpoint);
-    }
-    PrintSerial_string("the stick changes from 0% to 100% in", endpoint);
-    PrintSerial_float(CONTROLLERLOOPTIME_FLOAT/activesettings.stick_max_accel, endpoint);
-    PrintSerial_string(" seconds (=", endpoint);
-    PrintSerial_float(CONTROLLERLOOPTIME_FLOAT, endpoint);
-    PrintSerial_string("/", endpoint);
-    PrintSerial_float(activesettings.stick_max_accel, endpoint);
-    PrintSerial_string(") and is limited to +-", endpoint);
-    PrintSerial_int(activesettings.stick_max_speed*100.0f, endpoint);
-    PrintlnSerial_string("%", endpoint);
-
-    PrintSerial_string("  In Programming mode ", endpoint);
-    if (controllerstatus.safemode == PROGRAMMING)
-    {
-        PrintSerial_string("(active) ", endpoint);
-    }
-    PrintSerial_string("the stick changes from 0% to 100% in", endpoint);
-    PrintSerial_float(CONTROLLERLOOPTIME_FLOAT/activesettings.stick_max_accel_safemode, endpoint);
+    PrintSerial_string("The stick changes from 0% to 100% in", endpoint);
+    PrintSerial_float(CONTROLLERLOOPTIME_FLOAT/controllerstatus.stick_max_accel, endpoint);
     PrintSerial_string(" seconds and is limited to +-", endpoint);
-    PrintSerial_int(activesettings.stick_max_speed_safemode*100.0f, endpoint);
+    PrintSerial_int(controllerstatus.stick_max_speed*100.0f, endpoint);
     PrintlnSerial_string("%", endpoint);
     PrintlnSerial(endpoint);
-
-    USBPeriodElapsed();
 
     // ------- ESC direction
     PrintlnSerial_string("The sensor direction and the motor direction might not be the same. If the CableCam", endpoint);

@@ -57,7 +57,7 @@ _Note: All drivers used are included in a standard Windows 10 installation._
 1. This should print status information plus a help text in the console.
 <br/><a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/console_help.png"><img src="_images/console_help.png" height="100px"/></a>
 1. The first and most important step is to set the type of receiver. The firmware supports either SBus or SumPPM. The $h command prints the currently active receiver type and using the _$I_ (uppercase "i") the input receiver type can be changed, e.g. from the default SumPPM to SBus via _$I 1_. Then store that value permanently using the _$w_ command and restart the board by disconnecting the USB cable and reconnecting.
-1. Next step is to validate the receiver input signals. Turn on the ESC to power the receiver and enter the command _$i_. This shows all channels, their current reading from the receiver and which channel is used for what function. The CC3D Revo is designed to use USB while it is powered from an external source like the ESC.
+1. Next step is to validate the receiver input signals. Turn on the ESC (CC3D Revo is designed to handle USB and external power at the same time) to power the receiver and enter the command _$i_. This shows all channels, their current reading from the receiver and which channel is used for what function.
 <br/><a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/console_input_config.png"><img src="_images/console_input_config.png" height="100px"/></a>
 1. Setup the RC sender to assign the various inputs to channels. The functions used are
     1. Speed Input: In my case I control the camera with the left stick, moving the right stick forward/backwards should move the CableCam. This is channel 3 on my sender.
@@ -66,7 +66,8 @@ _Note: All drivers used are included in a standard Windows 10 installation._
     1. max acceleration knob (optional): The CableCam Controller puts a filter over the Speed Input to allow for slow accelerations/deaccelerations only. The value of this can either be programmed using the _$a_ command or by the sender. In my case the knob S1 is programmed to control the channel 4. A value of 256 would deactivate this function.
     1. max speed knob (optional): Similar to the acceleration, the maximum speed can be set as well. Either by the command _$v_ or via the RC sender, here the S2 is assigned to channel 5.
 1. To validate each channel execute the command _$i_ multiple times and check which channel reading does change when operating the RC sender.
-1. To program the channel assignments, execute the command _$i_ with the channels to be used for each functions, in the order of above. In my concrete example that would be _$i 3 6 7 4 5_. Or _$i 3 6 7 256 256_ for a setup without a accel and speed dial.
+1. Run the command $1 for a guided setup of the channels to CCC functions.
+1. Validate with _$i_ the current assignment.
 1. With _$w_ these settings are stored permantly. 
 1. Apply speed via the RC sender and check if the motor starts. If it does not, the defaults for other settings in the controller do not match your setup and need to be tested - see the troubleshooting section below.
 1. Execute the command _$p_. This prints out the current two end points and the current position. When the wheel with the Hall Sensor is turning, the position reading should be different with each _$p_ call. This does proof the Hall sensors are working properly.
@@ -140,7 +141,7 @@ The neutral range of the CableCam Controller is way smaller than the range the E
 
 * No slow speeds possible
 
-Obviously the ESC itself has a minum speed. Hence the assumption is, without the CableCam Controller the motor can be moved at slower speeds than with the controller. The only reason could be a similar effect around the output neutral range _$N_, but the other way around. The CableCam Controller has a larger range than the ESC. Then the first output signal will be neutral range and if that means a thrust level of 5% for the ESC already, because its neutral range is more narrow, the CableCam cannot be driven slower than that. Solution is to reduce the neutral range, e.g. _$N 1500 20_.
+Obviously the ESC itself has a minimum speed. Hence the assumption is, without the CableCam Controller the motor can be moved at slower speeds than with the controller. The only reason could be a similar effect around the output neutral range _$N_, but the other way around. The CableCam Controller has a larger range than the ESC. Then the first output signal will be neutral range and if that means a thrust level of 5% for the ESC already, because its neutral range is more narrow, the CableCam cannot be driven slower than that. Solution is to reduce the neutral range, e.g. _$N 1500 20_.
 
 * Forward and reverse is different
 

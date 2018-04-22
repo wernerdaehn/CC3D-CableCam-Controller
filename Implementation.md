@@ -143,7 +143,8 @@ Just to repeat: Every setting starting with _$1_ and below has no effect, except
 ### The acceleration and speed limiter
 
 When driving an RC car, applying full thrust instantly is fun, as the wheels start spinning, dirt flying through the air. For the CableCam not so much. Here a constant acceleration is more important. Therefore the CableCam Controller has in ramp built in.
-As long as th user stay within the acceleration and speed limit, he has full control. But if he exceeds the acceleration by e.g. pushing the stick forward too quickly, the stick movement is limited to the maximum allowed acceleration. 
+As long as the user stays within the acceleration limit, he has full control. But if he exceeds the acceleration by e.g. pushing the stick forward too quickly, the stick movement is limited to the maximum allowed acceleration. So the acceleration limiter works by using the stick raw position, e.g. 50%, then apply the expo factor and that is the current stick input in percent. This value change is governed by the acceleration limiter.
+The speed limiter works on the output instead. If the max speed is limited to 50%, the the VESC max erpm or the servo output signal is only 50% of what it has been configured as absolute max via _$e_ or _$N_. 
 
 ![ramp](_images/ramp.png)
 
@@ -159,7 +160,7 @@ The logic for the end point limiter is a bit tricky.
 Based on the stick position and the acceleration limit, the time to zero is calculated. For example, if the stick is at position +100 and the acceleration is 20, it takes 100/(20*0.1)=50 cycles to reach zero. At a refresh rate of 20ms, 50 cycles are 50*20ms, that is one second. In other words, the cable cam should stop within one second.
 From the hall sensor the controller knows the current speed, the time to stop from the stick level, hence the distance to stop can be calculated: s = v * t / 2 [(velocity-time graph)](http://www.bbc.co.uk/education/guides/z3bqtfr/revision/5).
 
-This calculation is made in absolute numbers to simplify things and which end point should be considered depends to the stick position only. If the stick is in forward direction, the current position plus the braking distance needs to be smaller than the end point. If the stick is in reverse, the position minus the braking distance has to be larger than the start point.
+This calculation is made in absolute numbers to simplify things. Which end point should be considered depends to the stick position only. If the stick is in forward direction, the current position plus the braking distance needs to be smaller than the end point. If the stick is in reverse, the position minus the braking distance has to be larger than the start point.
 As soon as the calculation shows the end point will be overshot, the stick is moved towards the neutral position usng the max acceleration.
 For a closed loop ESC this would cause the motor to actively engage the brake until the reduced target speed has been achieved. 
 A regular car ESC does slow down less. Almost nothing in fact. The drag brake does kick in if the stick is in neutral only. 
@@ -195,5 +196,7 @@ EEPROM | SPI for Flash 16MBit and optional RF Module (not used) | PC10 | SPI3_SC
 EEPROM | SPI for Flash 16MBit and optional RF Module (not used) | PC11 | SPI3_MISO
 EEPROM | SPI for Flash 16MBit and optional RF Module (not used) | PC12 | SPI3_MOSI
 EEPROM | Select for Flash 16MBit | PB3 | GPIO
-Bluetooth | TX3 on Flexiport | PB10 | USART3_TX
-Bluetooth | RX3 on Flexiport | PB11 | USART3_RX
+Bluetooth | TX3 on Flexiport on Conn1 | PB10 | USART3_TX
+Bluetooth | RX3 on Flexiport on Conn1 | PB11 | USART3_RX
+SBus Out (non-inverted) | Pin 7 on FlexIO con Conn2, Connect an inverter and control the DJI Ronin with that | PC7 | USART6_TX
+

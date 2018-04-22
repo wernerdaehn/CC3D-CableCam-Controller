@@ -27,6 +27,7 @@
 #define PROTOCOL_SETTINGS         'S'   // no argument
 #define PROTOCOL_EEPROM_WRITE     'w'   // no argument
 #define PROTOCOL_MAX_SPEED        'v'   // 1 float argument
+#define PROTOCOL_VERSION          'V'   // no argument
 #define PROTOCOL_EXPO_FACTOR      'x'   // 1 float argument
 #define PROTOCOL_SETUP            '1'
 #define PROTOCOL_READ_ERRORHANDLER 'H'  // Error handler hidden command

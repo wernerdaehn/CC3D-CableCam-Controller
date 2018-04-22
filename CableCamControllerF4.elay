@@ -48,27 +48,27 @@
 	</File>
 	<File name="inc\controller.h" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="166" topLine="0" />
+			<Cursor1 position="382" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="inc\eeprom.h" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="inc\eeprom.h" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="144" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="inc\main.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="3626" topLine="11" />
+			<Cursor1 position="3643" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="inc\protocol.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="inc\protocol.h" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="5215" topLine="81" />
+			<Cursor1 position="6636" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="inc\sbus.h" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="1537" topLine="3" />
+			<Cursor1 position="1822" topLine="6" />
 		</Cursor>
 	</File>
 	<File name="inc\serial_print.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -76,14 +76,14 @@
 			<Cursor1 position="718" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="inc\spi_flash.h" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="inc\spi_flash.h" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="4007" topLine="52" />
 		</Cursor>
 	</File>
 	<File name="inc\stm32f4xx_it.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="3123" topLine="13" />
+			<Cursor1 position="2994" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="inc\uart_callback.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -98,7 +98,7 @@
 	</File>
 	<File name="inc\usbd_cdc_if.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="4391" topLine="79" />
+			<Cursor1 position="3506" topLine="41" />
 		</Cursor>
 	</File>
 	<File name="inc\usbd_conf.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -131,37 +131,37 @@
 			<Cursor1 position="495" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\controller.c" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="-1" zoom_2="0">
+	<File name="src\controller.c" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="-1" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="29463" topLine="0" />
+			<Cursor1 position="28397" topLine="612" />
 		</Cursor>
 	</File>
-	<File name="src\eeprom.c" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\eeprom.c" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="995" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\main.c" open="1" top="1" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\main.c" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="23431" topLine="662" />
+			<Cursor1 position="6344" topLine="136" />
 		</Cursor>
 	</File>
-	<File name="src\protocol.c" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\protocol.c" open="1" top="1" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="13975" topLine="411" />
+			<Cursor1 position="59197" topLine="1438" />
 		</Cursor>
 	</File>
-	<File name="src\sbus.c" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\sbus.c" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2935" topLine="79" />
+			<Cursor1 position="11855" topLine="242" />
 		</Cursor>
 	</File>
-	<File name="src\serial_print.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\serial_print.c" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="3384" topLine="85" />
+			<Cursor1 position="2918" topLine="57" />
 		</Cursor>
 	</File>
-	<File name="src\spi_flash.c" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\spi_flash.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="2964" topLine="43" />
 		</Cursor>
@@ -173,12 +173,12 @@
 	</File>
 	<File name="src\stm32f4xx_hal_msp.c" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="8774" topLine="0" />
+			<Cursor1 position="3025" topLine="9" />
 		</Cursor>
 	</File>
 	<File name="src\stm32f4xx_it.c" open="0" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="6889" topLine="183" />
+			<Cursor1 position="4886" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="src\system_stm32f4xx.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -193,7 +193,7 @@
 	</File>
 	<File name="src\uart_callback.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="4253" topLine="37" />
+			<Cursor1 position="5960" topLine="79" />
 		</Cursor>
 	</File>
 	<File name="src\usb_device.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -203,7 +203,7 @@
 	</File>
 	<File name="src\usbd_cdc_if.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="17447" topLine="75" />
+			<Cursor1 position="6842" topLine="170" />
 		</Cursor>
 	</File>
 	<File name="src\usbd_conf.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -216,9 +216,9 @@
 			<Cursor1 position="8001" topLine="196" />
 		</Cursor>
 	</File>
-	<File name="src\vesc.c" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\vesc.c" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="156" topLine="0" />
+			<Cursor1 position="4744" topLine="87" />
 		</Cursor>
 	</File>
 	<File name="stm32f405rg_flash.ld" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -268,12 +268,12 @@
 	</File>
 	<File name="STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_tim.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="66902" topLine="1440" />
+			<Cursor1 position="58735" topLine="1261" />
 		</Cursor>
 	</File>
 	<File name="STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_uart.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="31182" topLine="592" />
+			<Cursor1 position="33456" topLine="625" />
 		</Cursor>
 	</File>
 	<File name="STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_pcd.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -288,7 +288,7 @@
 	</File>
 	<File name="STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_uart.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="11829" topLine="209" />
+			<Cursor1 position="55376" topLine="1507" />
 		</Cursor>
 	</File>
 	<File name="STM32F4xx_HAL_Driver\Src\stm32f4xx_ll_adc.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">

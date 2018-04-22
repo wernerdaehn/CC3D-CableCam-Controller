@@ -48,15 +48,6 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
             uint16_t duty = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4) - lastrising;
             if (duty > 4000)   // a long duty signal is the packet-end of a sum ppm
             {
-                /*
-                 * What could happen is that the receiver was swapped from SBus or SumPPM with 16 channels to a SumPPM 8 channel. And then the upper channels
-                 * duty values would never change. Hence set all others to zero.
-                 */
-                for (int i=current_virtual_channel; i<SBUS_MAX_CHANNEL; i++)
-                {
-                    sbusdata.servovalues[i].duty = 0;
-                }
-
                 current_virtual_channel = 0; // Hence the next duty signal will be for the first channel
                 sbusdata.sbusLastValidFrame = HAL_GetTick(); // and we got a valid frame, so set the timestamp to now
                 sbusdata.counter_sbus_valid_data++;
