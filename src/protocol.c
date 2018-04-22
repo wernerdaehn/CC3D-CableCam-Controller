@@ -355,6 +355,8 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             writeProtocolFloat(activesettings.stick_max_accel/CONTROLLERLOOPTIME_FLOAT, endpoint);
             writeProtocolFloat(activesettings.stick_max_accel_safemode/CONTROLLERLOOPTIME_FLOAT, endpoint);
             writeProtocolOK(endpoint);
+            PrintSerial_string("Current value: ", endpoint);
+            PrintlnSerial_float(controllerstatus.accel_limiter, endpoint);
         }
         else
         {

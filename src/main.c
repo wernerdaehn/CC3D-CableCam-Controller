@@ -168,8 +168,8 @@ int main(void)
     activesettings.rc_channel_max_accel = 255;
     activesettings.rc_channel_max_speed = 255;
     activesettings.rc_channel_mode = 255;
-    activesettings.stick_max_accel = 0.01;
-    activesettings.stick_max_accel_safemode = 0.001f;
+    activesettings.stick_max_accel = 0.01f;
+    activesettings.stick_max_accel_safemode = 0.01f;
     activesettings.stick_max_speed = 1.0f;
     activesettings.stick_max_speed_safemode = 0.25f;
     activesettings.stick_neutral_pos = 992;
