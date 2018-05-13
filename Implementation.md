@@ -198,5 +198,5 @@ EEPROM | SPI for Flash 16MBit and optional RF Module (not used) | PC12 | SPI3_MO
 EEPROM | Select for Flash 16MBit | PB3 | GPIO
 Bluetooth | TX3 on Flexiport on Conn1 | PB10 | USART3_TX
 Bluetooth | RX3 on Flexiport on Conn1 | PB11 | USART3_RX
-SBus Out (non-inverted) | Pin 7 on FlexIO con Conn2, Connect an inverter and control the DJI Ronin with that | PC7 | USART6_TX
+SBus Out (non-inverted) | Pin 7 on FlexIO, Connect an inverter and control the DJI Ronin with that | PC7 | USART6_TX
 

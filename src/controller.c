@@ -7,6 +7,8 @@
 #include "vesc.h"
 #include "math.h"
 
+#define ZERO_SPEED_POS_ZONE 100.0f
+
 void printControlLoop(int16_t input, float speed, float pos, float brakedistance, uint16_t esc, Endpoints endpoint);
 float stickCycle(float pos, float brakedistance);
 float getStickPositionRaw(void);
@@ -197,7 +199,7 @@ float getStickPositionRaw()
                      */
                     if (controllerstatus.play_direction == -activesettings.esc_direction)
                     {
-                        if (activesettings.pos_start < pos_current)
+                        if (activesettings.pos_start+ZERO_SPEED_POS_ZONE < pos_current)
                         {
                             value = -activesettings.stick_max_speed;
                             controllerstatus.play_endpoint_reached_at = HAL_GetTick();
@@ -213,10 +215,10 @@ float getStickPositionRaw()
                     }
                     else
                     {
-                        if (activesettings.pos_end > pos_current)
+                        if (activesettings.pos_end-ZERO_SPEED_POS_ZONE > pos_current)
                         {
-                            value = activesettings.stick_max_speed;
                             controllerstatus.play_endpoint_reached_at = HAL_GetTick();
+                            value = activesettings.stick_max_speed;
                         }
                         else
                         {
@@ -339,14 +341,14 @@ float stickCycle(float pos, float brakedistance)
              *
              */
 
-            if (pos + brakedistance < activesettings.pos_end && pos - brakedistance > activesettings.pos_start)
+            if (pos + brakedistance < activesettings.pos_end-ZERO_SPEED_POS_ZONE && pos - brakedistance > activesettings.pos_start+ZERO_SPEED_POS_ZONE)
             {
                 controllerstatus.endpointbrake = false;
                 controllerstatus.emergencybrake = false;
             }
             else
             {
-                if (pos + brakedistance >= activesettings.pos_end)
+                if (pos + brakedistance >= activesettings.pos_end-ZERO_SPEED_POS_ZONE)
                 {
                     /*
                      * In case the CableCam will overshoot the end point reduce the speed to zero.
@@ -355,42 +357,55 @@ float stickCycle(float pos, float brakedistance)
                      */
                     if (activesettings.esc_direction * value > 0.0f)
                     {
-                        value = stick_last_value - (maxaccel * activesettings.esc_direction); // reduce speed at full allowed acceleration
-                        if (value * activesettings.esc_direction < 0.0f) // watch out to not get into reverse.
-                        {
-                            value = 0.0f;
-                        }
-                        if (controllerstatus.endpointbrake == false)
-                        {
-                            PrintlnSerial_string("Endpoint brake on ", EndPoint_All);
-                        }
-                        controllerstatus.endpointbrake = true;
                         LED_WARN_ON;
                         /*
                          * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
+                         * As there is some elasticity between motor and actual position, add a value here.
                          */
                         if (pos >= activesettings.pos_end)
                         {
                             stick_last_value = 0.0f;
-                            return 0.0f;
+                            return stick_last_value;
                         }
-
-                        /*
-                         * Failsafe: If, at the current speed the end point will be overshot significantly, ignore the ramp logic and request a full brake by setting speed=0.
-                         */
-                        if (pos + brakedistance >= activesettings.pos_end + activesettings.max_position_error)
+                        else if (pos >= activesettings.pos_end - ZERO_SPEED_POS_ZONE)
                         {
-                            /*
-                             * We are in danger to overshoot the end point by max_position_error. Hence kick in the emergency brake.
-                             */
-                            if (controllerstatus.emergencybrake == false)
+                            stick_last_value = 0.001f * activesettings.esc_direction;
+                            return stick_last_value;
+                        }
+                        else
+                        {
+                            value = stick_last_value - (maxaccel * activesettings.esc_direction); // reduce speed at full allowed acceleration
+                            if (value * activesettings.esc_direction < 0.0f) // watch out to not get into reverse.
                             {
-                                PrintlnSerial_string("Emergency brake on ", EndPoint_All);
+                                value = 0.0f;
                             }
-                            controllerstatus.emergencybrake = true;
-                            LED_WARN_ON;
-                            stick_last_value = value;
-                            return 0.0f;
+                            if (controllerstatus.endpointbrake == false)
+                            {
+                                PrintSerial_string("Endpoint brake on. Distance=", EndPoint_All);
+                                PrintSerial_float(activesettings.pos_end-pos, EndPoint_All);
+                                PrintSerial_string(", calculated braking distance=", EndPoint_All);
+                                PrintlnSerial_float(brakedistance, EndPoint_All);
+                            }
+                            controllerstatus.endpointbrake = true;
+
+                            /*
+                             * Failsafe: If, at the current speed the end point will be overshot significantly, ignore the ramp logic and request a full brake by setting speed=0.
+                             * Because at high speeds the calculation might not be that accurate, add a factor depending on the brake distance
+                             */
+                            if (activesettings.max_position_error != 0.0f && (pos + brakedistance >= activesettings.pos_end + activesettings.max_position_error + 30.0f*brakedistance/activesettings.max_position_error))
+                            {
+                                /*
+                                 * We are in danger to overshoot the end point by max_position_error. Hence kick in the emergency brake.
+                                 */
+                                if (controllerstatus.emergencybrake == false)
+                                {
+                                    PrintlnSerial_string("Emergency brake on ", EndPoint_All);
+                                }
+                                controllerstatus.emergencybrake = true;
+                                LED_WARN_ON;
+                                stick_last_value = value;
+                                return 0.0f;
+                            }
                         }
                     }
                     else
@@ -403,7 +418,7 @@ float stickCycle(float pos, float brakedistance)
                 }
 
 
-                if (pos - brakedistance <= activesettings.pos_start)
+                if (pos - brakedistance <= activesettings.pos_start+ZERO_SPEED_POS_ZONE)
                 {
                     /*
                      * In case the CableCam will overshoot the start point reduce the speed to zero.
@@ -412,16 +427,6 @@ float stickCycle(float pos, float brakedistance)
                      */
                     if (activesettings.esc_direction * value < 0.0f)
                     {
-                        value = stick_last_value + (maxaccel * activesettings.esc_direction); // reduce speed at full allowed acceleration
-                        if (value * activesettings.esc_direction > 0.0f) // watch out to not get into reverse.
-                        {
-                            value = 0.0f;
-                        }
-                        if (controllerstatus.endpointbrake == false)
-                        {
-                            PrintlnSerial_string("Endpoint brake on ", EndPoint_All);
-                        }
-                        controllerstatus.endpointbrake = true;
                         LED_WARN_ON;
                         /*
                          * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
@@ -431,23 +436,45 @@ float stickCycle(float pos, float brakedistance)
                             stick_last_value = 0.0f;
                             return 0.0f;
                         }
-
-                        /*
-                         * Failsafe: If, at the current speed the end point will be overshot significantly, ignore the ramp logic and request a full brake by setting speed=0.
-                         */
-                        if (pos - brakedistance <= activesettings.pos_start - activesettings.max_position_error)
+                        else if (pos <= activesettings.pos_start+ZERO_SPEED_POS_ZONE)
                         {
-                            /*
-                             * We are in danger to overshoot the start point by max_position_error. Hence kick in the emergency brake.
-                             */
-                            if (controllerstatus.emergencybrake == false)
+                            stick_last_value = -0.001f * activesettings.esc_direction;
+                            return stick_last_value;
+                        }
+                        else
+                        {
+                            value = stick_last_value + (maxaccel * activesettings.esc_direction); // reduce speed at full allowed acceleration
+                            if (value * activesettings.esc_direction > 0.0f) // watch out to not get into reverse.
                             {
-                                PrintlnSerial_string("Emergency brake on ", EndPoint_All);
+                                value = 0.0f;
                             }
-                            controllerstatus.emergencybrake = true;
-                            LED_WARN_ON;
-                            stick_last_value = value;
-                            return 0.0f;
+                            if (controllerstatus.endpointbrake == false)
+                            {
+                                PrintSerial_string("Endpoint brake on. Distance=", EndPoint_All);
+                                PrintSerial_float(pos - activesettings.pos_start, EndPoint_All);
+                                PrintSerial_string(", calculated braking distance=", EndPoint_All);
+                                PrintlnSerial_float(brakedistance, EndPoint_All);
+                            }
+                            controllerstatus.endpointbrake = true;
+
+                            /*
+                             * Failsafe: If, at the current speed the end point will be overshot significantly, ignore the ramp logic and request a full brake by setting speed=0.
+                             * Because at high speeds the calculation might not be that accurate, add a factor depending on the brake distance
+                             */
+                            if (activesettings.max_position_error != 0.0f && (pos - brakedistance <= activesettings.pos_start - activesettings.max_position_error - 30.0f*brakedistance/activesettings.max_position_error))
+                            {
+                                /*
+                                 * We are in danger to overshoot the start point by max_position_error. Hence kick in the emergency brake.
+                                 */
+                                if (controllerstatus.emergencybrake == false)
+                                {
+                                    PrintlnSerial_string("Emergency brake on ", EndPoint_All);
+                                }
+                                controllerstatus.emergencybrake = true;
+                                LED_WARN_ON;
+                                stick_last_value = value;
+                                return 0.0f;
+                            }
                         }
                     }
                     else

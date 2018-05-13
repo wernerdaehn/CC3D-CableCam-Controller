@@ -61,9 +61,9 @@
 			<Cursor1 position="3643" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="inc\protocol.h" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="inc\protocol.h" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="6636" topLine="0" />
+			<Cursor1 position="1907" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="inc\sbus.h" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -133,7 +133,7 @@
 	</File>
 	<File name="src\controller.c" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="-1" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="28397" topLine="612" />
+			<Cursor1 position="32592" topLine="720" />
 		</Cursor>
 	</File>
 	<File name="src\eeprom.c" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -141,22 +141,29 @@
 			<Cursor1 position="995" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\main.c" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\main.c" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="6344" topLine="136" />
+			<Cursor1 position="6386" topLine="208" />
 		</Cursor>
 	</File>
-	<File name="src\protocol.c" open="1" top="1" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\protocol.c" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="59197" topLine="1438" />
+			<Cursor1 position="11456" topLine="316" />
+		</Cursor>
+		<Folding>
+			<Collapse line="367" />
+			<Collapse line="392" />
+			<Collapse line="450" />
+			<Collapse line="1213" />
+			<Collapse line="1233" />
+		</Folding>
+	</File>
+	<File name="src\sbus.c" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1419" topLine="17" />
 		</Cursor>
 	</File>
-	<File name="src\sbus.c" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="11855" topLine="242" />
-		</Cursor>
-	</File>
-	<File name="src\serial_print.c" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\serial_print.c" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="2918" topLine="57" />
 		</Cursor>
@@ -173,7 +180,7 @@
 	</File>
 	<File name="src\stm32f4xx_hal_msp.c" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="3025" topLine="9" />
+			<Cursor1 position="12740" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="src\stm32f4xx_it.c" open="0" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -186,9 +193,9 @@
 			<Cursor1 position="0" topLine="60" />
 		</Cursor>
 	</File>
-	<File name="src\timer_callbacks.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\timer_callbacks.c" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="199" topLine="0" />
+			<Cursor1 position="2276" topLine="32" />
 		</Cursor>
 	</File>
 	<File name="src\uart_callback.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -216,9 +223,9 @@
 			<Cursor1 position="8001" topLine="196" />
 		</Cursor>
 	</File>
-	<File name="src\vesc.c" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\vesc.c" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="4744" topLine="87" />
+			<Cursor1 position="5369" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="stm32f405rg_flash.ld" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">

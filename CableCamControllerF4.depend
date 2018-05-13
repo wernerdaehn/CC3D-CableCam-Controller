@@ -1525,7 +1525,7 @@
 	"stm32f4xx.h"
 	"serial_print.h"
 
-1523801748 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\protocol.c
+1524391151 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\protocol.c
 	"config.h"
 	"protocol.h"
 	<errno.h>
@@ -1935,7 +1935,7 @@
 1497112352 c:\users\werne\onedrive\github\cc3d-cablecam-controller\stm32f4xx_hal_driver\inc\stm32f4xx_ll_system.h
 	"stm32f4xx.h"
 
-1522685830 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\main.c
+1526198201 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\main.c
 	"main.h"
 	"stm32f4xx_hal.h"
 	"usb_device.h"
