@@ -581,16 +581,24 @@ float stickCycle(float pos, float brakedistance)
                 {
                     PrintSerial_string("Stick was moved overall", EndPoint_All);
                     PrintSerial_float(stickintegral, EndPoint_All);
-                    PrintSerial_string(" hence setting esc direction $r ", EndPoint_All);
-                    if (stickintegral > 0.0f)
+
+                    if (stickintegral > -3.0f && stickintegral < 3.0f)
                     {
-                        activesettings.esc_direction = 1.0f;
+                        PrintlnSerial_string(" which is too little. Drive a further distance.", EndPoint_All);
                     }
                     else
                     {
-                        activesettings.esc_direction = -1.0f;
+                        PrintSerial_string(" hence setting esc direction $r ", EndPoint_All);
+                        if (stickintegral > 0.0f)
+                        {
+                            activesettings.esc_direction = 1.0f;
+                        }
+                        else
+                        {
+                            activesettings.esc_direction = -1.0f;
+                        }
+                        PrintlnSerial_float(activesettings.esc_direction, EndPoint_All);
                     }
-                    PrintlnSerial_float(activesettings.esc_direction, EndPoint_All);
                }
             }
             else
@@ -610,16 +618,24 @@ float stickCycle(float pos, float brakedistance)
                 {
                     PrintSerial_string("Stick was moved overall", EndPoint_All);
                     PrintSerial_float(stickintegral, EndPoint_All);
-                    PrintSerial_string(" hence setting esc direction $r ", EndPoint_All);
-                    if (stickintegral > 0.0f)
+
+                    if (stickintegral > -3.0f && stickintegral < 3.0f)
                     {
-                        activesettings.esc_direction = -1.0f;
+                        PrintlnSerial_string(" which is too little. Drive a further distance.", EndPoint_All);
                     }
-                    else if (stickintegral < 0.0f)
+                    else
                     {
-                        activesettings.esc_direction = 1.0f;
+                        PrintSerial_string(" hence setting esc direction $r ", EndPoint_All);
+                        if (stickintegral > 0.0f)
+                        {
+                            activesettings.esc_direction = -1.0f;
+                        }
+                        else
+                        {
+                            activesettings.esc_direction = 1.0f;
+                        }
+                        PrintlnSerial_float(activesettings.esc_direction, EndPoint_All);
                     }
-                    PrintlnSerial_float(activesettings.esc_direction, EndPoint_All);
                 }
             }
             eeprom_write_sector_async((uint8_t*) &semipermanentsettings, sizeof(semipermanentsettings), EEPROM_SECTOR_FOR_SEMIPERMANENTSETTINGS);
