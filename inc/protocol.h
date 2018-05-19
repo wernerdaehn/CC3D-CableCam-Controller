@@ -17,7 +17,7 @@
 #define PROTOCOL_HELP		      'h'	// help
 #define PROTOCOL_INPUT_CHANNELS   'i'   // 3-5 int arguments for speed, command switch, end point button, max acceleration poti, may speed poti
 #define PROTOCOL_INPUT_SOURCE     'I'   // 1 int arguments for the input, SumPPM or SBus
-#define PROTOCOL_INPUT_SINGLE     'j'   // 1 int argument, the channel assignment for the play button
+#define PROTOCOL_INPUT_SINGLE     'j'   // 1 char and 1 int argument, the channel assignment for individual functions
 #define PROTOCOL_MODE             'm'
 #define PROTOCOL_NEUTRAL          'n'	// 3 int neutral microseconds, +-neutral range microseconds, +- 100% throttle
 #define PROTOCOL_ESC_NEUTRAL      'N'	// 2 int neutral microseconds, +-range microseconds
@@ -26,6 +26,7 @@
 #define PROTOCOL_ROTATION_DIR     'r'   // 1 int argument
 #define PROTOCOL_SETTINGS         'S'   // no argument
 #define PROTOCOL_EEPROM_WRITE     'w'   // no argument
+#define PROTOCOL_EEPROM_VOID      'W'   // no argument
 #define PROTOCOL_MAX_SPEED        'v'   // 1 float argument
 #define PROTOCOL_VERSION          'V'   // no argument
 #define PROTOCOL_EXPO_FACTOR      'x'   // 1 float argument
@@ -100,8 +101,8 @@ typedef struct
     uint8_t rc_channel_mode;
     uint8_t mode;
     float max_position_error;
-    float pos_start;
-    float pos_end;
+    float ignore1_pos_start;
+    float ignore2_pos_end;
     uint8_t receivertype;
     int16_t esc_neutral_pos;
     int16_t esc_neutral_range;
@@ -126,6 +127,18 @@ typedef struct
 
 
 extern settings_t activesettings;
+
+
+typedef struct
+{
+    char version[11];
+    float pos_start;
+    float pos_end;
+    uint16_t structure_length;
+} settings2_t;
+
+extern settings2_t semipermanentsettings;
+
 
 /** \brief All status and monitoring info is set in this structure to keep them together
  *

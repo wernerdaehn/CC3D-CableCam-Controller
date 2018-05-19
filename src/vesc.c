@@ -52,7 +52,6 @@ getvalues_t vescvalues;
 uint8_t vesc_rxbuffer[VESC_RXBUFFER_SIZE];
 uint32_t vesc_packet_start_timestamp;
 int32_t tacho_old;
-int16_t handbrake_current;
 
 extern UART_HandleTypeDef huart2;
 
@@ -77,8 +76,6 @@ void VESC_init()
     currentbrakepacket.frame.length = 0x05;
     currentbrakepacket.frame.command = COMM_SET_CURRENT_BRAKE;
     currentbrakepacket.frame.stop = 0x03;
-
-    handbrake_current = activesettings.vesc_brake_handbrake_max;
 }
 
 uint8_t* getRequestValuePacketFrameAddress(void)
@@ -124,17 +121,7 @@ void VESC_Output(float esc_output)
         }
         else
         {
-            handbrake_current += diff - 1;
-
-            if (handbrake_current > activesettings.vesc_brake_handbrake_max)
-            {
-                handbrake_current = activesettings.vesc_brake_handbrake_max;
-            }
-            else if (handbrake_current < activesettings.vesc_brake_handbrake_min)
-            {
-                handbrake_current = activesettings.vesc_brake_handbrake_min;
-            }
-            VESC_set_handbrake_current(handbrake_current);
+            VESC_set_handbrake_current(activesettings.vesc_brake_handbrake_min);
         }
     }
     else
@@ -142,7 +129,6 @@ void VESC_Output(float esc_output)
         // controllerstatus.stick_max_speed reduces the vesc erpm by this factor at stick=100%
         int32_t vesc_erpm = (int32_t) ((esc_output * controllerstatus.stick_max_speed * ((float) activesettings.vesc_max_erpm)));
         VESC_set_rpm(vesc_erpm);
-        handbrake_current = activesettings.vesc_brake_handbrake_max;
     }
     tacho_old = tacho_current;
 }

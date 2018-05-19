@@ -97,19 +97,25 @@ void sFLASH_LowLevel_Init(void);
 /**
   * @brief  High layer functions
   */
-void sFLASH_EraseSector(uint32_t SectorAddr);
-void sFLASH_EraseBulk(void);
-void sFLASH_WritePage(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite);
-void sFLASH_WriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint32_t NumByteToWrite);
-void sFLASH_ReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr, uint32_t NumByteToRead);
+uint32_t sFLASH_EraseSector(uint32_t SectorAddr);
+uint32_t sFLASH_EraseBulk(void);
+uint32_t sFLASH_WritePage(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite);
+uint32_t sFLASH_WriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint32_t NumByteToWrite);
+uint32_t sFLASH_ReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr, uint32_t NumByteToRead);
 uint32_t sFLASH_ReadID(void);
 uint32_t sFLASH_VerifyWrite(uint8_t* pBuffer, uint32_t ReadAddr, uint32_t NumByteToRead);
+
+uint32_t sFLASH_EraseSector_nowait(uint32_t SectorAddr);
+uint32_t sFLASH_WritePage_nowait(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite);
+uint32_t sFLASH_WriteBuffer_nowait(uint8_t* pBuffer, uint32_t WriteAddr, uint32_t NumByteToWrite);
+
+
 /**
   * @brief  Low layer functions
   */
-void sFLASH_WriteEnable(void);
-void sFLASH_WaitForWriteEnd(void);
-
+uint32_t sFLASH_WriteEnable(void);
+uint32_t sFLASH_WaitForWriteEnd(void);
+uint32_t sFLASH_CheckForWriteEnd(void);
 
 #ifdef __cplusplus
 }

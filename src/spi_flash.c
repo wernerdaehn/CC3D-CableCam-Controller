@@ -60,7 +60,20 @@ uint8_t command[4];
  * @param  SectorAddr: address of the sector to erase.
  * @retval None
  */
-void sFLASH_EraseSector(uint32_t SectorAddr)
+uint32_t sFLASH_EraseSector(uint32_t SectorAddr)
+{
+    if (sFLASH_EraseSector_nowait(SectorAddr) != 0)
+    {
+        return 1;
+    }
+    else
+    {
+        /*!< Wait the end of Flash writing */
+        return sFLASH_WaitForWriteEnd();
+    }
+}
+
+uint32_t sFLASH_EraseSector_nowait(uint32_t SectorAddr)
 {
     /*!< Send write enable instruction */
     sFLASH_WriteEnable();
@@ -79,12 +92,12 @@ void sFLASH_EraseSector(uint32_t SectorAddr)
     case HAL_TIMEOUT:
         /* A Timeout Occur ______________________________________________________*/
         /* Call Timeout Handler */
-        return;
+        return 1;
         break;
         /* An Error Occur ______________________________________________________ */
     case HAL_ERROR:
         /* Call Timeout Handler */
-        return;
+        return 1;
         break;
     default:
         break;
@@ -92,8 +105,7 @@ void sFLASH_EraseSector(uint32_t SectorAddr)
     /*!< Deselect the FLASH: Chip Select high */
     sFLASH_CS_HIGH();
 
-    /*!< Wait the end of Flash writing */
-    sFLASH_WaitForWriteEnd();
+    return 0;
 }
 
 /**
@@ -101,7 +113,7 @@ void sFLASH_EraseSector(uint32_t SectorAddr)
  * @param  None
  * @retval None
  */
-void sFLASH_EraseBulk(void)
+uint32_t sFLASH_EraseBulk(void)
 {
     /*!< Send write enable instruction */
     sFLASH_WriteEnable();
@@ -116,12 +128,12 @@ void sFLASH_EraseBulk(void)
     case HAL_TIMEOUT:
         /* A Timeout Occur ______________________________________________________*/
         /* Call Timeout Handler */
-        return;
+        return 1;
         break;
         /* An Error Occur ______________________________________________________ */
     case HAL_ERROR:
         /* Call Timeout Handler */
-        return;
+        return 1;
         break;
     default:
         break;
@@ -131,7 +143,7 @@ void sFLASH_EraseBulk(void)
     sFLASH_CS_HIGH();
 
     /*!< Wait the end of Flash writing */
-    sFLASH_WaitForWriteEnd();
+    return sFLASH_WaitForWriteEnd();
 }
 
 /**
@@ -145,7 +157,20 @@ void sFLASH_EraseBulk(void)
  *         or less than "sFLASH_PAGESIZE" value.
  * @retval None
  */
-void sFLASH_WritePage(uint8_t* pBuffer, uint32_t WriteAddr,	uint16_t NumByteToWrite)
+uint32_t sFLASH_WritePage(uint8_t* pBuffer, uint32_t WriteAddr,	uint16_t NumByteToWrite)
+{
+    if (sFLASH_WritePage_nowait(pBuffer, WriteAddr, NumByteToWrite) != 0)
+    {
+        return 1;
+    }
+    else
+    {
+        /*!< Wait the end of Flash writing */
+        return sFLASH_WaitForWriteEnd();
+    }
+}
+
+uint32_t sFLASH_WritePage_nowait(uint8_t* pBuffer, uint32_t WriteAddr,	uint16_t NumByteToWrite)
 {
 
     /*!< Enable the write access to the FLASH */
@@ -165,12 +190,12 @@ void sFLASH_WritePage(uint8_t* pBuffer, uint32_t WriteAddr,	uint16_t NumByteToWr
     case HAL_TIMEOUT:
         /* A Timeout Occur ______________________________________________________*/
         /* Call Timeout Handler */
-        return;
+        return 1;
         break;
         /* An Error Occur ______________________________________________________ */
     case HAL_ERROR:
         /* Call Timeout Handler */
-        return;
+        return 1;
         break;
     default:
         break;
@@ -182,12 +207,12 @@ void sFLASH_WritePage(uint8_t* pBuffer, uint32_t WriteAddr,	uint16_t NumByteToWr
     case HAL_TIMEOUT:
         /* A Timeout Occur ______________________________________________________*/
         /* Call Timeout Handler */
-        return;
+        return 1;
         break;
         /* An Error Occur ______________________________________________________ */
     case HAL_ERROR:
         /* Call Timeout Handler */
-        return;
+        return 1;
         break;
     default:
         break;
@@ -197,8 +222,7 @@ void sFLASH_WritePage(uint8_t* pBuffer, uint32_t WriteAddr,	uint16_t NumByteToWr
     /*!< Deselect the FLASH: Chip Select high */
     sFLASH_CS_HIGH();
 
-    /*!< Wait the end of Flash writing */
-    sFLASH_WaitForWriteEnd();
+    return 0;
 }
 
 /**
@@ -210,9 +234,23 @@ void sFLASH_WritePage(uint8_t* pBuffer, uint32_t WriteAddr,	uint16_t NumByteToWr
  * @param  NumByteToWrite: number of bytes to write to the FLASH.
  * @retval None
  */
-void sFLASH_WriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint32_t NumByteToWrite)
+uint32_t sFLASH_WriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint32_t NumByteToWrite)
+{
+    if (sFLASH_WriteBuffer_nowait(pBuffer, WriteAddr, NumByteToWrite) != 0)
+    {
+        return 1;
+    }
+    else
+    {
+        /*!< Wait the end of Flash writing */
+        return sFLASH_WaitForWriteEnd();
+    }
+}
+
+uint32_t sFLASH_WriteBuffer_nowait(uint8_t* pBuffer, uint32_t WriteAddr, uint32_t NumByteToWrite)
 {
     uint32_t NumOfPage = 0, NumOfSingle = 0, Addr = 0, count = 0, temp = 0;
+    uint32_t writeerrors = 0;
 
     Addr = WriteAddr % sFLASH_SPI_PAGESIZE;
     count = sFLASH_SPI_PAGESIZE - Addr;
@@ -223,18 +261,18 @@ void sFLASH_WriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint32_t NumByteTo
     {
         if (NumOfPage == 0) /*!< NumByteToWrite < sFLASH_PAGESIZE */
         {
-            sFLASH_WritePage(pBuffer, WriteAddr, NumByteToWrite);
+            writeerrors += sFLASH_WritePage(pBuffer, WriteAddr, NumByteToWrite);
         }
         else   /*!< NumByteToWrite > sFLASH_PAGESIZE */
         {
             while (NumOfPage--)
             {
-                sFLASH_WritePage(pBuffer, WriteAddr, sFLASH_SPI_PAGESIZE);
+                writeerrors += sFLASH_WritePage(pBuffer, WriteAddr, sFLASH_SPI_PAGESIZE);
                 WriteAddr += sFLASH_SPI_PAGESIZE;
                 pBuffer += sFLASH_SPI_PAGESIZE;
             }
 
-            sFLASH_WritePage(pBuffer, WriteAddr, NumOfSingle);
+            writeerrors += sFLASH_WritePage(pBuffer, WriteAddr, NumOfSingle);
         }
     }
     else   /*!< WriteAddr is not sFLASH_PAGESIZE aligned  */
@@ -245,15 +283,15 @@ void sFLASH_WriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint32_t NumByteTo
             {
                 temp = NumOfSingle - count;
 
-                sFLASH_WritePage(pBuffer, WriteAddr, count);
+                writeerrors += sFLASH_WritePage(pBuffer, WriteAddr, count);
                 WriteAddr += count;
                 pBuffer += count;
 
-                sFLASH_WritePage(pBuffer, WriteAddr, temp);
+                writeerrors += sFLASH_WritePage(pBuffer, WriteAddr, temp);
             }
             else
             {
-                sFLASH_WritePage(pBuffer, WriteAddr, NumByteToWrite);
+                writeerrors += sFLASH_WritePage(pBuffer, WriteAddr, NumByteToWrite);
             }
         }
         else   /*!< NumByteToWrite > sFLASH_PAGESIZE */
@@ -262,23 +300,24 @@ void sFLASH_WriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint32_t NumByteTo
             NumOfPage = NumByteToWrite / sFLASH_SPI_PAGESIZE;
             NumOfSingle = NumByteToWrite % sFLASH_SPI_PAGESIZE;
 
-            sFLASH_WritePage(pBuffer, WriteAddr, count);
+            writeerrors += sFLASH_WritePage(pBuffer, WriteAddr, count);
             WriteAddr += count;
             pBuffer += count;
 
             while (NumOfPage--)
             {
-                sFLASH_WritePage(pBuffer, WriteAddr, sFLASH_SPI_PAGESIZE);
+                writeerrors += sFLASH_WritePage(pBuffer, WriteAddr, sFLASH_SPI_PAGESIZE);
                 WriteAddr += sFLASH_SPI_PAGESIZE;
                 pBuffer += sFLASH_SPI_PAGESIZE;
             }
 
             if (NumOfSingle != 0)
             {
-                sFLASH_WritePage(pBuffer, WriteAddr, NumOfSingle);
+                writeerrors += sFLASH_WritePage(pBuffer, WriteAddr, NumOfSingle);
             }
         }
     }
+    return writeerrors;
 }
 
 
@@ -358,9 +397,8 @@ uint32_t sFLASH_VerifyWrite(uint8_t* pBuffer, uint32_t ReadAddr, uint32_t NumByt
  * @param  NumByteToRead: number of bytes to read from the FLASH.
  * @retval None
  */
-void sFLASH_ReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr,	uint32_t NumByteToRead)
+uint32_t sFLASH_ReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr,	uint32_t NumByteToRead)
 {
-
     /*!< Send "Read from Memory " instruction */
 
     command[0] = sFLASH_CMD_READ;
@@ -376,12 +414,12 @@ void sFLASH_ReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr,	uint32_t NumByteToRe
     case HAL_TIMEOUT:
         /* A Timeout Occur ______________________________________________________*/
         /* Call Timeout Handler */
-        return;
+        return 1;
         break;
         /* An Error Occur ______________________________________________________ */
     case HAL_ERROR:
         /* Call Timeout Handler */
-        return;
+        return 1;
         break;
     default:
         break;
@@ -396,12 +434,12 @@ void sFLASH_ReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr,	uint32_t NumByteToRe
         case HAL_TIMEOUT:
             /* A Timeout Occur ______________________________________________________*/
             /* Call Timeout Handler */
-            return;
+            return 1;
             break;
             /* An Error Occur ______________________________________________________ */
         case HAL_ERROR:
             /* Call Timeout Handler */
-            return;
+            return 1;
             break;
         default:
             break;
@@ -412,6 +450,7 @@ void sFLASH_ReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr,	uint32_t NumByteToRe
 
     /*!< Deselect the FLASH: Chip Select high */
     sFLASH_CS_HIGH();
+    return 0;
 }
 
 /**
@@ -485,7 +524,7 @@ uint32_t sFLASH_ReadID(void)
  * @param  None
  * @retval None
  */
-void sFLASH_WriteEnable(void)
+uint32_t sFLASH_WriteEnable(void)
 {
     /*!< Select the FLASH: Chip Select low */
     sFLASH_CS_LOW();
@@ -497,12 +536,12 @@ void sFLASH_WriteEnable(void)
     case HAL_TIMEOUT:
         /* A Timeout Occur ______________________________________________________*/
         /* Call Timeout Handler */
-        return;
+        return 1;
         break;
         /* An Error Occur ______________________________________________________ */
     case HAL_ERROR:
         /* Call Timeout Handler */
-        return;
+        return 1;
         break;
     default:
         break;
@@ -510,6 +549,7 @@ void sFLASH_WriteEnable(void)
 
     /*!< Deselect the FLASH: Chip Select high */
     sFLASH_CS_HIGH();
+    return 0;
 }
 
 /**
@@ -518,9 +558,10 @@ void sFLASH_WriteEnable(void)
  * @param  None
  * @retval None
  */
-void sFLASH_WaitForWriteEnd(void)
+uint32_t sFLASH_WaitForWriteEnd(void)
 {
     uint8_t flashstatus = 0;
+    uint32_t timeout = HAL_GetTick() + 10000L;
 
     /*!< Select the FLASH: Chip Select low */
     sFLASH_CS_LOW();
@@ -532,12 +573,12 @@ void sFLASH_WaitForWriteEnd(void)
     case HAL_TIMEOUT:
         /* A Timeout Occur ______________________________________________________*/
         /* Call Timeout Handler */
-        return;
+        return 1;
         break;
         /* An Error Occur ______________________________________________________ */
     case HAL_ERROR:
         /* Call Timeout Handler */
-        return;
+        return 1;
         break;
     default:
         break;
@@ -555,20 +596,80 @@ void sFLASH_WaitForWriteEnd(void)
         case HAL_TIMEOUT:
             /* A Timeout Occur ______________________________________________________*/
             /* Call Timeout Handler */
-            return;
+            return 1;
             break;
             /* An Error Occur ______________________________________________________ */
         case HAL_ERROR:
             /* Call Timeout Handler */
-            return;
+            return 1;
             break;
         default:
             break;
         }
 
     }
-    while ((flashstatus & sFLASH_WIP_FLAG) == SET);   /* Write in progress */
+    while ((flashstatus & sFLASH_WIP_FLAG) == SET && HAL_GetTick() < timeout);   /* Write in progress */
 
     /*!< Deselect the FLASH: Chip Select high */
     sFLASH_CS_HIGH();
+
+    if ((flashstatus & sFLASH_WIP_FLAG) == SET)
+    {
+        return 1; // timeout
+    }
+    else
+    {
+        return 0; // WorkInProgress Bit is unset, write completed
+    }
+}
+
+uint32_t sFLASH_CheckForWriteEnd(void)
+{
+    uint8_t flashstatus = 0;
+
+    /*!< Select the FLASH: Chip Select low */
+    sFLASH_CS_LOW();
+
+    /*!< Send "Read Status Register" instruction */
+    command[0] = sFLASH_CMD_RDSR;
+    switch(HAL_SPI_Transmit(&hspi3, &command[0], 1, 5000))
+    {
+    case HAL_TIMEOUT:
+        /* A Timeout Occur ______________________________________________________*/
+        /* Call Timeout Handler */
+        return 1;
+        break;
+        /* An Error Occur ______________________________________________________ */
+    case HAL_ERROR:
+        /* Call Timeout Handler */
+        return 1;
+        break;
+    default:
+        break;
+    }
+
+    command[0] = sFLASH_DUMMY_BYTE;
+
+    /*!< Send a dummy byte to generate the clock needed by the FLASH
+     and put the value of the status register in FLASH_Status variable */
+    switch(HAL_SPI_TransmitReceive(&hspi3, &command[0], &flashstatus, 1, 5000))
+    {
+    case HAL_TIMEOUT:
+        /* A Timeout Occur ______________________________________________________*/
+        /* Call Timeout Handler */
+        return 1;
+        break;
+        /* An Error Occur ______________________________________________________ */
+    case HAL_ERROR:
+        /* Call Timeout Handler */
+        return 1;
+        break;
+    default:
+        break;
+    }
+
+    /*!< Deselect the FLASH: Chip Select high */
+    sFLASH_CS_HIGH();
+
+    return ((flashstatus & sFLASH_WIP_FLAG) == SET);
 }

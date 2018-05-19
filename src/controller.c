@@ -6,6 +6,7 @@
 #include "sbus.h"
 #include "vesc.h"
 #include "math.h"
+#include "eeprom.h"
 
 #define ZERO_SPEED_POS_ZONE 100.0f
 
@@ -181,8 +182,8 @@ float getStickPositionRaw()
                 controllerstatus.play_running != 0 &&
                 activesettings.mode == MODE_LIMITER_ENDPOINTS &&
                 value == 0.0f &&
-                activesettings.pos_start != -POS_END_NOT_SET &&
-                activesettings.pos_end != POS_END_NOT_SET)
+                semipermanentsettings.pos_start != -POS_END_NOT_SET &&
+                semipermanentsettings.pos_end != POS_END_NOT_SET)
             {
                 /*
                  * The condition to play a preprogrammed movement is very narrow. It requires that
@@ -199,9 +200,9 @@ float getStickPositionRaw()
                      */
                     if (controllerstatus.play_direction == -activesettings.esc_direction)
                     {
-                        if (activesettings.pos_start+ZERO_SPEED_POS_ZONE < pos_current)
+                        if (semipermanentsettings.pos_start+ZERO_SPEED_POS_ZONE < pos_current)
                         {
-                            value = -activesettings.stick_max_speed;
+                            value = -activesettings.stick_max_speed * activesettings.esc_direction;
                             controllerstatus.play_endpoint_reached_at = HAL_GetTick();
                         }
                         else
@@ -209,23 +210,23 @@ float getStickPositionRaw()
                             value = 0.0f;
                             if (HAL_GetTick() - controllerstatus.play_endpoint_reached_at > 5000L) // wait for 5 seconds at the start point
                             {
-                                controllerstatus.play_direction = 1;
+                                controllerstatus.play_direction = activesettings.esc_direction;
                             }
                         }
                     }
                     else
                     {
-                        if (activesettings.pos_end-ZERO_SPEED_POS_ZONE > pos_current)
+                        if (semipermanentsettings.pos_end-ZERO_SPEED_POS_ZONE > pos_current)
                         {
                             controllerstatus.play_endpoint_reached_at = HAL_GetTick();
-                            value = activesettings.stick_max_speed;
+                            value = activesettings.stick_max_speed * activesettings.esc_direction;
                         }
                         else
                         {
                             value = 0.0f;
                             if (HAL_GetTick() - controllerstatus.play_endpoint_reached_at > 5000L)  // wait for 5 seconds at the end point
                             {
-                                controllerstatus.play_direction = -1;
+                                controllerstatus.play_direction = -activesettings.esc_direction;
                             }
                         }
                     }
@@ -313,11 +314,11 @@ float stickCycle(float pos, float brakedistance)
              * However there is a cases where this might not be so:
              * Start and end point had been set but then only the start point is moved.
              */
-            if (activesettings.pos_start > activesettings.pos_end)
+            if (semipermanentsettings.pos_start > semipermanentsettings.pos_end)
             {
-                float tmp = activesettings.pos_start;
-                activesettings.pos_start = activesettings.pos_end;
-                activesettings.pos_end = tmp;
+                float tmp = semipermanentsettings.pos_start;
+                semipermanentsettings.pos_start = semipermanentsettings.pos_end;
+                semipermanentsettings.pos_end = tmp;
             }
 
             /*
@@ -341,14 +342,14 @@ float stickCycle(float pos, float brakedistance)
              *
              */
 
-            if (pos + brakedistance < activesettings.pos_end-ZERO_SPEED_POS_ZONE && pos - brakedistance > activesettings.pos_start+ZERO_SPEED_POS_ZONE)
+            if (pos + brakedistance < semipermanentsettings.pos_end-ZERO_SPEED_POS_ZONE && pos - brakedistance > semipermanentsettings.pos_start+ZERO_SPEED_POS_ZONE)
             {
                 controllerstatus.endpointbrake = false;
                 controllerstatus.emergencybrake = false;
             }
             else
             {
-                if (pos + brakedistance >= activesettings.pos_end-ZERO_SPEED_POS_ZONE)
+                if (pos + brakedistance >= semipermanentsettings.pos_end-ZERO_SPEED_POS_ZONE)
                 {
                     /*
                      * In case the CableCam will overshoot the end point reduce the speed to zero.
@@ -362,14 +363,14 @@ float stickCycle(float pos, float brakedistance)
                          * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
                          * As there is some elasticity between motor and actual position, add a value here.
                          */
-                        if (pos >= activesettings.pos_end)
+                        if (pos >= semipermanentsettings.pos_end)
                         {
                             stick_last_value = 0.0f;
                             return stick_last_value;
                         }
-                        else if (pos >= activesettings.pos_end - ZERO_SPEED_POS_ZONE)
+                        else if (pos >= semipermanentsettings.pos_end - ZERO_SPEED_POS_ZONE)
                         {
-                            stick_last_value = 0.001f * activesettings.esc_direction;
+                            stick_last_value = 0.005f * activesettings.esc_direction;
                             return stick_last_value;
                         }
                         else
@@ -382,7 +383,7 @@ float stickCycle(float pos, float brakedistance)
                             if (controllerstatus.endpointbrake == false)
                             {
                                 PrintSerial_string("Endpoint brake on. Distance=", EndPoint_All);
-                                PrintSerial_float(activesettings.pos_end-pos, EndPoint_All);
+                                PrintSerial_float(semipermanentsettings.pos_end-pos, EndPoint_All);
                                 PrintSerial_string(", calculated braking distance=", EndPoint_All);
                                 PrintlnSerial_float(brakedistance, EndPoint_All);
                             }
@@ -392,7 +393,7 @@ float stickCycle(float pos, float brakedistance)
                              * Failsafe: If, at the current speed the end point will be overshot significantly, ignore the ramp logic and request a full brake by setting speed=0.
                              * Because at high speeds the calculation might not be that accurate, add a factor depending on the brake distance
                              */
-                            if (activesettings.max_position_error != 0.0f && (pos + brakedistance >= activesettings.pos_end + activesettings.max_position_error + 30.0f*brakedistance/activesettings.max_position_error))
+                            if (activesettings.max_position_error != 0.0f && (pos + brakedistance >= semipermanentsettings.pos_end + activesettings.max_position_error + 30.0f*brakedistance/activesettings.max_position_error))
                             {
                                 /*
                                  * We are in danger to overshoot the end point by max_position_error. Hence kick in the emergency brake.
@@ -418,7 +419,7 @@ float stickCycle(float pos, float brakedistance)
                 }
 
 
-                if (pos - brakedistance <= activesettings.pos_start+ZERO_SPEED_POS_ZONE)
+                if (pos - brakedistance <= semipermanentsettings.pos_start+ZERO_SPEED_POS_ZONE)
                 {
                     /*
                      * In case the CableCam will overshoot the start point reduce the speed to zero.
@@ -431,14 +432,14 @@ float stickCycle(float pos, float brakedistance)
                         /*
                          * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
                          */
-                        if (pos <= activesettings.pos_start)
+                        if (pos <= semipermanentsettings.pos_start)
                         {
                             stick_last_value = 0.0f;
                             return 0.0f;
                         }
-                        else if (pos <= activesettings.pos_start+ZERO_SPEED_POS_ZONE)
+                        else if (pos <= semipermanentsettings.pos_start+ZERO_SPEED_POS_ZONE)
                         {
-                            stick_last_value = -0.001f * activesettings.esc_direction;
+                            stick_last_value = -0.005f * activesettings.esc_direction;
                             return stick_last_value;
                         }
                         else
@@ -451,7 +452,7 @@ float stickCycle(float pos, float brakedistance)
                             if (controllerstatus.endpointbrake == false)
                             {
                                 PrintSerial_string("Endpoint brake on. Distance=", EndPoint_All);
-                                PrintSerial_float(pos - activesettings.pos_start, EndPoint_All);
+                                PrintSerial_float(pos - semipermanentsettings.pos_start, EndPoint_All);
                                 PrintSerial_string(", calculated braking distance=", EndPoint_All);
                                 PrintlnSerial_float(brakedistance, EndPoint_All);
                             }
@@ -461,7 +462,7 @@ float stickCycle(float pos, float brakedistance)
                              * Failsafe: If, at the current speed the end point will be overshot significantly, ignore the ramp logic and request a full brake by setting speed=0.
                              * Because at high speeds the calculation might not be that accurate, add a factor depending on the brake distance
                              */
-                            if (activesettings.max_position_error != 0.0f && (pos - brakedistance <= activesettings.pos_start - activesettings.max_position_error - 30.0f*brakedistance/activesettings.max_position_error))
+                            if (activesettings.max_position_error != 0.0f && (pos - brakedistance <= semipermanentsettings.pos_start - activesettings.max_position_error - 30.0f*brakedistance/activesettings.max_position_error))
                             {
                                 /*
                                  * We are in danger to overshoot the start point by max_position_error. Hence kick in the emergency brake.
@@ -541,7 +542,7 @@ float stickCycle(float pos, float brakedistance)
     {
         if (endpointclicks == 0)
         {
-            activesettings.pos_start = pos;
+            semipermanentsettings.pos_start = pos;
             endpointclicks = 1;
             PrintlnSerial_string("Point 1 set", EndPoint_All);
             stickintegral = 0.0f;
@@ -564,18 +565,18 @@ float stickCycle(float pos, float brakedistance)
              *    is calculated only if the esc direction is unset yet.
              */
             PrintlnSerial_string("Point 2 set", EndPoint_All);
-            if (activesettings.pos_start < pos)
+            if (semipermanentsettings.pos_start < pos)
             {
-                activesettings.pos_end = pos;
+                semipermanentsettings.pos_end = pos;
                 /*
                  * Autoconfigure the esc direction, answering the question in what direction the stick is pushed in order to drive from the start point
                  * to the end point, forward or backward?
                  * In this case the stick was pushed either forward or reverse and that resulted to pos sensor increasing while driving to the end point.
                  */
                 PrintSerial_string("Drove forward from", EndPoint_All);
-                PrintSerial_float(activesettings.pos_start, EndPoint_All);
+                PrintSerial_float(semipermanentsettings.pos_start, EndPoint_All);
                 PrintSerial_string(" to", EndPoint_All);
-                PrintlnSerial_float(activesettings.pos_end, EndPoint_All);
+                PrintlnSerial_float(semipermanentsettings.pos_end, EndPoint_All);
                 if (activesettings.esc_direction == 0.0f)
                 {
                     PrintSerial_string("Stick was moved overall", EndPoint_All);
@@ -594,17 +595,17 @@ float stickCycle(float pos, float brakedistance)
             }
             else
             {
-                activesettings.pos_end = activesettings.pos_start;
-                activesettings.pos_start = pos;
+                semipermanentsettings.pos_end = semipermanentsettings.pos_start;
+                semipermanentsettings.pos_start = pos;
                 /*
                  * Autoconfigure the esc direction, answering the question in what direction the stick is pushed in order to drive from the start point
                  * to the end point, forward or backward?
                  * In this case the stick was pushed either forward or reverse and that resulted to pos sensor decreasing while driving to the end point.
                  */
                 PrintSerial_string("Drove backward from endpoint", EndPoint_All);
-                PrintSerial_float(activesettings.pos_end, EndPoint_All);
+                PrintSerial_float(semipermanentsettings.pos_end, EndPoint_All);
                 PrintSerial_string(" to startpoint", EndPoint_All);
-                PrintlnSerial_float(activesettings.pos_start, EndPoint_All);
+                PrintlnSerial_float(semipermanentsettings.pos_start, EndPoint_All);
                 if (activesettings.esc_direction == 0.0f)
                 {
                     PrintSerial_string("Stick was moved overall", EndPoint_All);
@@ -621,6 +622,7 @@ float stickCycle(float pos, float brakedistance)
                     PrintlnSerial_float(activesettings.esc_direction, EndPoint_All);
                 }
             }
+            eeprom_write_sector_async((uint8_t*) &semipermanentsettings, sizeof(semipermanentsettings), EEPROM_SECTOR_FOR_SEMIPERMANENTSETTINGS);
         }
     }
     lastendpointswitch = currentendpointswitch; // Needed to identify a raising flank on the tip switch
@@ -854,7 +856,7 @@ void printControlLoop(int16_t input, float speed, float pos, float brakedistance
     PrintSerial_string("  Calculated stop: ", endpoint);
     if (input > 0)
     {
-        if (pos + brakedistance > activesettings.pos_end)
+        if (pos + brakedistance > semipermanentsettings.pos_end)
         {
             PrintSerial_float(pos + brakedistance, endpoint);
         }
@@ -865,7 +867,7 @@ void printControlLoop(int16_t input, float speed, float pos, float brakedistance
     }
     else
     {
-        if (pos - brakedistance < activesettings.pos_start)
+        if (pos - brakedistance < semipermanentsettings.pos_start)
         {
             PrintSerial_float(pos - brakedistance, endpoint);
         }

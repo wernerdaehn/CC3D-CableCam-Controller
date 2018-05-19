@@ -159,8 +159,6 @@ int main(void)
     activesettings.esc_direction = 0;
     activesettings.max_position_error = 100.0f;
     activesettings.mode = MODE_PASSTHROUGH;
-    activesettings.pos_end = (float) POS_END_NOT_SET;
-    activesettings.pos_start = (float) -POS_END_NOT_SET;
     activesettings.receivertype = RECEIVER_TYPE_SUMPPM;
     activesettings.rc_channel_endpoint = 255;
     activesettings.rc_channel_programming = 255;
@@ -201,11 +199,11 @@ int main(void)
         memcpy(&activesettings, &defaultsettings, sizeof(defaultsettings));
         strcpy(controllerstatus.boottext_eeprom, "defaults loaded from eeprom");
     }
-    else if (strncmp("2017", defaultsettings.version, 4) == 0)
+    else if (strncmp(defaultsettings.version, "2017", 4) == 0)
     {
         strcpy(controllerstatus.boottext_eeprom, "Values in the EEPROM outdated, please setup all again");
     }
-    else if (strncmp("20", defaultsettings.version, 2) == 0)
+    else if (strncmp(defaultsettings.version, "2018", 4) >= 0)
     {
         /*
          * Version stored is valid but older, hence copy the old structure over the activestructure.
@@ -225,6 +223,27 @@ int main(void)
     {
         strcpy(controllerstatus.boottext_eeprom, "eeprom does not contain valid default - keeping the system defaults");
     }
+
+    /*
+     * Read the semi-permanent settings from EEPROM and if they are invalid, reset to default.
+     */
+    eeprom_read_sector((uint8_t *)&semipermanentsettings, sizeof(semipermanentsettings), EEPROM_SECTOR_FOR_SEMIPERMANENTSETTINGS);
+    if (strncmp(semipermanentsettings.version, "20180519", sizeof(semipermanentsettings.version)) != 0)
+    {
+        PrintlnSerial_string("Start/End-positions have been reset to the defaults", EndPoint_All);
+        semipermanentsettings.pos_end = (float) POS_END_NOT_SET;
+        semipermanentsettings.pos_start = (float) -POS_END_NOT_SET;
+        strcpy(semipermanentsettings.version, "20180519");
+    }
+    else
+    {
+        PrintSerial_string("Startposition=", EndPoint_All);
+        PrintSerial_float(semipermanentsettings.pos_start, EndPoint_All);
+        PrintSerial_string("; Endposition=", EndPoint_All);
+        PrintlnSerial_float(semipermanentsettings.pos_end, EndPoint_All);
+    }
+    semipermanentsettings.structure_length = sizeof(semipermanentsettings);
+
 
     if (activesettings.receivertype == RECEIVER_TYPE_SBUS)
     {
@@ -293,6 +312,7 @@ int main(void)
             serialCom(EndPoint_UART3, uart3_commandlinebuffer);
         }
         SBusSendCycle();
+        eeprom_cycle();
     }
 }
 

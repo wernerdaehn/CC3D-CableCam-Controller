@@ -59,6 +59,8 @@ static const char * error_string[] = {"other errors",
                                };
 
 settings_t activesettings;
+settings2_t semipermanentsettings;
+
 controllerstatus_t controllerstatus;
 
 extern TIM_HandleTypeDef htim1;
@@ -392,8 +394,8 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
     case PROTOCOL_POS:
     {
         writeProtocolHead(PROTOCOL_POS, endpoint);
-        writeProtocolLong(activesettings.pos_start, endpoint);
-        writeProtocolLong(activesettings.pos_end, endpoint);
+        writeProtocolLong(semipermanentsettings.pos_start, endpoint);
+        writeProtocolLong(semipermanentsettings.pos_end, endpoint);
         writeProtocolLong(getPos(), endpoint);
         writeProtocolFloat(getSpeedPosDifference(), endpoint);
         writeProtocolFloat(getSpeedPosSensor(), endpoint);
@@ -435,6 +437,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
     case PROTOCOL_EEPROM_WRITE:
     {
         uint32_t write_errors = eeprom_write_sector_safe((uint8_t*) &activesettings, sizeof(activesettings), EEPROM_SECTOR_FOR_SETTINGS);
+        write_errors += eeprom_write_sector_safe((uint8_t*) &semipermanentsettings, sizeof(semipermanentsettings), EEPROM_SECTOR_FOR_SEMIPERMANENTSETTINGS);
         writeProtocolHead(PROTOCOL_EEPROM_WRITE, endpoint);
         if (write_errors == 0)
         {
@@ -445,6 +448,15 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         {
             writeProtocolError(ERROR_EEPROM_SAVE, endpoint);
         }
+        break;
+    }
+    case PROTOCOL_EEPROM_VOID:
+    {
+        eeprom_erase(EEPROM_SECTOR_FOR_SETTINGS);
+        eeprom_erase(EEPROM_SECTOR_FOR_SEMIPERMANENTSETTINGS);
+        writeProtocolHead(PROTOCOL_EEPROM_VOID, endpoint);
+        writeProtocolText("\r\nEEPROM erased", endpoint);
+        writeProtocolOK(endpoint);
         break;
     }
     case PROTOCOL_INPUT_CHANNELS:
@@ -848,15 +860,15 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
     break;
 	case PROTOCOL_VESC_BRAKE:
     {
-        int16_t p[3];
-        argument_index = sscanf(&commandlinebuffer[2], "%hd %hd %hd", &p[0], &p[1], &p[2]);
+        int16_t p[2];
+        argument_index = sscanf(&commandlinebuffer[2], "%hd %hd", &p[0], &p[1]);
         if (argument_index == 3)
         {
-            if (p[0] >= 0 && p[1] >= 0 && p[2] >= 0)
+            if (p[0] >= 0 && p[1] >= 0)
             {
-                activesettings.vesc_brake_handbrake_max = p[0];
-                activesettings.vesc_brake_handbrake_min = p[1];
-                activesettings.vesc_brake_min_speed = p[2];
+                activesettings.vesc_brake_handbrake_max = 0; // not used
+                activesettings.vesc_brake_handbrake_min = p[0];
+                activesettings.vesc_brake_min_speed = p[1];
                 writeProtocolHead(PROTOCOL_VESC_BRAKE, endpoint);
                 writeProtocolOK(endpoint);
             }
@@ -869,7 +881,6 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         else
         {
             writeProtocolHead(PROTOCOL_VESC_BRAKE, endpoint);
-            writeProtocolInt(activesettings.vesc_brake_handbrake_max, endpoint);
             writeProtocolInt(activesettings.vesc_brake_handbrake_min, endpoint);
             writeProtocolInt(activesettings.vesc_brake_min_speed, endpoint);
             writeProtocolOK(endpoint);
@@ -1286,7 +1297,7 @@ uint8_t check_for_multiple_channels_changed(sbusData_t * rcmin, sbusData_t * rcm
     uint8_t no_channels_with_changes = 0;
     for (int i=0; i<SBUS_MAX_CHANNEL; i++)
     {
-        if (rcmax->servovalues[i].duty - rcmin->servovalues[i].duty > 100)
+        if (rcmax->servovalues[i].duty - rcmin->servovalues[i].duty > 300)
         {
             PrintSerial_string("Channel #", endpoint);
             PrintSerial_int(i+1, endpoint);
@@ -1386,6 +1397,7 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("$a [<int> <int>]                        set or print maximum allowed acceleration in normal and programming mode", endpoint);
     PrintlnSerial_string("$A [<int>]                              set or print the AUX channel assignment", endpoint);
     PrintlnSerial_string("$B                                      Configure the HC-05 Bluetooth module on FlexiPort (RX3/TX3)", endpoint);
+    PrintlnSerial_string("$c [<int> <int>]                        VESC handbrake current and min tacho speed to engage handbrake", endpoint);
     PrintlnSerial_string("$e [<long>]                             set or print maximum eRPMs as set in the VESC speed controller. 100% stick = this eRPM", endpoint);
     PrintlnSerial_string("$E                                      print the status of the VESC ESC", endpoint);
     PrintlnSerial_string("$g [<float>]                            set or print the max positional error -> exceeding it causes an emergency stop", endpoint);
@@ -1416,7 +1428,8 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("$P <int>                                turn the Play command (automatic movement) on (1) or off (0) for the next 2 seconds. Send frequently.", endpoint);
     PrintlnSerial_string("$r [<int>]                              set or print rotation direction of the ESC output, either +1 or -1", endpoint);
     PrintlnSerial_string("$S                                      print all settings", endpoint);
-    PrintlnSerial_string("$v [<int> <int>]                        set or print maximum allowed stick % in normal and programming mode", endpoint);
+    PrintlnSerial_string("$v [<int> <int>]                        set or print the maximum output % when stick is at 100% in normal and programming mode", endpoint);
+    PrintlnSerial_string("$V                                      print firmware version", endpoint);
     PrintlnSerial_string("$w                                      write settings to eeprom", endpoint);
     PrintlnSerial_string("$x [<float>]                            expo factor 1.0 means linear, everything between 1 and 0 is a exponential input", endpoint);
 
@@ -1428,8 +1441,6 @@ void printActiveSettings(Endpoints endpoint)
     PrintlnSerial(endpoint);
 
     PrintlnSerial_string(controllerstatus.boottext_eeprom, endpoint);
-    PrintSerial_string("Version of the stored settings: ", endpoint);
-    PrintlnSerial_string(activesettings.version, endpoint);
     PrintlnSerial(endpoint);
 
     PrintSerial_string("Current Mode: ", endpoint);
@@ -1452,29 +1463,29 @@ void printActiveSettings(Endpoints endpoint)
     int32_t pos = ENCODER_VALUE;
 
      // ------- Endpoint
-    if (activesettings.pos_start > activesettings.pos_end)
+    if (semipermanentsettings.pos_start > semipermanentsettings.pos_end)
     {
         /* start is always smaller than end anyway but below prints rely on that, hence doublecheck. */
-        int32_t tmp = activesettings.pos_start;
-        activesettings.pos_start = activesettings.pos_end;
-        activesettings.pos_end = tmp;
+        float tmp = semipermanentsettings.pos_start;
+        semipermanentsettings.pos_start = semipermanentsettings.pos_end;
+        semipermanentsettings.pos_end = tmp;
     }
 
     PrintSerial_string(" ", endpoint);
-    if (pos < activesettings.pos_start)
+    if (pos < semipermanentsettings.pos_start)
     {
         PrintSerial_long(pos, endpoint);
         PrintSerial_string("--- ", endpoint);
     }
-    PrintSerial_long((int32_t) activesettings.pos_start, endpoint);
+    PrintSerial_long((int32_t) semipermanentsettings.pos_start, endpoint);
     PrintSerial_string(" <--------- ", endpoint);
-    if (activesettings.pos_start <= pos && pos <= activesettings.pos_end)
+    if (semipermanentsettings.pos_start <= pos && pos <= semipermanentsettings.pos_end)
     {
         PrintSerial_long(pos, endpoint);
     }
     PrintSerial_string(" ---------> ", endpoint);
-    PrintSerial_long((int32_t) activesettings.pos_end, endpoint);
-    if (pos > activesettings.pos_end)
+    PrintSerial_long((int32_t) semipermanentsettings.pos_end, endpoint);
+    if (pos > semipermanentsettings.pos_end)
     {
         PrintSerial_string("--- ", endpoint);
         PrintSerial_long(pos, endpoint);
@@ -1531,7 +1542,7 @@ void printActiveSettings(Endpoints endpoint)
         {
             PrintlnSerial_string("but inactive as speed is overridden by RC", endpoint);
         }
-        else if (activesettings.pos_start == -POS_END_NOT_SET || activesettings.pos_end == POS_END_NOT_SET)
+        else if (semipermanentsettings.pos_start == -POS_END_NOT_SET || semipermanentsettings.pos_end == POS_END_NOT_SET)
         {
             PrintlnSerial_string("but inactive as endpoints have never been set", endpoint);
         }
