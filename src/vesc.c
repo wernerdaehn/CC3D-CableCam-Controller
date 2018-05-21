@@ -51,7 +51,6 @@ getvalues_t vescvalues;
 
 uint8_t vesc_rxbuffer[VESC_RXBUFFER_SIZE];
 uint32_t vesc_packet_start_timestamp;
-int32_t tacho_old;
 
 extern UART_HandleTypeDef huart2;
 
@@ -108,21 +107,9 @@ int16_t vesc_get_int(uint16_t uartfield)
 
 void VESC_Output(float esc_output)
 {
-    VESC_request_values();
-    int32_t tacho_current = (int32_t) __REV(vescvalues.frame.tachometer_abs);
-    if (esc_output == 0.0f || isnan(esc_output))
+    if (isnan(esc_output))
     {
-        int32_t diff = (float) (tacho_current - tacho_old);
-        if (diff >= activesettings.vesc_brake_min_speed)
-        {
-            // We are moving fast and the target speed is zero, e.g. due to an emergency brake
-            // Therefore brake as hard as you can before enabling the handbrake
-            VESC_set_rpm(0);
-        }
-        else
-        {
-            VESC_set_handbrake_current(activesettings.vesc_brake_handbrake_min);
-        }
+        VESC_set_rpm(0);
     }
     else
     {
@@ -130,7 +117,6 @@ void VESC_Output(float esc_output)
         int32_t vesc_erpm = (int32_t) ((esc_output * controllerstatus.stick_max_speed * ((float) activesettings.vesc_max_erpm)));
         VESC_set_rpm(vesc_erpm);
     }
-    tacho_old = tacho_current;
 }
 
 void VESC_set_rpm(int32_t erpm)

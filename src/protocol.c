@@ -396,7 +396,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         writeProtocolHead(PROTOCOL_POS, endpoint);
         writeProtocolLong(semipermanentsettings.pos_start, endpoint);
         writeProtocolLong(semipermanentsettings.pos_end, endpoint);
-        writeProtocolLong(getPos(), endpoint);
+        writeProtocolFloat(getPos(), endpoint);
         writeProtocolFloat(getSpeedPosDifference(), endpoint);
         writeProtocolFloat(getSpeedPosSensor(), endpoint);
         writeProtocolOK(endpoint);
@@ -641,6 +641,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             {
                 writeProtocolHead(PROTOCOL_ROTATION_DIR, endpoint);
                 activesettings.esc_direction = (float) p;
+                writeProtocolInt( (int16_t) activesettings.esc_direction, endpoint);
                 writeProtocolOK(endpoint);
             }
             else
@@ -862,7 +863,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
     {
         int16_t p[2];
         argument_index = sscanf(&commandlinebuffer[2], "%hd %hd", &p[0], &p[1]);
-        if (argument_index == 3)
+        if (argument_index == 2)
         {
             if (p[0] >= 0 && p[1] >= 0)
             {
@@ -1520,7 +1521,7 @@ void printActiveSettings(Endpoints endpoint)
         PrintlnSerial_string(" (positive stick = hall sensor counts down)", endpoint);
     } else
     {
-        PrintlnSerial_string(" (not yet decided, drive to pos>500 on a horizontal rope to set it automatically)", endpoint);
+        PrintlnSerial_string(" (not yet decided, set the endpoints via the RC to get help)", endpoint);
     }
     PrintlnSerial(endpoint);
 

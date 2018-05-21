@@ -8,10 +8,10 @@
 #include "math.h"
 #include "eeprom.h"
 
-#define ZERO_SPEED_POS_ZONE 100.0f
+#define BUFFER_ZONE 44.0f
 
 void printControlLoop(int16_t input, float speed, float pos, float brakedistance, uint16_t esc, Endpoints endpoint);
-float stickCycle(float pos, float brakedistance);
+float stickCycle(float brakedistance);
 float getStickPositionRaw(void);
 float abs_d(float v);
 float getGimbalDuty(uint8_t channel);
@@ -51,8 +51,8 @@ float getSpeedPosSensor(void)
     {
         /* Speed is the number of signals per 0.02 (=Ta) secs.
          * Hence refactor Ta to millisenconds to match the HAL_GetTick() millisecond time scale.
-         * But the encoder is set to by an X4 type, so it updates the position on rising and falling flanks
-         * of both channels whereas the interrupt fires on one pin and rising flank only - hence times 4.
+         * The encoder is set to by an X4 type and increases on falling and raising flanks
+         * whereas the interrupt fires on one pin and rising flank only - hence times 4.
          */
         return CONTROLLERLOOPTIME_FLOAT * 1000.0f * 4.0f / ((float) possensorduration);
     }
@@ -69,9 +69,18 @@ float getStick(void)
     return stick_last_value;
 }
 
-int32_t getPos(void)
+float getPos(void)
 {
-    return ENCODER_VALUE;
+    int32_t v = ENCODER_VALUE; // Convert uint to int
+
+    if (activesettings.esc_direction == 0.0f)
+    {
+        return (float) v;
+    }
+    else
+    {
+        return ((float) v) * activesettings.esc_direction;
+    }
 }
 
 void initController(void)
@@ -177,56 +186,83 @@ float getStickPositionRaw()
         }
         else
         {
-            int32_t pos_current = ENCODER_VALUE;
-            if (controllerstatus.safemode == OPERATIONAL &&
-                controllerstatus.play_running != 0 &&
-                activesettings.mode == MODE_LIMITER_ENDPOINTS &&
-                value == 0.0f &&
-                semipermanentsettings.pos_start != -POS_END_NOT_SET &&
-                semipermanentsettings.pos_end != POS_END_NOT_SET)
+            float pos_current = getPos();
+            if (controllerstatus.play_running == 1)
             {
-                /*
-                 * The condition to play a preprogrammed movement is very narrow. It requires that
-                 * - end points are set
-                 * - stick is in neutral
-                 * - mode is the limiter with endpoints mode
-                 * - not in the programming mode
-                 * - and of course the play command was triggered
-                 */
-                if (HAL_GetTick() - controllerstatus.play_time_lastsignal < 2000L)
+                if (controllerstatus.safemode != OPERATIONAL)
+                {
+                    controllerstatus.play_running = 2;
+                    PrintlnSerial_string("Cannot Play, not in operational mode but endpoint programming mode", EndPoint_All);
+                }
+                else if (activesettings.mode != MODE_LIMITER_ENDPOINTS)
+                {
+                    controllerstatus.play_running = 2;
+                    PrintlnSerial_string("Cannot Play, not limiter with endpoints mode", EndPoint_All);
+                }
+                else if (value != 0.0f)
+                {
+                    controllerstatus.play_running = 2;
+                    PrintlnSerial_string("Cannot Play, stick is not in neutral", EndPoint_All);
+                }
+                else if (semipermanentsettings.pos_start == -POS_END_NOT_SET)
+                {
+                    controllerstatus.play_running = 2;
+                    PrintlnSerial_string("Cannot Play, pos_end is not set", EndPoint_All);
+                }
+                else if (semipermanentsettings.pos_end == POS_END_NOT_SET )
+                {
+                    controllerstatus.play_running = 2;
+                    PrintlnSerial_string("Cannot Play, pos_start is not set", EndPoint_All);
+                }
+                else if (activesettings.esc_direction == 0.0f)
+                {
+                    controllerstatus.play_running = 2;
+                    PrintlnSerial_string("Cannot Play, esc direction is not set. See $r", EndPoint_All);
+                } else
                 {
                     /*
-                     * Only when the play signal is sent continuously, we actually play the program. If the RC or app is disconnected, we don't.
+                     * The condition to play a preprogrammed movement is very narrow. It requires that
+                     * - end points are set
+                     * - stick is in neutral
+                     * - mode is the limiter with endpoints mode
+                     * - not in the programming mode
+                     * - and of course the play command was triggered
                      */
-                    if (controllerstatus.play_direction == -activesettings.esc_direction)
+                    if (HAL_GetTick() - controllerstatus.play_time_lastsignal < 2000L)
                     {
-                        if (semipermanentsettings.pos_start+ZERO_SPEED_POS_ZONE < pos_current)
+                        /*
+                         * Only when the play signal is sent continuously, we actually play the program. If the RC or app is disconnected, we don't.
+                         */
+                        if (controllerstatus.play_direction == -1)
                         {
-                            value = -activesettings.stick_max_speed * activesettings.esc_direction;
-                            controllerstatus.play_endpoint_reached_at = HAL_GetTick();
-                        }
-                        else
-                        {
-                            value = 0.0f;
-                            if (HAL_GetTick() - controllerstatus.play_endpoint_reached_at > 5000L) // wait for 5 seconds at the start point
+                            if (semipermanentsettings.pos_start + 20.0f < pos_current)
                             {
-                                controllerstatus.play_direction = activesettings.esc_direction;
+                                value = -activesettings.stick_max_speed;
+                                controllerstatus.play_endpoint_reached_at = HAL_GetTick();
+                            }
+                            else
+                            {
+                                value = 0.0f;
+                                if (HAL_GetTick() - controllerstatus.play_endpoint_reached_at > 5000L) // wait for 5 seconds at the start point
+                                {
+                                    controllerstatus.play_direction = 1;
+                                }
                             }
                         }
-                    }
-                    else
-                    {
-                        if (semipermanentsettings.pos_end-ZERO_SPEED_POS_ZONE > pos_current)
-                        {
-                            controllerstatus.play_endpoint_reached_at = HAL_GetTick();
-                            value = activesettings.stick_max_speed * activesettings.esc_direction;
-                        }
                         else
                         {
-                            value = 0.0f;
-                            if (HAL_GetTick() - controllerstatus.play_endpoint_reached_at > 5000L)  // wait for 5 seconds at the end point
+                            if (semipermanentsettings.pos_end - 20.0f > pos_current)
                             {
-                                controllerstatus.play_direction = -activesettings.esc_direction;
+                                controllerstatus.play_endpoint_reached_at = HAL_GetTick();
+                                value = activesettings.stick_max_speed;
+                            }
+                            else
+                            {
+                                value = 0.0f;
+                                if (HAL_GetTick() - controllerstatus.play_endpoint_reached_at > 5000L)  // wait for 5 seconds at the end point
+                                {
+                                    controllerstatus.play_direction = -1;
+                                }
                             }
                         }
                     }
@@ -261,9 +297,10 @@ float getStickPositionRaw()
  * \return stick_requested_value float
  *
  */
-float stickCycle(float pos, float brakedistance)
+float stickCycle(float brakedistance)
 {
     float stickpercent = getStickPositionRaw();
+    float pos = getPos();
 
 
     // output = ( (1 - factor) x input^3 ) + ( factor x input )     with input and output between -1 and +1
@@ -324,17 +361,14 @@ float stickCycle(float pos, float brakedistance)
             /*
              * One problem is the direction. Once the endpoint was overshot, a stick position driving the cablecam even further over
              * the limit is not allowed. But driving it back between start and end point is fine. But what value of the stick
-             * is further over the limit? activesettings.esc_direction tells that.
+             * is further over the limit?
+             * The rule is that pos_start < pos_end and a positive speed means driving towards the endpoint. Since that cannot be
+             * guaranteed to be the case, the activesettings.esc_direction ($r command) controls that. In case this value is -1 the
+             * getPos() funtion returns the mirrored values, makes them negative.
              *
              * Case 1: start pos_start = 0, stick forward drove cablecam to pos_end +3000. Hence esc_direction = +1
              *         Condition: if value > 0 && pos+brakedistance <= pos_end.
              *                Or: if value > 0 && pos+brakedistance <= pos_end.
-             * Case 2: start pos_start = 0, stick forward drove cablecam to pos_end -3000. Hence esc_direction = -1.
-             *         Condition: if value < 0 && pos+brakedistance <= pos_end.
-             *                Or: if -value > 0 && pos+brakedistance <= pos_end.
-             * Case 3: start pos_start = 0, stick reverse drove cablecam to pos_end +3000. Hence esc_direction = -1.
-             *         Condition: if value < 0 && pos+brakedistance <= pos_end.
-             *                Or: if -value > 0 && pos+brakedistance <= pos_end.
              * Case 4: start pos_start = 0, stick reverse drove cablecam to pos_end -3000. Hence esc_direction = +1.
              *         Condition: if value > 0 && pos+brakedistance <= pos_end.
              *                Or: if value > 0 && pos+brakedistance <= pos_end.
@@ -342,41 +376,42 @@ float stickCycle(float pos, float brakedistance)
              *
              */
 
-            if (pos + brakedistance < semipermanentsettings.pos_end-ZERO_SPEED_POS_ZONE && pos - brakedistance > semipermanentsettings.pos_start+ZERO_SPEED_POS_ZONE)
+            /*
+             * First check if the position is safe, both end points cannot be overshot at the current speed. In that case no braking calculation is needed.
+             */
+            if (pos + brakedistance < semipermanentsettings.pos_end && pos - brakedistance > semipermanentsettings.pos_start)
             {
                 controllerstatus.endpointbrake = false;
                 controllerstatus.emergencybrake = false;
             }
             else
             {
-                if (pos + brakedistance >= semipermanentsettings.pos_end-ZERO_SPEED_POS_ZONE)
+                /*
+                 * Which end point is in danger? The cablecam might be very close to the start point but is driving towards the other end point -> no problem.
+                 */
+                if (pos + brakedistance >= semipermanentsettings.pos_end)
                 {
                     /*
                      * In case the CableCam will overshoot the end point reduce the speed to zero.
-                     * Only if the stick is in the reverse direction already, accept the value. Else you cannot maneuver
+                     * Only if the stick is in the reverse direction already, accept the value. Without that condition you cannot move the cablecam
                      * back into the safe zone.
                      */
-                    if (activesettings.esc_direction * value > 0.0f)
+                    if (value > 0.0f)
                     {
                         LED_WARN_ON;
                         /*
                          * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
                          * As there is some elasticity between motor and actual position, add a value here.
                          */
-                        if (pos >= semipermanentsettings.pos_end)
+                        if (pos >= semipermanentsettings.pos_end + BUFFER_ZONE)
                         {
                             stick_last_value = 0.0f;
                             return stick_last_value;
                         }
-                        else if (pos >= semipermanentsettings.pos_end - ZERO_SPEED_POS_ZONE)
-                        {
-                            stick_last_value = 0.005f * activesettings.esc_direction;
-                            return stick_last_value;
-                        }
                         else
                         {
-                            value = stick_last_value - (maxaccel * activesettings.esc_direction); // reduce speed at full allowed acceleration
-                            if (value * activesettings.esc_direction < 0.0f) // watch out to not get into reverse.
+                            value = stick_last_value - maxaccel; // reduce speed at full allowed acceleration
+                            if (value < 0.0f) // watch out to not get into reverse.
                             {
                                 value = 0.0f;
                             }
@@ -409,7 +444,7 @@ float stickCycle(float pos, float brakedistance)
                             }
                         }
                     }
-                    else
+                    else // moving away from the end point into the safe zone
                     {
                         controllerstatus.endpointbrake = false;
                         controllerstatus.emergencybrake = false;
@@ -419,33 +454,28 @@ float stickCycle(float pos, float brakedistance)
                 }
 
 
-                if (pos - brakedistance <= semipermanentsettings.pos_start+ZERO_SPEED_POS_ZONE)
+                if (pos - brakedistance <= semipermanentsettings.pos_start)
                 {
                     /*
                      * In case the CableCam will overshoot the start point reduce the speed to zero.
                      * Only if the stick is in the reverse direction already, accept the value. Else you cannot maneuver
                      * back into the safe zone.
                      */
-                    if (activesettings.esc_direction * value < 0.0f)
+                    if (value < 0.0f)
                     {
                         LED_WARN_ON;
                         /*
                          * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
                          */
-                        if (pos <= semipermanentsettings.pos_start)
+                        if (pos <= semipermanentsettings.pos_start - BUFFER_ZONE)
                         {
                             stick_last_value = 0.0f;
                             return 0.0f;
                         }
-                        else if (pos <= semipermanentsettings.pos_start+ZERO_SPEED_POS_ZONE)
-                        {
-                            stick_last_value = -0.005f * activesettings.esc_direction;
-                            return stick_last_value;
-                        }
                         else
                         {
-                            value = stick_last_value + (maxaccel * activesettings.esc_direction); // reduce speed at full allowed acceleration
-                            if (value * activesettings.esc_direction > 0.0f) // watch out to not get into reverse.
+                            value = stick_last_value + maxaccel; // reduce speed at full allowed acceleration from a negative value up to zero
+                            if (value > 0.0f) // watch out to not get into reverse.
                             {
                                 value = 0.0f;
                             }
@@ -528,12 +558,12 @@ float stickCycle(float pos, float brakedistance)
             PrintlnSerial_string("Entered Endpoint Programming mode", EndPoint_All);
         }
         controllerstatus.safemode = PROGRAMMING;
+        stickintegral += value;
     }
 
 
 
 
-    stickintegral += value;
     /*
      * Evaluate the End Point Programming switch
      */
@@ -564,81 +594,50 @@ float stickCycle(float pos, float brakedistance)
              *    be with the wrong sign. Let's hope this never happens during the initial setup. That is also the reason why the esc direction
              *    is calculated only if the esc direction is unset yet.
              */
-            PrintlnSerial_string("Point 2 set", EndPoint_All);
-            if (semipermanentsettings.pos_start < pos)
+            semipermanentsettings.pos_end = pos;
+            if (stickintegral > -3.0f && stickintegral < 3.0f)
             {
-                semipermanentsettings.pos_end = pos;
-                /*
-                 * Autoconfigure the esc direction, answering the question in what direction the stick is pushed in order to drive from the start point
-                 * to the end point, forward or backward?
-                 * In this case the stick was pushed either forward or reverse and that resulted to pos sensor increasing while driving to the end point.
-                 */
-                PrintSerial_string("Drove forward from", EndPoint_All);
-                PrintSerial_float(semipermanentsettings.pos_start, EndPoint_All);
-                PrintSerial_string(" to", EndPoint_All);
-                PrintlnSerial_float(semipermanentsettings.pos_end, EndPoint_All);
-                if (activesettings.esc_direction == 0.0f)
-                {
-                    PrintSerial_string("Stick was moved overall", EndPoint_All);
-                    PrintSerial_float(stickintegral, EndPoint_All);
-
-                    if (stickintegral > -3.0f && stickintegral < 3.0f)
-                    {
-                        PrintlnSerial_string(" which is too little. Drive a further distance.", EndPoint_All);
-                    }
-                    else
-                    {
-                        PrintSerial_string(" hence setting esc direction $r ", EndPoint_All);
-                        if (stickintegral > 0.0f)
-                        {
-                            activesettings.esc_direction = 1.0f;
-                        }
-                        else
-                        {
-                            activesettings.esc_direction = -1.0f;
-                        }
-                        PrintlnSerial_float(activesettings.esc_direction, EndPoint_All);
-                    }
-               }
+                PrintlnSerial_string("Endpoints too close together based on the stick signals. Move the cablecam via the RC.", EndPoint_All);
             }
             else
             {
-                semipermanentsettings.pos_end = semipermanentsettings.pos_start;
-                semipermanentsettings.pos_start = pos;
-                /*
-                 * Autoconfigure the esc direction, answering the question in what direction the stick is pushed in order to drive from the start point
-                 * to the end point, forward or backward?
-                 * In this case the stick was pushed either forward or reverse and that resulted to pos sensor decreasing while driving to the end point.
-                 */
-                PrintSerial_string("Drove backward from endpoint", EndPoint_All);
-                PrintSerial_float(semipermanentsettings.pos_end, EndPoint_All);
-                PrintSerial_string(" to startpoint", EndPoint_All);
-                PrintlnSerial_float(semipermanentsettings.pos_start, EndPoint_All);
+
+                PrintlnSerial_string("Point 2 set", EndPoint_All);
+
                 if (activesettings.esc_direction == 0.0f)
                 {
-                    PrintSerial_string("Stick was moved overall", EndPoint_All);
-                    PrintSerial_float(stickintegral, EndPoint_All);
-
-                    if (stickintegral > -3.0f && stickintegral < 3.0f)
+                    /*
+                     * The esc_direction has never been set. Hence set it together with the end points.
+                     */
+                    if ((semipermanentsettings.pos_start < semipermanentsettings.pos_end && stickintegral > 0.0f) ||
+                        (semipermanentsettings.pos_start > semipermanentsettings.pos_end && stickintegral < 0.0f))
                     {
-                        PrintlnSerial_string(" which is too little. Drive a further distance.", EndPoint_All);
+                        activesettings.esc_direction = +1.0f;
+                        PrintlnSerial_string("ESC direction not set yet. Correct value seems to be $r 1", EndPoint_All);
                     }
                     else
                     {
-                        PrintSerial_string(" hence setting esc direction $r ", EndPoint_All);
-                        if (stickintegral > 0.0f)
-                        {
-                            activesettings.esc_direction = -1.0f;
-                        }
-                        else
-                        {
-                            activesettings.esc_direction = 1.0f;
-                        }
-                        PrintlnSerial_float(activesettings.esc_direction, EndPoint_All);
+                        activesettings.esc_direction = -1.0f;
+                        semipermanentsettings.pos_start = -semipermanentsettings.pos_start;
+                        semipermanentsettings.pos_end = -semipermanentsettings.pos_end;
+                        PrintlnSerial_string("ESC direction not set yet. Correct value seems to be $r -1", EndPoint_All);
                     }
                 }
+                PrintSerial_string("Drove from", EndPoint_All);
+                PrintSerial_float(semipermanentsettings.pos_start, EndPoint_All);
+                PrintSerial_string(" to", EndPoint_All);
+                PrintlnSerial_float(semipermanentsettings.pos_end, EndPoint_All);
+
+
+                if (semipermanentsettings.pos_start > semipermanentsettings.pos_end)
+                {
+                    // Rule is that pos_start < pos_end. Hence swap the two.
+                    float tmp = semipermanentsettings.pos_start;
+                    semipermanentsettings.pos_start = semipermanentsettings.pos_end;
+                    semipermanentsettings.pos_end = tmp;
+                }
+                eeprom_write_sector_async((uint8_t*) &semipermanentsettings, sizeof(semipermanentsettings), EEPROM_SECTOR_FOR_SEMIPERMANENTSETTINGS);
             }
-            eeprom_write_sector_async((uint8_t*) &semipermanentsettings, sizeof(semipermanentsettings), EEPROM_SECTOR_FOR_SEMIPERMANENTSETTINGS);
         }
     }
     lastendpointswitch = currentendpointswitch; // Needed to identify a raising flank on the tip switch
@@ -774,9 +773,8 @@ void controllercycle()
      *    ----------------------------------
      *      time_to_stop
      */
-    int32_t pos_current = ENCODER_VALUE;
+    int32_t pos_current = getPos();
     speed_current = abs_d((float) (pos_current_old - pos_current));
-    float pos = (float) pos_current;
     float speed_timer = getSpeedPosSensor();
     float speed = speed_current;
 
@@ -791,7 +789,7 @@ void controllercycle()
     float time_to_stop = abs_d(getStick()/controllerstatus.stick_max_accel);
 
     float distance_to_stop = speed * time_to_stop / 2.0f;
-    float stick_filtered_value = stickCycle(pos, distance_to_stop); // go through the stick position calculation with its limiters, max accel etc
+    float stick_filtered_value = stickCycle(distance_to_stop); // go through the stick position calculation with its limiters, max accel etc
 
     /*
      * PPM output is rescaled to +-700 and adding the ESC's neutral range to get an immediate output.

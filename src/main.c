@@ -273,6 +273,13 @@ int main(void)
             tickCounter();
 
             USBPeriodElapsed();
+            if (is1Hz())
+            {
+                /*
+                 * Every second trigger the VESC status
+                 */
+                VESC_request_values();
+            }
             if (is1Hz() && controllerstatus.safemode == OPERATIONAL)
             {
                 /*
@@ -623,7 +630,10 @@ static void MX_USART2_UART_Init(void)
     }
 }
 
-/* USART3 init function */
+/* USART3 init function
+ *
+ * used vor the bluetooth communication
+ */
 static void MX_USART3_UART_Init(void)
 {
     huart3.Instance = USART3;
@@ -640,9 +650,9 @@ static void MX_USART3_UART_Init(void)
     }
 }
 
-/* USART1 init function */
+/* USART6 init function */
 /*
- * The SBus receiver
+ * The SBus out (non-inverted) for the gimbal
  */
 static void MX_USART6_UART_Init(void)
 {

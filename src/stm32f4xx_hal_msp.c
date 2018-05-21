@@ -408,13 +408,27 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
         __HAL_RCC_USART3_CLK_DISABLE();
 
         /**USART3 GPIO Configuration
-        PC6     ------> USART6_TX
-        PC7     ------> USART6_RX
+        PB10     ------> USART3_TX
+        PB11     ------> USART3_RX
         */
         HAL_GPIO_DeInit(GPIOB, GPIO_PIN_10|GPIO_PIN_11);
 
         /* USART3 interrupt DeInit */
         HAL_NVIC_DisableIRQ(USART3_IRQn);
+    }
+    else if(huart->Instance==USART6)
+    {
+        /* Peripheral clock disable */
+        __HAL_RCC_USART6_CLK_DISABLE();
+
+        /**USART3 GPIO Configuration
+        PC6     ------> USART6_TX
+        PC7     ------> USART6_RX
+        */
+        HAL_GPIO_DeInit(GPIOC, GPIO_PIN_6|GPIO_PIN_7);
+
+        /* USART3 interrupt DeInit */
+        HAL_NVIC_DisableIRQ(USART6_IRQn);
     }
 }
 

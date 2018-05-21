@@ -9,7 +9,7 @@
 void initController(void);
 void controllercycle(void);
 
-int32_t getPos(void);
+float getPos(void);
 float getStick(void);
 
 float getProgrammingSwitch(void);

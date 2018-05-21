@@ -6,7 +6,6 @@
 #include "stdbool.h"
 
 #define PROTOCOL_MAX_ACCEL        'a'   // 1 float argument
-#define PROTOCOL_AUX              'A'   // 1 int argument, the AUX channel assignment
 #define PROTOCOL_BINARY           'b'   // Hidden command to print the binary active settings or play them back (Useful to quickly transfer settings)
 #define PROTOCOL_BLUETOOTH        'B'   // no argument
 #define PROTOCOL_VESC_BRAKE       'c'
