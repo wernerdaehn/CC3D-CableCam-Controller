@@ -8,8 +8,6 @@
 #include "math.h"
 #include "eeprom.h"
 
-#define BUFFER_ZONE 44.0f
-
 void printControlLoop(int16_t input, float speed, float pos, float brakedistance, uint16_t esc, Endpoints endpoint);
 float stickCycle(float brakedistance);
 float getStickPositionRaw(void);
@@ -233,35 +231,57 @@ float getStickPositionRaw()
                         /*
                          * Only when the play signal is sent continuously, we actually play the program. If the RC or app is disconnected, we don't.
                          */
-                        if (controllerstatus.play_direction == -1)
+                        if (controllerstatus.play_direction == 0)
                         {
-                            if (semipermanentsettings.pos_start + 20.0f < pos_current)
+                            if (pos_current - semipermanentsettings.pos_start < semipermanentsettings.pos_end - pos_current)
                             {
-                                value = -activesettings.stick_max_speed;
-                                controllerstatus.play_endpoint_reached_at = HAL_GetTick();
+                                /*
+                                 * Example: pos_current = 400; pos_start = 0; pos_end = 1000;
+                                 * 400 - 0 < 1000-400
+                                 *
+                                 * --> Closer to the start point, so drive to pos_end first
+                                 */
+                                controllerstatus.play_direction = 1;
                             }
                             else
                             {
-                                value = 0.0f;
-                                if (HAL_GetTick() - controllerstatus.play_endpoint_reached_at > 5000L) // wait for 5 seconds at the start point
-                                {
-                                    controllerstatus.play_direction = 1;
-                                }
+                                controllerstatus.play_direction = -1;
                             }
+                        }
+
+                        if (HAL_GetTick() - controllerstatus.play_endpoint_reached_at < 5000L)  // wait for 5 seconds at the start/end point
+                        {
+                            value = 0.0f;
                         }
                         else
                         {
-                            if (semipermanentsettings.pos_end - 20.0f > pos_current)
+                            if (controllerstatus.play_direction == 1) // Drive towards the end point
                             {
-                                controllerstatus.play_endpoint_reached_at = HAL_GetTick();
-                                value = activesettings.stick_max_speed;
+                                if (pos_current < semipermanentsettings.pos_end - 44.0f)
+                                {
+                                    // Continue driving towards the end point
+                                    value = activesettings.stick_max_speed;
+                                }
+                                else
+                                {
+                                    // End point reached (almost), hence revert the direction and restart the countdown
+                                    controllerstatus.play_endpoint_reached_at = HAL_GetTick();
+                                    controllerstatus.play_direction = -1;
+                                }
                             }
                             else
                             {
-                                value = 0.0f;
-                                if (HAL_GetTick() - controllerstatus.play_endpoint_reached_at > 5000L)  // wait for 5 seconds at the end point
+                                // Driving towards the start point
+                                if (pos_current > semipermanentsettings.pos_start + 44.0f)
                                 {
-                                    controllerstatus.play_direction = -1;
+                                    // current position is far away from the start point, hence continue driving towards it
+                                    value = -activesettings.stick_max_speed;
+                                }
+                                else
+                                {
+                                    // Got in reach of the start point, hence reverse direction and restart the wait countdown
+                                    controllerstatus.play_endpoint_reached_at = HAL_GetTick();
+                                    controllerstatus.play_direction = 1;
                                 }
                             }
                         }
@@ -403,7 +423,7 @@ float stickCycle(float brakedistance)
                          * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
                          * As there is some elasticity between motor and actual position, add a value here.
                          */
-                        if (pos >= semipermanentsettings.pos_end + BUFFER_ZONE)
+                        if (pos >= semipermanentsettings.pos_end)
                         {
                             stick_last_value = 0.0f;
                             return stick_last_value;
@@ -467,7 +487,7 @@ float stickCycle(float brakedistance)
                         /*
                          * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
                          */
-                        if (pos <= semipermanentsettings.pos_start - BUFFER_ZONE)
+                        if (pos <= semipermanentsettings.pos_start)
                         {
                             stick_last_value = 0.0f;
                             return 0.0f;
@@ -621,6 +641,12 @@ float stickCycle(float brakedistance)
                         semipermanentsettings.pos_start = -semipermanentsettings.pos_start;
                         semipermanentsettings.pos_end = -semipermanentsettings.pos_end;
                         PrintlnSerial_string("ESC direction not set yet. Correct value seems to be $r -1", EndPoint_All);
+                    }
+                    PrintlnSerial_string("Saving all settings ($w) to store the $r parameter permanently", EndPoint_All);
+                    uint32_t write_errors = eeprom_write_sector_safe((uint8_t*) &activesettings, sizeof(activesettings), EEPROM_SECTOR_FOR_SETTINGS);
+                    if (write_errors != 0)
+                    {
+                        PrintlnSerial_string("Saving the settings failed", EndPoint_All);
                     }
                 }
                 PrintSerial_string("Drove from", EndPoint_All);
