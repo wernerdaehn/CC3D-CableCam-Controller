@@ -141,7 +141,7 @@ float getAuxInput()
  *   sbus reading: 860; neutral: 870..890 --> return 860-870=-10;
  *
  * Therefore the output is a linear range from min to max with the neutral range eliminated from the value.
- * Also, when the reading is too old, meaning older than 3 seconds, the value is reset to NAN as emergency precaution.
+ * Also, when the reading is too old, meaning older than 3 seconds, the value is reset to NAN as ency precaution.
  *
  */
 float getStickPositionRaw()
@@ -446,9 +446,18 @@ float stickCycle(float brakedistance)
 
                             /*
                              * Failsafe: If, at the current speed the end point will be overshot significantly, ignore the ramp logic and request a full brake by setting speed=0.
-                             * Because at high speeds the calculation might not be that accurate, add a factor depending on the brake distance
+                             * Because at high speeds the calculation might not be that accurate, add a factor depending on the brake distance.
+                             *
+                             * Example: pos = 800; max_position error = 100; pos_end = 1000
+                             * at brakedistance = 200: 800+200 >= 1000+100+100*200/100 = 1000+100+200--> No emergency brake, we will stop nicely at the end point
+                             * at brakedistance = 400: 800+400 >= 1000+100+100*400/100 = 1000+100+400
+                             *
+                             * Example: pos = 800; max_position error = 10; pos_end = 1000
+                             * at brakedistance = 200: 800+200 >= 1000+10+10*200/100 = 1000+10+20--> No emergency brake, we will stop nicely at the end point
+                             * at brakedistance = 400: 800+400 >= 1000+10+10*400/100 = 1000+10+40
                              */
-                            if (activesettings.max_position_error != 0.0f && (pos + brakedistance >= semipermanentsettings.pos_end + activesettings.max_position_error + 30.0f*brakedistance/activesettings.max_position_error))
+                            if (activesettings.max_position_error != 0.0f &&
+                                (pos + brakedistance >= semipermanentsettings.pos_end + activesettings.max_position_error + activesettings.max_position_error*brakedistance/100.0f))
                             {
                                 /*
                                  * We are in danger to overshoot the end point by max_position_error. Hence kick in the emergency brake.
@@ -512,7 +521,8 @@ float stickCycle(float brakedistance)
                              * Failsafe: If, at the current speed the end point will be overshot significantly, ignore the ramp logic and request a full brake by setting speed=0.
                              * Because at high speeds the calculation might not be that accurate, add a factor depending on the brake distance
                              */
-                            if (activesettings.max_position_error != 0.0f && (pos - brakedistance <= semipermanentsettings.pos_start - activesettings.max_position_error - 30.0f*brakedistance/activesettings.max_position_error))
+                            if (activesettings.max_position_error != 0.0f &&
+                                (pos - brakedistance <= semipermanentsettings.pos_start - activesettings.max_position_error - activesettings.max_position_error*brakedistance/100.0f))
                             {
                                 /*
                                  * We are in danger to overshoot the start point by max_position_error. Hence kick in the emergency brake.
@@ -647,6 +657,16 @@ float stickCycle(float brakedistance)
                     if (write_errors != 0)
                     {
                         PrintlnSerial_string("Saving the settings failed", EndPoint_All);
+                    }
+                }
+                else
+                {
+                    if ((((semipermanentsettings.pos_start < semipermanentsettings.pos_end && stickintegral > 0.0f) ||
+                        (semipermanentsettings.pos_start > semipermanentsettings.pos_end && stickintegral < 0.0f)) && activesettings.esc_direction == -1.0f) ||
+                        (((semipermanentsettings.pos_start > semipermanentsettings.pos_end && stickintegral < 0.0f) ||
+                        (semipermanentsettings.pos_start < semipermanentsettings.pos_end && stickintegral > 0.0f)) && activesettings.esc_direction == 1.0f))
+                    {
+                        PrintlnSerial_string("Is $r really correct? Does not look like it.", EndPoint_All);
                     }
                 }
                 PrintSerial_string("Drove from", EndPoint_All);
