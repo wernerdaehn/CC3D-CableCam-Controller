@@ -61,7 +61,7 @@ The only important things to make sure are
 To achieve that one of the running wheels has 22 bores of d3x8mm (3mm drill and 8mm deep) and magnets are inserted alternating north/south. The hall sensor does switch on north magnetic fields only and therefore by adding a south orientated magnet between, it is an absolute certainty, the north field strength falls below the required level. 
 In my case the bores are drilled into the skate wheel with a diameter of 60mm, hence the distance between each drill is 8.6mm. So as long as the distance between the two hall sensors is not 17.2mm or multiples thereof, they will not switch on/off at the same time. I aimed for a distance of 8.6mm+50% = 13mm roughly.
 
-_Note: The sensor board PCB is currently redesigned using above guidelines. Maybe LEDs are added as well as visual indication?_
+_Note: The sensor board PCB is currently redesigned using above guidelines. Maybe LEDs will be added as well as visual indication?_
 
 
 ### Flashing the firmware
@@ -97,7 +97,7 @@ The first thing to do is selecting the RC receiver type, SBus (1) or SumPPM (0..
 Using the command $1 invokes a guided setup of the input channels and hte neutral range with many sanity checks. Make sure the RC sender does output something on the desired switches and no mixers are enabled.
 
 ### Bluetooth
-To simplify using the controller all settings can be done via bluetooth as well. It assumes the bluetooth module is connected to RX3/TX3 of the CC3D Revo and runs at 38400,8,n,1. In case the module is a HC-05, using the command _$B_ does everything to setup the module correctly, figureing out the current baud rate, changing it, give the module the name _cablecam_ and set the security Pin to 1234. 
+To simplify using the controller all settings can be done via bluetooth as well. It assumes the bluetooth module is connected to RX3/TX3 of the CC3D Revo and runs at 38400,8,n,1. In case the module is a HC-06, using the command _$B_ does everything to setup the module correctly, figuring out the current baud rate, changing it, give the module the name _cablecam_ and set the security Pin to 1234. 
 
 
 ### Command Reference
@@ -107,16 +107,21 @@ Command | Description
 _$1_ | Guided setup through for the receiver once _$I_ was used to select the receiver type. This command sets the same values as _$i_ and _$n_ does.
 _$a_ | Shows the two acceleration values, the first is the max acceleration in operational mode, the second in programming mode
 _$a int int_ | sets the two acceleration values. Default is _$a 20 10_
-_$B_ | Configure the HC-05 bluetooth module connected to RX3/TX3 pin
+_$A int int int_ | sets the neutral point and range and maximum deflection. The default _$N 1500 0 700_ creates a pwm signal with a puls width of 1500us in neutral and +-700us without a neutral range.
+_$B_ | Configure the HC-06 bluetooth module connected to RX3/TX3 pin
 _$e_ | Print the maximum eRPMs as defined in the VESC ESC.
 _$e int_ | Set the maximum eRPMs as defined in the VESC ESC.
-_$g_ | Print the maximum positional error before going into an emergency brake. In case moving the stick slowly towards neutral does not apply enough brake power and hence the endpoint will be overshot by more than this value, the ESC output is reset to neutral forcefully. Thus applying the maximum brake power the ESC can apply. Default is 100 Hall sensor steps.
+_$E_ | print the status information of the VESC.
+_$g_ | Print the maximum positional error before going into an emergency brake. In case moving the stick slowly towards neutral does not apply enough brake power and hence the endpoint will be overshot by more than this value, the ESC output is reset to neutral. Thus applying the maximum brake power the ESC can apply. Default is 100 hall sensor steps.
 _$g int_ | Set the max error.
+_$G int1 .. int8_ | The controller can output a (non-inverted) SBus signal meant for the DJI Ronin gimbal. Which input channel should be assigned to channel 1 to 8?
 _$i_ | Print the the current channel assignments and a overview of all channels with their current values as received from the RC receiver. A value of 0 means no valid data received.
-_$i int int int int int int int_ | Assign the input channels to functions in the order of speed, programming switch, endpoint button, max acceleration dial, max speed dial, mode selector, Aux Channel input. A value of 256 is allowed in order to disable those RC functions.
-_$I_ | shows which type of receiver signal is expected
-_$I 0_ | SumPPM receiver. Note: Changing it requires the setting to be written with $w and to reboot the board.
-_$I 1_ | SBus receiver. Note: Changing it requires the setting to be written with $w and to reboot the board.
+_$i int1 .. int8_ | Assign the input channels to functions in the order of speed, programming switch, endpoint button, max acceleration dial, max speed dial, mode selector, Aux Channel, Play switch input. A value of 256 is allowed in order to disable those RC functions.
+_$I_ | shows which type of receiver signal is expected, SumPPM or SBus.
+_$I 0_ | SumPPM receiver is connected.
+_$I 1_ | SBus receiver is connected.
+_$j char | Prints the channel assignment of a specific function. Characters can be v (=speed), m (=Mode switch), P (=endpoint programming), e (=end point tip switch), A (=max accel dial), V (=max speed dial), a (=Aux input), p (=play switch).
+_$j char int | Set a channel to a specific function. Allowed values for char see in the line above.
 _$m_ | print the operation mode
 _$m 0_ | Positional mode. In this mode the stick moves a target position and a PID loop does everything in order to keep the CableCam as close as possible to that point. ATTENTION: Not tested, do not use.
 _$m 1_ | Passthrough mode. Essentially output = input. All the control does is converting the receiver signal into an ESC servo output signal. Useful for testing and to calibrate the ESC for neutral/max/min points.
@@ -125,19 +130,19 @@ _$m 3_ | Passthough with speed limits & end points. In addition to the _$m 2_ mo
 _$n_ | Prints the neutral point of the input, the neutral range and the 100% range. Make sure that the neutral point is the same value _$i_ shows for the speed channel when the RC stick is in idle.
 _$n int int int_ | set the neutral point to the first value and the neutral range to the second. The third value is the maximum deflection from neutral. The default value of _$n 992 30 800_ would consider all stick values from 962 to 1022 as idle and values from 162 to 1762 as thrust.
 _$N_ | Prints the neutral point and range of the ESC output pwm signal. 
-_$N int int_ | sets the neutral point and range. The default _$N 1500 30_ creates a pwm signal with a puls width of 1500us in idle and to create movement overcomes the neutral range of the ESC by starting with 1530 (or 1470 for reverse). This should match the defaults of the ESC but ESC calibration is adviced. The better these values match the ESC, the faster the response times at start.
-_$p_ | Print the low endpoint, the high endpoint and the current position. 
-_$r_ | Print the rotation direction, clockwise (+1) or ccw (-1). This is important information one the cablecam did overshoot the endpoint. Then the controller allows driving back into the allowed range but not further outside. But which direction 
+_$N int int_ | sets the neutral point and range. The default _$N 1500 30 700_ creates a pwm signal with a puls width of 1500us in idle and to create movement overcomes the neutral range of the ESC by starting with 1530 (or 1470 for reverse). And 100% speed would be an output signal of 2230 and 770 in reverse. This should match the defaults of the ESC but running an ESC calibration is advised.
+_$p_ | Print the low endpoint, the high endpoint, the current position and the current speed via two methods.
+_$P_ | Turn on the Play function for the next few seconds. Hence this command has to be sent constantly to keep the play program running.
+_$r_ | Print the rotation direction, clockwise (+1) or ccw (-1). This is important information once the cablecam did overshoot the endpoint. Then the controller allows driving back into the allowed range but not further outside. A value of 0 means it has not been set yet.
 _$r int_ | Sets the rotation direction.
 _$S_ | Print a summary of all settings.
 _$v_ | Print the max value the speed input signal is allowed range between the neutral point. With the neutral point at 992 and a speed limit of 800, the full SBus range of 192 to 1792 can be used. With a value of 400, everything above 50% thrust on the stick is limited to 50% max thrust. Note that this value controls the stick and hence is dependant on the type of input receiver.
 _$v int int_ | Sets the max speed for the operational mode and the programming mode. The idea is to limit the max speed when setting the endpoints as a safety precaution. Default is _$v 500 100_.
-_$w_ | Write all active settings to the EEPROM from which they are loaded at boot time. Active settings does include everything, even the start/end points.
+_$V_ | prints the current firmware version.
+_$w_ | Write all active settings to the EEPROM from which they are loaded at boot time.
 _$x_ | Print the exponential factor for the thrust stick input.
 _$x double_ | Set the exponential factor for the thrust input curve. A common input curve is a linear relationship between the stick position and the output signal. 100% stick means 100% output, 50% stick is 50% ouput signal. This behavior would require the factor to be set to 1.0. If the stick can send signals in 0.1% steps and the maximum RPMs are 50'000, the lowest possible resolution would be in 50RPM steps. Which is absolutely fine at higher speeds but at low speeds it does not allow fine control. The closer this factor is to zero, the fine grained low speeds can be controlled.
 
-
-Just to repeat: Every setting starting with _$1_ and below has no effect, except for the positional mode _$m 0_. And this mode should not be used for now.
 
 
 ### The acceleration and speed limiter

@@ -155,7 +155,7 @@ int main(void)
         Error_Handler();
     }
 
-    strcpy(activesettings.version, "20180401");
+    strcpy(activesettings.version, "20180523");
     activesettings.esc_direction = 0;
     activesettings.max_position_error = 100.0f;
     activesettings.mode = MODE_PASSTHROUGH;
@@ -186,6 +186,9 @@ int main(void)
     activesettings.rc_channel_pitch = 255;
     activesettings.rc_channel_roll = 255;
     activesettings.rc_channel_play = 255;
+    activesettings.aux_value_range = 700;
+    activesettings.aux_neutral_pos = 1500;
+    activesettings.aux_neutral_range = 0;
     for (int i=0; i<8; i++)
     {
         activesettings.rc_channel_sbus_out_mapping[i] = 255;
@@ -210,13 +213,16 @@ int main(void)
          * If the structure_length argument (introduced later) is valid, this will fill the activesettings with
          * values and leave the new ones untouched, hence the defaults from above.
          */
-        strcpy(defaultsettings.version, activesettings.version);
+        char current_version_string[11];
+        memcpy(current_version_string, activesettings.version, 11); // capture the current version according to the default activesettings set initially
         uint16_t structuresize = defaultsettings.structure_length;
         if (structuresize == 0 || structuresize > sizeof(defaultsettings))
         {
             structuresize = sizeof(defaultsettings);
         }
-        memcpy(&activesettings, &defaultsettings, structuresize);
+        memcpy(&activesettings, &defaultsettings, structuresize); // activesettings are overwritten with the eeprom values
+        memcpy(activesettings.version, current_version_string, 11); // As the version is overwritten ans well reapply the version string
+        activesettings.structure_length = sizeof(activesettings); // Same with the old structure_length. It has been migrated, hence the current value counts, not the one read from eeprom.
         strcpy(controllerstatus.boottext_eeprom, "defaults loaded from eeprom using an older version");
     }
     else

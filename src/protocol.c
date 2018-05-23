@@ -631,6 +631,40 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         }
         break;
     }
+    case PROTOCOL_AUX_NEUTRAL:
+    {
+        int16_t p[3];
+        argument_index = sscanf(&commandlinebuffer[2], "%hd %hd %hd", &p[0], &p[1], &p[2]);
+        if (argument_index == 3)
+        {
+            if (p[0] > 500 && p[0] < 2000 &&
+                    p[1] > 0 && p[1] < 100 && p[2] > 300 && p[2] < 900)
+            {
+                writeProtocolHead(PROTOCOL_AUX_NEUTRAL, endpoint);
+                activesettings.aux_neutral_pos = p[0];
+                activesettings.aux_neutral_range = p[1];
+                activesettings.aux_value_range = p[2];
+                writeProtocolOK(endpoint);
+            }
+            else
+            {
+                writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+            }
+        }
+        else if (argument_index <= 0)
+        {
+            writeProtocolHead(PROTOCOL_AUX_NEUTRAL, endpoint);
+            writeProtocolInt(activesettings.aux_neutral_pos, endpoint);
+            writeProtocolInt(activesettings.aux_neutral_range, endpoint);
+            writeProtocolInt(activesettings.aux_value_range, endpoint);
+            writeProtocolOK(endpoint);
+        }
+        else
+        {
+            writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+        }
+        break;
+    }
     case PROTOCOL_ROTATION_DIR:
     {
         int16_t p;
@@ -1395,10 +1429,11 @@ void printHelp(Endpoints endpoint)
 
     USBPeriodElapsed();
 
+    PrintlnSerial_string("$1                                      start a guided setup to set the most important input channels", endpoint);
     PrintlnSerial_string("$a [<int> <int>]                        set or print maximum allowed acceleration in normal and programming mode", endpoint);
-    PrintlnSerial_string("$A [<int>]                              set or print the AUX channel assignment", endpoint);
+    PrintlnSerial_string("$A [<int>]                              set or print AUX output neutral pos and +- neutral range and the +-max range", endpoint);
     PrintlnSerial_string("$B                                      Configure the HC-05 Bluetooth module on FlexiPort (RX3/TX3)", endpoint);
-    PrintlnSerial_string("$c [<int> <int>]                        VESC handbrake current and min tacho speed to engage handbrake", endpoint);
+    // PrintlnSerial_string("$c [<int> <int>]                        VESC handbrake current and min tacho speed to engage handbrake", endpoint);
     PrintlnSerial_string("$e [<long>]                             set or print maximum eRPMs as set in the VESC speed controller. 100% stick = this eRPM", endpoint);
     PrintlnSerial_string("$E                                      print the status of the VESC ESC", endpoint);
     PrintlnSerial_string("$g [<float>]                            set or print the max positional error -> exceeding it causes an emergency stop", endpoint);
@@ -1409,12 +1444,12 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("                                                                  1..SBus", endpoint);
     USBPeriodElapsed();
     PrintlnSerial_string("$j <char> [<int>]                       set or print the channel assignment for a given function. Chars can be...", endpoint);
-    PrintlnSerial_string("                                        v...ESC channel", endpoint);
+    PrintlnSerial_string("                                        v...speed channel", endpoint);
     PrintlnSerial_string("                                        m...Modeswitch channel", endpoint);
-    PrintlnSerial_string("                                        P...Endpoint Programmingswitch channel", endpoint);
-    PrintlnSerial_string("                                        e...Endpoint Setbutton channel", endpoint);
-    PrintlnSerial_string("                                        A...Max Accel Poti channel", endpoint);
-    PrintlnSerial_string("                                        V...Max Speed Poti channel", endpoint);
+    PrintlnSerial_string("                                        P...Endpoint programming switch channel", endpoint);
+    PrintlnSerial_string("                                        e...Endpoint tip switch channel", endpoint);
+    PrintlnSerial_string("                                        A...Max accel dial channel", endpoint);
+    PrintlnSerial_string("                                        V...Max speed dial channel", endpoint);
     PrintlnSerial_string("                                        a...Aux input channel", endpoint);
     PrintlnSerial_string("                                        p...Playswitch channel", endpoint);
     PrintlnSerial_string("$m [<int>]                              set or print the mode 1..passthrough", endpoint);
@@ -1424,7 +1459,7 @@ void printHelp(Endpoints endpoint)
     USBPeriodElapsed();
 
     PrintlnSerial_string("$n [<int> <int> <int>]                  set or print receiver neutral pos and +-neutral range and +-max range", endpoint);
-    PrintlnSerial_string("$N [<int> <int> <int>]                  set or print ESC output neutral pos and +-range and the +-max range", endpoint);
+    PrintlnSerial_string("$N [<int> <int> <int>]                  set or print ESC output neutral pos and +-neutral range and the +-max range", endpoint);
     PrintlnSerial_string("$p                                      print positions", endpoint);
     PrintlnSerial_string("$P <int>                                turn the Play command (automatic movement) on (1) or off (0) for the next 2 seconds. Send frequently.", endpoint);
     PrintlnSerial_string("$r [<int>]                              set or print rotation direction of the ESC output, either +1 or -1", endpoint);
@@ -1461,7 +1496,7 @@ void printActiveSettings(Endpoints endpoint)
     PrintlnSerial_string(getSafeModeLabel(), endpoint);
 
     PrintlnSerial_string("Currently the endpoint limits are configured as ", endpoint);
-    int32_t pos = ENCODER_VALUE;
+    float pos = getPos();
 
      // ------- Endpoint
     if (semipermanentsettings.pos_start > semipermanentsettings.pos_end)
@@ -1475,21 +1510,21 @@ void printActiveSettings(Endpoints endpoint)
     PrintSerial_string(" ", endpoint);
     if (pos < semipermanentsettings.pos_start)
     {
-        PrintSerial_long(pos, endpoint);
+        PrintSerial_long((int32_t) pos, endpoint);
         PrintSerial_string("--- ", endpoint);
     }
     PrintSerial_long((int32_t) semipermanentsettings.pos_start, endpoint);
     PrintSerial_string(" <--------- ", endpoint);
     if (semipermanentsettings.pos_start <= pos && pos <= semipermanentsettings.pos_end)
     {
-        PrintSerial_long(pos, endpoint);
+        PrintSerial_long((int32_t) pos, endpoint);
     }
     PrintSerial_string(" ---------> ", endpoint);
     PrintSerial_long((int32_t) semipermanentsettings.pos_end, endpoint);
     if (pos > semipermanentsettings.pos_end)
     {
         PrintSerial_string("--- ", endpoint);
-        PrintSerial_long(pos, endpoint);
+        PrintSerial_long((int32_t) pos, endpoint);
     }
     PrintlnSerial(endpoint);
 
@@ -1501,9 +1536,9 @@ void printActiveSettings(Endpoints endpoint)
 
     PrintSerial_string("The stick changes from 0% to 100% in", endpoint);
     PrintSerial_float(CONTROLLERLOOPTIME_FLOAT/controllerstatus.stick_max_accel, endpoint);
-    PrintSerial_string(" seconds and is limited to +-", endpoint);
-    PrintSerial_int(controllerstatus.stick_max_speed*100.0f, endpoint);
-    PrintlnSerial_string("%", endpoint);
+    PrintSerial_string(" seconds and output is limited to +-", endpoint);
+    PrintSerial_int(((int16_t) (controllerstatus.stick_max_speed*100.0f)), endpoint);
+    PrintlnSerial_string("% max speed", endpoint);
     PrintlnSerial(endpoint);
 
     // ------- ESC direction

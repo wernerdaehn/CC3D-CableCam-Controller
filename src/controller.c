@@ -448,16 +448,9 @@ float stickCycle(float brakedistance)
                              * Failsafe: If, at the current speed the end point will be overshot significantly, ignore the ramp logic and request a full brake by setting speed=0.
                              * Because at high speeds the calculation might not be that accurate, add a factor depending on the brake distance.
                              *
-                             * Example: pos = 800; max_position error = 100; pos_end = 1000
-                             * at brakedistance = 200: 800+200 >= 1000+100+100*200/100 = 1000+100+200--> No emergency brake, we will stop nicely at the end point
-                             * at brakedistance = 400: 800+400 >= 1000+100+100*400/100 = 1000+100+400
-                             *
-                             * Example: pos = 800; max_position error = 10; pos_end = 1000
-                             * at brakedistance = 200: 800+200 >= 1000+10+10*200/100 = 1000+10+20--> No emergency brake, we will stop nicely at the end point
-                             * at brakedistance = 400: 800+400 >= 1000+10+10*400/100 = 1000+10+40
                              */
                             if (activesettings.max_position_error != 0.0f &&
-                                (pos + brakedistance >= semipermanentsettings.pos_end + activesettings.max_position_error + activesettings.max_position_error*brakedistance/100.0f))
+                                pos + brakedistance >= semipermanentsettings.pos_end + activesettings.max_position_error)
                             {
                                 /*
                                  * We are in danger to overshoot the end point by max_position_error. Hence kick in the emergency brake.
@@ -522,7 +515,7 @@ float stickCycle(float brakedistance)
                              * Because at high speeds the calculation might not be that accurate, add a factor depending on the brake distance
                              */
                             if (activesettings.max_position_error != 0.0f &&
-                                (pos - brakedistance <= semipermanentsettings.pos_start - activesettings.max_position_error - activesettings.max_position_error*brakedistance/100.0f))
+                                pos - brakedistance <= semipermanentsettings.pos_start - activesettings.max_position_error)
                             {
                                 /*
                                  * We are in danger to overshoot the start point by max_position_error. Hence kick in the emergency brake.
@@ -860,15 +853,15 @@ void controllercycle()
     float aux = getAuxInput();
     if (aux > 0.0f)
     {
-        TIM3->CCR4 = activesettings.esc_neutral_pos + activesettings.esc_neutral_range + ((int16_t) (aux * ((float) activesettings.esc_value_range)));
+        TIM3->CCR4 = activesettings.aux_neutral_pos + activesettings.aux_neutral_range + ((int16_t) (aux * ((float) activesettings.aux_value_range)));
     }
     else if (aux < 0.0f)
     {
-        TIM3->CCR4 = activesettings.esc_neutral_pos - activesettings.esc_neutral_range + ((int16_t) (aux * ((float) activesettings.esc_value_range)));
+        TIM3->CCR4 = activesettings.aux_neutral_pos - activesettings.aux_neutral_range + ((int16_t) (aux * ((float) activesettings.aux_value_range)));
     }
     else
     {
-        TIM3->CCR4 = activesettings.esc_neutral_pos;
+        TIM3->CCR4 = activesettings.aux_neutral_pos;
     }
 
     for (int ch=0; ch<8 ; ch++)

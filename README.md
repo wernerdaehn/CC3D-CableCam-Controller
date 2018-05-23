@@ -14,10 +14,10 @@ https://www.youtube.com/watch?v=M1JVqWaG6Yg
 ## (Quick)start
 
 **Hardware**
-1. Connect the ESC to the Servo1 pins. The ESC will power the board. ESC should be turned off for now.
+1. Connect the ESC to the Servo1 pin. The ESC will power the board. ESC should be turned off for now.
 1. Connect the receiver (SumPPM or SBus) to the Main USART, the pin called SBus RX1 on above F4 controller
 1. Provide power to the receiver by connecting its Vcc and Gnd to Servo5 Vcc and Gnd
-1. Hall sensor board is powered by Servo6 Vcc and Gnd and its two input signals are connected to Servo5 and Servo6 signal pins
+1. Hall sensor board is powered by Servo5 Vcc and Gnd and its two input signals are connected to Servo5 and Servo6 signal pins
 
 <a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/Hardware_Overview.jpg">
   <img src="_images/Hardware_Overview.jpg" height="100px"/>
@@ -30,8 +30,8 @@ https://www.youtube.com/watch?v=M1JVqWaG6Yg
 _Note: All drivers used are included in a standard Windows 10 installation._
 1. Install the ST provided DfuSe utility from the bottom of [this page](http://www.st.com/en/development-tools/stsw-stm32080.html).
 1. Run the installed DfuSe program.
-1. Connect the board to your computer via USB and while doing so, keep the boot button pressed. When the board is powered with the boot button pressed, the STM32 internal USB bootloader is started instead of the firmware.
-1. As this activates the STM32F4 hardware bootloader and no firmware runs, only the red Power LED should be on. If the green Status LED does blink, the firmware is active. Try again above step.
+1. Connect the board to your computer via USB and while doing so, keep the _boot_ button pressed. When the board is powered with the boot button pressed, the STM32 internal USB bootloader is started instead of the firmware.
+1. As this activates the STM32F4 hardware bootloader and no firmware runs, only the Power LED should be on. If the Status LED does blink, the firmware is active. Try again above step.
 1. Download the firmware from this project https://github.com/wernerdaehn/CC3D-CableCam-Controller/blob/master/bin/Debug/CableCamControllerF4.dfu
 1. At the bottom of the utility, in the _Upgrade or Verify Action_ area, click on _Choose_ and select above's downloaded CableCamControllerF4.dfu file. 
 <br/><a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/dfuse_choose.jpg"><img src="_images/dfuse_choose.jpg" height="100px"/></a>
@@ -39,38 +39,35 @@ _Note: All drivers used are included in a standard Windows 10 installation._
 1. If it does, the _Upgrade_ button copies the firmware onto the board. 
 <br/><a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/dfuse_upgrade.jpg"><img src="_images/dfuse_upgrade.jpg" height="100px"/></a>
 1. The next dialog(s) is to be confirmed with _yes_. We are certain the firmware is for the STM32F405RG chip.
-1. To validate the flashing truly was successful, the _Verify_ action can be triggered, just to doublecheck.
-1. At the top, the button _Leave DFU mode_, does restart the device and as the boot button on the board is not pressed during startup, it will boot the firmware.
-1. A first indication that everything is normal is when the yellow Status LED on the board does flash with 1Hz.
+1. To validate the flashing was successful, the _Verify_ action can be triggered, just to doublecheck.
+1. At the top is the _Leave DFU mode_ button to restart the controller with the new firmware.
+1. A first indication that everything is normal is when the Status LED on the board does flash with 1Hz.
 
 
 
 **First setup**
 
 1. Currently the board is powered by USB, as the **ESC is off still**. Hence neither the receiver nor the hall sensors work.
-1. As the board is connected to the computer via USB a new COM port is available to interact with the CableCam Controller.
+1. As the board is connected to the computer via USB, a new COM port is available to interact with the CableCam Controller.
 1. Validate that by starting the Windows 10 Device Manager and locating the port. 
 <br/><a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/WindowsDeviceManager.jpg"><img src="_images/WindowsDeviceManager.jpg" height="100px"/></a>
 1. Open a serial terminal in order to talk to the board. The one I use is [putty](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html) as 64Bit install or just the 64Bit exe download.
-1. In the terminal create a new serial connection to the port shown in the devide manager. In putty that means clicking on _serial_ and entering the port like _COM3_. The settings for baud rate etc are irrelevant and can be left the defaults.
+1. In the terminal create a new serial connection to the port shown in the device manager. In putty that means clicking on _serial_ and entering the port like _COM3_. The settings for baud rate etc are irrelevant and can be left at their defaults.
 1. To test if everything works properly, a first command can be sent by typing _$h_ for help and confirming the command with the return key.
 1. This should print status information plus a help text in the console.
 <br/><a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/console_help.png"><img src="_images/console_help.png" height="100px"/></a>
-1. The first and most important step is to set the type of receiver. The firmware supports either SBus or SumPPM. The $h command prints the currently active receiver type and using the _$I_ (uppercase "i") the input receiver type can be changed, e.g. from the default SumPPM to SBus via _$I 1_. Then store that value permanently using the _$w_ command and restart the board by disconnecting the USB cable and reconnecting.
-1. Next step is to validate the receiver input signals. Turn on the ESC (CC3D Revo is designed to handle USB and external power at the same time) to power the receiver and enter the command _$i_. This shows all channels, their current reading from the receiver and which channel is used for what function.
+1. The first and most important step is to set the type of receiver. The firmware supports either SBus or SumPPM. The $h command prints the currently active receiver type and using the _$I_ (uppercase "i") the input receiver type can be changed, e.g. from the default SumPPM to SBus via _$I 1_.
+1. Next step is to validate the receiver input signals. Turn on the ESC (yes, the CC3D Revo is designed to handle USB and external power at the same time) to power the receiver and enter the command _$i_. This shows all channels, their current reading from the receiver and which channel is used for what function - if assigned.
 <br/><a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/console_input_config.png"><img src="_images/console_input_config.png" height="100px"/></a>
-1. Setup the RC sender to assign the various inputs to channels. The functions used are
-    1. Speed Input: In my case I control the camera with the left stick, moving the right stick forward/backwards should move the CableCam. This is channel 3 on my sender.
-    1. Programming Switch: In order to set endpoints, a switch on the RC is flipped. This does enter or leave the end point programming mode. In my case the RC sender Switch SF is mapped to channel 6. 
-    1. Endpoint Button: When pressing the button the first time, this will be the endpoint no.1, then the CableCam will be driven to the second endpoint and pressing the button a second time set that position as endpoint no.2. After leaving the programming mode, the CableCam can be driven only within these two points. I use button SH for that, mapped to channel 7.
-    1. max acceleration knob (optional): The CableCam Controller puts a filter over the Speed Input to allow for slow accelerations/deaccelerations only. The value of this can either be programmed using the _$a_ command or by the sender. In my case the knob S1 is programmed to control the channel 4. A value of 256 would deactivate this function.
-    1. max speed knob (optional): Similar to the acceleration, the maximum speed can be set as well. Either by the command _$v_ or via the RC sender, here the S2 is assigned to channel 5.
-1. To validate each channel execute the command _$i_ multiple times and check which channel reading does change when operating the RC sender.
-1. Run the command $1 for a guided setup of the channels to CCC functions.
+1. Setup the RC to assign the various inputs to channels. The functions used are
+    1. Speed Input: In my case I control the camera with the left stick, moving the right stick forward/backwards should move the CableCam.
+    1. Programming Switch: In order to set endpoints, a switch on the RC is flipped. This does enter or leave the end point programming mode.
+    1. Endpoint Button: When pressing the button the first time, this will be the endpoint no.1, then the CableCam should be driven to the second endpoint and pressing the button a second time to set that position as endpoint no.2. After leaving the programming mode, the CableCam can be driven only within these two points.
+    1. max acceleration knob (optional): The CableCam Controller puts a filter over the Speed Input to allow for constant accelerations/deaccelerations. The value of this can either be programmed using the _$a_ command or by the sender.
+    1. max speed knob (optional): Similar to the acceleration, the maximum speed can be set as well. Either by the command _$v_ or via the RC sender.
+1. Run the command $1 for a guided setup of the channels to CCC functions. see <a href="https://youtu.be/UbZSGKW4F94">this video (here)</a>
 1. Validate with _$i_ the current assignment.
-1. With _$w_ these settings are stored permantly. 
-1. Apply speed via the RC sender and check if the motor starts. If it does not, the defaults for other settings in the controller do not match your setup and need to be tested - see the troubleshooting section below.
-1. Execute the command _$p_. This prints out the current two end points and the current position. When the wheel with the Hall Sensor is turning, the position reading should be different with each _$p_ call. This does proof the Hall sensors are working properly.
+1. With _$w_ these settings are stored permantly.
 
 
 
@@ -79,18 +76,18 @@ _Note: All drivers used are included in a standard Windows 10 installation._
 Program the RC car ESC to forward/reverse and high levels of drag and initial brakes. This is essential for the CableCam controller to work. The CableCam Controller only moves the stick forward, neutral or reverse but does not apply extra power to hold against the movement of the CableCam!
 
 This is worth some explanations:
-At first sight the CableCam is like a RC car. Drving forward, backward and stop. One main difference however is that the CableCam should drive forward and backward in an identical fashion. Many car ESCs do not support that. With those you can accelerate the car forward, putting the stick in neutral lets the car free wheeling and to brake it actively, the stick has to be put into reverse until it stops. And only then you can go in reverse direction, probably at reduced speed.
+At first sight the CableCam is like a RC car. Drving forward, backward and stop. One main difference however is that the CableCam should drive forward and backward in an symmetrical fashion. Many car ESCs do not support that. With those you can accelerate the car forward, putting the stick in neutral lets the car free wheeling and to brake it actively, the stick has to be put into reverse until it stops. And only then you can go in reverse direction, probably at reduced speed.
 With the CableCam we want something else. Putting the stick forward drives the CableCam in one direction, neutral means stopping and reverse means driving in reverse direction at same speed as forward.
-ESCs that support that are used for rock crawlers and usually name that application specifically. Another indication the ESC supports all the CableCam application needs is when there is a drive mode forward/reverse, a drag brake setting and an intial brake setting is available. 
+ESCs that support that are used for rock crawlers. Another indication the ESC supports all needed is when there are a drive mode forward/reverse, a drag brake setting and an intial brake setting. 
 The drag brake level means how decisive the car brakes when the stick is in neutral while moving. A drag brake of zero would let the car continue to drive, slowed down only by resistance. A high drag brake means the ESC does use regenerative braking and removes kinetic energy from the car, thus stopping it more quickly.
 The initial brake level controls if the motor should be energized a little bit when the car is at a stand still, thus locking it to the current position.
 Unfortunately even the higest brake level settings are too weak for the CableCam to work in all instances. Most noticable when the CableCam should drive up and down a hill. Without an initial brake, it would start rolling downhill getting faster and faster. Thanks to the initial and drag brake it rather brakes but is still going downhill, just slower.
 
 The best ESC would be one that supports a Closed Loop Speed control. Because then the stick position controls the speed instead of the thrust. With such an ESC a stick position of neutral would make the CableCam hold the current position, preventing it from rolling downhill at all. 
-Such ESCs are quite common in industrial applications like robotics or CNC servo motors but they are also quite expensive and not meant for cars and RC implementations. So they do not have an UART input but RS232. They are quite heavy or conveniently small but support tiny motors only. Unfortunately I have not managed to convince any of the RC car ESC vendors to add a close loop mode although it would be a piece of cake for them. The hardware supports that already and the logic is well known.
+Such ESCs are quite common in industrial applications like robotics or CNC servo motors but they are also quite expensive and not meant for cars and RC implementations. So they do not have an UART input but RS232. They are quite heavy or conveniently small but support tiny motors only. Unfortunately I have not managed to convince any of the RC car ESC vendors to add a close loop mode although it would be a piece of cake for them. The hardware supports it and the logic is well known.
 
 A cheap ESC I use at the moment is the [SkyRC TS160](http://www.skyrc.com/index.php?route=product/product&product_id=212) for 3s batteries together with a [programming box](http://www.skyrc.com/index.php?route=product/product&product_id=176).
-An ESC supporting Closed Loop operations is the [VESC](http://www.trampaboards.com/vesc-6-in-cnc-t6-sealed-of-aluminum-box--vedder-electronic-speed-controller-trampa-exclusive-x1-p-23866.html). The price of 330EUR is steep though.
+An ESC supporting Closed Loop operations is the [VESC6](http://www.trampaboards.com/vesc-6-in-cnc-t6-sealed-of-aluminum-box--vedder-electronic-speed-controller-trampa-exclusive-x1-p-23866.html). The price of 330EUR is steep though.
 
 **VESC6 ESC**
 
@@ -105,23 +102,27 @@ _Note: Power the CableCam Controller via +5V and not the Vcc pin. The latter mig
 
 **On the rope**
 
-With all settings programmed in the EEPROM via the _$w_ command, the CableCam can be put on the rope.
+With all settings programmed permanently via the _$w_ command, the CableCam can be put on the rope.
+
+The cablecam controller knows three modes. These can be set with the _$m_ command or via a tri-state switch on the RC sender - assuming it has been assigned during the setup. 
+- Passthrough Mode: In this mode the controller simply passes the input value to the ESC unmodified.
+- Passthrough with Limiter: The cablecam can be moved freely but the acceleration and speed limits are applied. Thus the cablecam moves much more evenly and smoother, less agressive.
+- Passthrough with Limiter and Endpoints: If endpoints are programmed, the cablecam can be moved only within that range. It starts to brake early enough so that it stops approximately at the endpoint when applying the maximum allowed (de)acceleration as defined by the limiter
+
 When turned on, the CableCam Controller is either in programming mode or in operational mode, depending on the programming switch setting. The difference between the two modes are
 1. In programming mode the max speed and max acceleration is lower than in operational mode.
-1. In programming mode the max speed and max acceleration knobs have no effect as these control the speed/acceleration limits for the operational mode only.
+1. In programming mode the max speed knob has no effect, it is using the preprogrammed speed.
 1. In programming mode the endpoint limits are ignored, else the endpoints could not be pushed further outward.
 
-Therefore the first step would be to flip the switch into programming mode. The end point switch is pressed a first time to set the current position as one end point. Now the Cablecam should be driven to the other end of the rope, pressing the endpoint switch a second time. With both endpoints set, flipping the programming switch back to operational mode, the CableCam can be moved between the two points only. Simply try to drive further outside of the endpoint, the motor will not turn but the blue Warn LED on the Controller is turned on. Moving towards the second endpoint is no problem.
+Therefore the first step would be to flip the switch to enter programming mode. The end point tip switch is pressed a first time to set the current position as one end point. Then the Cablecam should be driven to the other end of the rope, pressing the endpoint switch a second time. With both endpoints set, flipping the programming switch back to operational mode, the CableCam can be moved between the two points only - in the limiter&endpoint mode. Simply try to drive further outside of the endpoint, the motor will not turn but the blue Warn LED on the Controller is turned on. Moving towards the second endpoint is no problem.
 
-Also the knobs for max acceleration and max speed can be tested, assuming they were programmed to a valid channel. Put the max speed know to neutral in order to set it to the slowest speed possible. When applying full throttle, the CableCam Controller does filter the stick position up to the maximum speed value. Increasing the max speed knob and the full throttle will be higher, driving the CableCam faster.
-Similar for the acceleration. A value of neutral means slowest acceleration possible, a maximum acceleration will likely cause the wheels to spin.
-
-_Note: Values below neutral for both, max accel and max speed, are ignored._
+Also the knobs for max acceleration and max speed can be tested. When applying full throttle, the CableCam Controller does filter the stick position up to the maximum speed value. Increasing the max speed knob and the full throttle will be higher, driving the CableCam faster.
+Similar for the acceleration.
 
 
 **Troubleshooting**
 
-One problem the CableCam controller has is, it sits between two systems and hence has to know both. The software tries to automate as much as possible but without feedback, many things are not possible. So much for the excuse. If you have ideas, please write up issues here in github.
+One problem the CableCam controller has is, it sits between two systems and hence has to know both. The software tries to automate as much as possible but without feedback, many things are not possible. So much for the excuses. If you have ideas, please write up issues here in github.
 In case you have issues, please post an [issue](https://github.com/wernerdaehn/CC3D-CableCam-Controller/issues).
 
 * The motor does not start although everything has been configured. 
@@ -141,7 +142,7 @@ The neutral range of the CableCam Controller is way smaller than the range the E
 
 * No slow speeds possible
 
-Obviously the ESC itself has a minimum speed. Hence the assumption is, without the CableCam Controller the motor can be moved at slower speeds than with the controller. The only reason could be a similar effect around the output neutral range _$N_, but the other way around. The CableCam Controller has a larger range than the ESC. Then the first output signal will be neutral range and if that means a thrust level of 5% for the ESC already, because its neutral range is more narrow, the CableCam cannot be driven slower than that. Solution is to reduce the neutral range, e.g. _$N 1500 20_.
+Obviously the ESC itself has a minimum speed. Hence the assumption is, without the CableCam Controller the motor can be moved at slower speeds than with the controller. The only reason could be a similar effect around the output neutral range _$N_, but the other way around. The CableCam Controller has a larger range than the ESC. Then the first output signal will be neutral range and if that means a thrust level of 5% for the ESC already, because its neutral range is more narrow, the CableCam cannot be driven slower than that. Solution is to reduce the neutral range, e.g. _$N 1500 20 700_.
 
 * Forward and reverse is different
 

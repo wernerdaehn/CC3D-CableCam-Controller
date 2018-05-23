@@ -6,6 +6,7 @@
 #include "stdbool.h"
 
 #define PROTOCOL_MAX_ACCEL        'a'   // 1 float argument
+#define PROTOCOL_AUX_NEUTRAL      'A'	// 3 int neutral microseconds, +-neutral range microseconds, +- 100% throttle
 #define PROTOCOL_BINARY           'b'   // Hidden command to print the binary active settings or play them back (Useful to quickly transfer settings)
 #define PROTOCOL_BLUETOOTH        'B'   // no argument
 #define PROTOCOL_VESC_BRAKE       'c'
@@ -19,7 +20,7 @@
 #define PROTOCOL_INPUT_SINGLE     'j'   // 1 char and 1 int argument, the channel assignment for individual functions
 #define PROTOCOL_MODE             'm'
 #define PROTOCOL_NEUTRAL          'n'	// 3 int neutral microseconds, +-neutral range microseconds, +- 100% throttle
-#define PROTOCOL_ESC_NEUTRAL      'N'	// 2 int neutral microseconds, +-range microseconds
+#define PROTOCOL_ESC_NEUTRAL      'N'	// 3 int neutral microseconds, +-neutral range microseconds, +- 100% throttle
 #define PROTOCOL_POS              'p'
 #define PROTOCOL_PLAY             'P'   // 1 int argument, play=1 or don't play
 #define PROTOCOL_ROTATION_DIR     'r'   // 1 int argument
@@ -122,6 +123,11 @@ typedef struct
     uint8_t rc_channel_play;
     uint8_t rc_channel_sbus_out_mapping[8];
     uint16_t structure_length;
+    uint8_t noop_padding_1[2]; // Needed to align the structure to 32bit
+    int16_t aux_neutral_pos;
+    int16_t aux_neutral_range;
+    int16_t aux_value_range;
+    uint8_t noop_padding_2[2]; // Needed to align the structure to 32bit
 } settings_t;
 
 
