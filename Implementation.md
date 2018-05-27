@@ -1,20 +1,6 @@
 
 
-## Goals
 
-The most simple way to control a cablecam is by connecting the RC receiver to the motor controller (=ESC, speed controller) and control it like a RC car.
-But this has multiple limitations the CableCam Controller tries to solve:
-1. The CableCam might crash into the start- or endpoint by accident. Would be much nicer if the CableCam calculates the required braking distance constantly and does engage the brake automatically. This way it stops automatically no matter of the user input.
-1. A smooth acceleration/deceleration makes the videos look better. Even when the stick is pushed forward at once, the CableCam should accelerate slowly instead of the wheel slipping over the rope.
-1. A speed limiter to protect the CableCam from going too fast and for constant speed travels during filming.
-1. Direct positional control. Normally the stick controls the thrust. But the thrust might mean different things, e.g. a thrust of zero could make the CableCam accelerate downhill. The stick of the RC sender should rather control the speed - stick in neutral means the CableCam should stop.
-1. Preprogram movement patterns and the Cablecam repeats them on request.
-
-To achieve that the CableCam controller sits between the receiver and the motor controller and acts as a governour of the receiver input. If for example the user did push the stick forward from neutral to max within a second, the CableCam Controller rather increases the stick position slowly. For speed and positional input the controller is connected to two hall sensors on one of the running wheels.
-
-<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/HallSensor.jpg">
-  <img src="_images/HallSensor.jpg" width="50%"/>
-</a>
 
 ## Getting started
 
@@ -108,6 +94,8 @@ _$1_ | Guided setup through for the receiver once _$I_ was used to select the re
 _$a_ | Shows the two acceleration values, the first is the max acceleration in operational mode, the second in programming mode
 _$a int int_ | sets the two acceleration values. Default is _$a 20 10_
 _$A int int int_ | sets the neutral point and range and maximum deflection. The default _$N 1500 0 700_ creates a pwm signal with a puls width of 1500us in neutral and +-700us without a neutral range.
+_$b_ | Print a long hex string with the current settings encoded in them. Useful as a backup and to transfer the settings to another board.
+_$b string_ | To write all settings as encoded in the string.
 _$B_ | Configure the HC-06 bluetooth module connected to RX3/TX3 pin
 _$e_ | Print the maximum eRPMs as defined in the VESC ESC.
 _$e int_ | Set the maximum eRPMs as defined in the VESC ESC.

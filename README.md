@@ -1,23 +1,45 @@
 [LICENSE](LICENSE)
 
-# CC3D-CableCam-Controller
+# CableCam-Controller
 
 **A CableCam Controller to allow smooth movements and automatic braking near the end points of the rope.**
 
-MCU used is [STM32F405RG](http://www.st.com/en/microcontrollers/stm32f405rg.html) <BR/>
-Board used: Any CC3D Revolution or clone, e.g. F4 Advanced Flight Controller by Bob Forooghi [e.g. bought here](http://www.getfpv.com/f4-advanced-flight-controller.html)
+## Goals
 
-[![Using the CableCam Controller](_images/Using_the_CableCam_Controller_YouTube_Video.jpg)](https://youtu.be/M1JVqWaG6Yg "Using the CableCam Controller")
+The most simple way to control a cablecam is by connecting the RC receiver to the motor controller (=ESC, electronic speed controller) and control it like a RC car.
+But this has multiple limitations this CableCam Controller tries to solve:
 
-https://www.youtube.com/watch?v=M1JVqWaG6Yg
+1. The CableCam might crash into the start- or endpoint by accident. Would be much nicer if the CableCam calculates the required braking distance constantly and does engage the brake automatically. This way it stops no matter of the user input.
+2. A smooth acceleration/deceleration makes the videos look more cinematic. Even when the stick is pushed forward at once, the CableCam should accelerate slowly instead of the wheel spinning damaging the rope.
+3. A speed limiter to protect the CableCam from going too fast and for constant speed travels during filming.
+4. Preprogram movement patterns and the Cablecam repeats them on request.
+
+To achieve that, the CableCam controller sits between the receiver and the motor controller and acts as a governour of the receiver input. If, for example, the user did push the stick forward from neutral to max within a second, the CableCam Controller rather increases the stick position slowly. For speed and positional input the controller is connected to two hall sensors on one of the running wheels.
+
+MCU used is [STM32F405RG](http://www.st.com/en/microcontrollers/stm32f405rg.html) 
+Board used: Any CC3D Revolution or clone, e.g. the [Flip 32 F4](https://github.com/iNavFlight/inav/blob/master/docs/Board%20-%20Airbot%20F4%20and%20Flip32%20F4.md) which can be bought at various shops for little money [(here?)](https://www.rctech.de/flip32-f4-flight-controller.html).
+
+See all videos at: https://www.youtube.com/channel/UCTLw_Boy24qAhuygCyIOzyw 
+
+[![Using the CableCam Controller](_images/Using_the_CableCam_Controller_YouTube_Video.jpg)](https://youtu.be/ohzvkKzsO8Q "Using the CableCam Controller")
+
+[![The Play function](_images/Play_Function_Youtube.jpg)](https://www.youtube.com/watch?v=D3UhXKbMN38 "The Play function")
+
+
+
+If the stick is pushed full forward, the cablecam will start accelerating with the maximum allowed value instead until the maximum allowed speed is reached. This speed is held until it starts to decelerate with the same acceleration level so that it reaches the end point at zero speed.
+
+Using the speed dial the maximum speed can be configured. And with the accel dial the steepness of the linear acceleration curve.
+
+[![Speed Ramps](_images/Speed_Ramps_Youtube.jpg)](https://www.youtube.com/watch?v=Usq5xiH9H7Y)
 
 ## (Quick)start
 
 **Hardware**
-1. Connect the ESC to the Servo1 pin. The ESC will power the board. ESC should be turned off for now.
+1. Connect the Motor ESC with the CableCam Controller. The ESC will power the board. ESC should be turned off for now.
 1. Connect the receiver (SumPPM or SBus) to the Main USART, the pin called SBus RX1 on above F4 controller
 1. Provide power to the receiver by connecting its Vcc and Gnd to Servo5 Vcc and Gnd
-1. Hall sensor board is powered by Servo5 Vcc and Gnd and its two input signals are connected to Servo5 and Servo6 signal pins
+1. Hall sensor board is powered by Servo6 Vcc and Gnd and its two input signals are connected to Servo5 and Servo6 signal pins
 
 <a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/Hardware_Overview.jpg">
   <img src="_images/Hardware_Overview.jpg" height="100px"/>
@@ -34,10 +56,10 @@ _Note: All drivers used are included in a standard Windows 10 installation._
 1. As this activates the STM32F4 hardware bootloader and no firmware runs, only the Power LED should be on. If the Status LED does blink, the firmware is active. Try again above step.
 1. Download the firmware from this project https://github.com/wernerdaehn/CC3D-CableCam-Controller/blob/master/bin/Debug/CableCamControllerF4.dfu
 1. At the bottom of the utility, in the _Upgrade or Verify Action_ area, click on _Choose_ and select above's downloaded CableCamControllerF4.dfu file. 
-<br/><a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/dfuse_choose.jpg"><img src="_images/dfuse_choose.jpg" height="100px"/></a>
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/dfuse_choose.jpg"><img src="_images/dfuse_choose.jpg" height="100px"/></a>
 1. The DfuSe Utility should show in the top box the text _STM Device in DFU Mode_. This indicates the board's hardware bootloader is running. 
 1. If it does, the _Upgrade_ button copies the firmware onto the board. 
-<br/><a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/dfuse_upgrade.jpg"><img src="_images/dfuse_upgrade.jpg" height="100px"/></a>
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/dfuse_upgrade.jpg"><img src="_images/dfuse_upgrade.jpg" height="100px"/></a>
 1. The next dialog(s) is to be confirmed with _yes_. We are certain the firmware is for the STM32F405RG chip.
 1. To validate the flashing was successful, the _Verify_ action can be triggered, just to doublecheck.
 1. At the top is the _Leave DFU mode_ button to restart the controller with the new firmware.
@@ -50,15 +72,15 @@ _Note: All drivers used are included in a standard Windows 10 installation._
 1. Currently the board is powered by USB, as the **ESC is off still**. Hence neither the receiver nor the hall sensors work.
 1. As the board is connected to the computer via USB, a new COM port is available to interact with the CableCam Controller.
 1. Validate that by starting the Windows 10 Device Manager and locating the port. 
-<br/><a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/WindowsDeviceManager.jpg"><img src="_images/WindowsDeviceManager.jpg" height="100px"/></a>
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/WindowsDeviceManager.jpg"><img src="_images/WindowsDeviceManager.jpg" height="100px"/></a>
 1. Open a serial terminal in order to talk to the board. The one I use is [putty](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html) as 64Bit install or just the 64Bit exe download.
 1. In the terminal create a new serial connection to the port shown in the device manager. In putty that means clicking on _serial_ and entering the port like _COM3_. The settings for baud rate etc are irrelevant and can be left at their defaults.
 1. To test if everything works properly, a first command can be sent by typing _$h_ for help and confirming the command with the return key.
 1. This should print status information plus a help text in the console.
-<br/><a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/console_help.png"><img src="_images/console_help.png" height="100px"/></a>
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/console_help.png"><img src="_images/console_help.png" height="100px"/></a>
 1. The first and most important step is to set the type of receiver. The firmware supports either SBus or SumPPM. The $h command prints the currently active receiver type and using the _$I_ (uppercase "i") the input receiver type can be changed, e.g. from the default SumPPM to SBus via _$I 1_.
 1. Next step is to validate the receiver input signals. Turn on the ESC (yes, the CC3D Revo is designed to handle USB and external power at the same time) to power the receiver and enter the command _$i_. This shows all channels, their current reading from the receiver and which channel is used for what function - if assigned.
-<br/><a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/console_input_config.png"><img src="_images/console_input_config.png" height="100px"/></a>
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/console_input_config.png"><img src="_images/console_input_config.png" height="100px"/></a>
 1. Setup the RC to assign the various inputs to channels. The functions used are
     1. Speed Input: In my case I control the camera with the left stick, moving the right stick forward/backwards should move the CableCam.
     1. Programming Switch: In order to set endpoints, a switch on the RC is flipped. This does enter or leave the end point programming mode.
