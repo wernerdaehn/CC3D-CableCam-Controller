@@ -66,10 +66,13 @@ extern sbusData_t sbusdata;
 void SBUS_IRQHandler(UART_HandleTypeDef *huart);
 void printSBUSChannels(Endpoints endpoint);
 float getDuty(uint8_t channel);
+float getDutyIgnoreNeutral(uint8_t channel);
 uint8_t* getSBUSFrameAddress(void);
+uint8_t* getSBUSFrameGimbalAddress(void);
 void initSBusData(uint8_t receivertype);
 void setGimbalValues(float channel_values[]);
 void SBusSendCycle(void);
-
+void setNextDuty(uint16_t v);
+void PrintSumPPMRawData(Endpoints endpoint);
 
 #endif

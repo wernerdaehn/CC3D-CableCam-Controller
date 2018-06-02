@@ -41,11 +41,14 @@ extern UART_HandleTypeDef huart6;
 
 void setServoValues(void);
 uint32_t getInvalidFrameCount(void);
-uint16_t convertDutyIntoSBus(float duty);
+uint16_t convertDutyIntoSBus(float channel_values[], uint8_t channel);
 
-static sbusFrame_t sbusFrame;
-static sbusFrame_t sBusFrameGimbal;
+sbusFrame_t sbusFrame;
+sbusFrame_t sBusFrameGimbal;
 uint32_t lastsbussend = 0;
+
+uint16_t dutyarray[64];
+uint16_t duty_pos = 0;
 
 sbusData_t sbusdata;
 
@@ -69,25 +72,26 @@ void initSBusData(uint8_t receivertype)
 
 void setGimbalValues(float channel_values[])
 {
-    sBusFrameGimbal.frame.chan0 = convertDutyIntoSBus(channel_values[0]);
-    sBusFrameGimbal.frame.chan1 = convertDutyIntoSBus(channel_values[1]);
-    sBusFrameGimbal.frame.chan2 = convertDutyIntoSBus(channel_values[2]);
-    sBusFrameGimbal.frame.chan3 = convertDutyIntoSBus(channel_values[3]);
-    sBusFrameGimbal.frame.chan4 = convertDutyIntoSBus(channel_values[4]);
-    sBusFrameGimbal.frame.chan5 = convertDutyIntoSBus(channel_values[5]);
-    sBusFrameGimbal.frame.chan6 = convertDutyIntoSBus(channel_values[6]);
-    sBusFrameGimbal.frame.chan7 = convertDutyIntoSBus(channel_values[7]);
+    sBusFrameGimbal.frame.chan0 = convertDutyIntoSBus(channel_values, 0);
+    sBusFrameGimbal.frame.chan1 = convertDutyIntoSBus(channel_values, 1);
+    sBusFrameGimbal.frame.chan2 = convertDutyIntoSBus(channel_values, 2);
+    sBusFrameGimbal.frame.chan3 = convertDutyIntoSBus(channel_values, 3);
+    sBusFrameGimbal.frame.chan4 = convertDutyIntoSBus(channel_values, 4);
+    sBusFrameGimbal.frame.chan5 = convertDutyIntoSBus(channel_values, 5);
+    sBusFrameGimbal.frame.chan6 = convertDutyIntoSBus(channel_values, 6);
+    sBusFrameGimbal.frame.chan7 = convertDutyIntoSBus(channel_values, 7);
 }
 
-uint16_t convertDutyIntoSBus(float duty)
+uint16_t convertDutyIntoSBus(float channel_values[], uint8_t channel)
 {
+    float duty = channel_values[channel];
     if (isnan(duty))
     {
-        return 0;
+        return activesettings.rc_channel_sbus_out_default[channel];
     }
     else
     {
-        return ((uint16_t) (duty * 450.0f)) + 992;
+        return (uint16_t) ((duty * 800.0f) + 992.0f);
     }
 }
 
@@ -180,9 +184,48 @@ float getDuty(uint8_t channel)
     return NAN;
 }
 
+/*
+ * getDutyIgnoreNeutral() returns the current duty value as percentage of the full stick range.
+ * It returns NAN in case the value is too old or the RC does not send a valid channel value or a wrong channel is requested.
+ */
+float getDutyIgnoreNeutral(uint8_t channel)
+{
+    if (HAL_GetTick() - sbusdata.sbusLastValidFrame > 3000L || sbusdata.failsafeactive)
+    {
+        // No valid signal for more than 3 seconds --> invalid reading
+        return NAN;
+    }
+    else if (channel < SBUS_MAX_CHANNEL && controllerstatus.safemode != DISABLE_RC)
+    {
+        int16_t val = 0;
+        if (sbusdata.servovalues[channel].duty != 0)
+        {
+            // realign the uint16 sbus data to be centered around zero, e.g. sbusdata = 1300, neutral_pos = 1000 --> val = +300
+            val = sbusdata.servovalues[channel].duty - activesettings.stick_neutral_pos;
+            if (val > activesettings.stick_value_range)
+            {
+                // The percentage cannot be higher than +1.00
+                val = activesettings.stick_value_range;
+            }
+            else if (val < -activesettings.stick_value_range)
+            {
+                // The percentage cannot be lower than -1.00
+                val = -activesettings.stick_value_range;
+            }
+            return ((float) val)/activesettings.stick_value_range;
+        }
+    }
+    return NAN;
+}
+
 uint8_t* getSBUSFrameAddress(void)
 {
     return &sbusFrame.bytes[0];
+}
+
+uint8_t* getSBUSFrameGimbalAddress(void)
+{
+    return &sBusFrameGimbal.bytes[0];
 }
 
 uint32_t getInvalidFrameCount(void)
@@ -295,12 +338,28 @@ void SBUS_IRQHandler(UART_HandleTypeDef *huart)
 
 }
 
+void setNextDuty(uint16_t v)
+{
+    dutyarray[duty_pos++] = v;
+    if (duty_pos >= 64)
+    {
+        duty_pos = 0;
+    }
+}
+
+
 void printSBUSChannels(Endpoints endpoint)
 {
     PrintSerial_string("Time: ", endpoint);
-    PrintSerial_long(sbusdata.sbusLastValidFrame, endpoint);
+    PrintlnSerial_long(sbusdata.sbusLastValidFrame, endpoint);
     PrintSerial_string("  SBUS Errors: ", endpoint);
-    PrintSerial_long(sbusdata.counter_sbus_errors, endpoint);
+    PrintlnSerial_long(sbusdata.counter_sbus_errors, endpoint);
+
+    PrintSerial_string("LastError: ", endpoint);
+    PrintlnSerial_long(huart1.ErrorCode, endpoint);
+
+    PrintlnSerial_hexstring(huart1.pRxBuffPtr, SBUS_FRAME_SIZE, endpoint);
+
     uint32_t age = HAL_GetTick() - sbusdata.sbusLastValidFrame;
     if (sbusdata.counter_sbus_frames == 0)
     {
@@ -323,13 +382,28 @@ void printSBUSChannels(Endpoints endpoint)
             PrintlnSerial(endpoint);
         }
     }
+
+}
+
+void PrintSumPPMRawData(Endpoints endpoint)
+{
+    if (activesettings.receivertype == RECEIVER_TYPE_SUMPPM)
+    {
+        PrintSerial_string("Duty & Pause Timing for SumPPM:", endpoint);
+        for (int i = 0; i < 64; i++)
+        {
+            PrintSerial_string("  ", endpoint);
+            PrintSerial_int(dutyarray[i], endpoint);
+        }
+        PrintlnSerial(endpoint);
+    }
 }
 
 
 void SBusSendCycle()
 {
     uint32_t currenttick = HAL_GetTick();
-    if (currenttick - lastsbussend >= 14)
+    if (currenttick - lastsbussend >= 15)
     {
         HAL_UART_Transmit_IT(&huart6, &sBusFrameGimbal.bytes[0], SBUS_FRAME_SIZE);
         lastsbussend = currenttick;

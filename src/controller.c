@@ -110,12 +110,12 @@ float getEndPointSwitch()
 
 float getMaxAccelPoti()
 {
-    return getDuty(activesettings.rc_channel_max_accel);
+    return getDutyIgnoreNeutral(activesettings.rc_channel_max_accel);
 }
 
 float getMaxSpeedPoti()
 {
-    return getDuty(activesettings.rc_channel_max_speed);
+    return getDutyIgnoreNeutral(activesettings.rc_channel_max_speed);
 }
 
 float getModeSwitch()
@@ -877,13 +877,13 @@ void controllercycle()
 
 float getGimbalDuty(uint8_t channel)
 {
-    if (activesettings.rc_channel_sbus_out_mapping[channel] == 255)
+    if (activesettings.rc_channel_sbus_out_mapping[channel] > 64)
     {
         return NAN;
     }
     else
     {
-        return sbusdata.servovalues[activesettings.rc_channel_sbus_out_mapping[channel]].duty;
+        return getDutyIgnoreNeutral(activesettings.rc_channel_sbus_out_mapping[channel]);
     }
 }
 

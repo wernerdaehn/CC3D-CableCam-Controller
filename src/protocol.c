@@ -14,6 +14,7 @@
 #include "bluetooth.h"
 #include "main.h"
 #include "vesc.h"
+#include "systembootloader.h"
 
 
 #define COMMAND_START  '$'
@@ -41,6 +42,8 @@
 #define ERROR_BT_NOT_FROM_USB		 13
 #define ERROR_INVALID_VALUE 		 14
 
+
+
 static const char * error_string[] = {"other errors",
                                 "max size of argument exceeded",
                                 "max number of arguments exceeded",
@@ -65,6 +68,7 @@ controllerstatus_t controllerstatus;
 
 extern TIM_HandleTypeDef htim1;
 extern getvalues_t vescvalues;
+extern sbusFrame_t sBusFrameGimbal;
 
 static uint8_t checksum_response;
 
@@ -91,9 +95,11 @@ void printChannelDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, Endpoints en
 
 void printCurrentRCInput(Endpoints endpoint);
 
+typedef  void (*pFunction)(void);
 
 void initProtocol()
 {
+    controllerstatus.vesc_config = false;
 }
 
 void writeProtocolError(uint8_t e, Endpoints endpoint)
@@ -1117,7 +1123,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
     {
         uint8_t buffer[4096];
         int line;
-        eeprom_read_sector(buffer, 4096, 1);
+        eeprom_read_sector(buffer, 4096, 5);
         PrintSerial_string("Line :", endpoint);
         memcpy(&line, &buffer[0], 2);
         PrintlnSerial_int(line, endpoint);
@@ -1133,7 +1139,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
 
         if (argument_index >= 1)
         {
-            for (int i=0; i<7; i++)
+            for (int i=0; i<8; i++)
             {
                 if (i<argument_index && p[i] > 0 && p[i] <= 256)
                 {
@@ -1144,18 +1150,40 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                     activesettings.rc_channel_sbus_out_mapping[i] = 255;
                 }
             }
-            writeProtocolHead(PROTOCOL_INPUT_GIMBAL, endpoint);
-            writeProtocolOK(endpoint);
         }
-        else
+        writeProtocolHead(PROTOCOL_INPUT_GIMBAL, endpoint);
+        for (int i=0; i<8; i++)
         {
-            writeProtocolHead(PROTOCOL_INPUT_GIMBAL, endpoint);
-            for (int i=0; i<7; i++)
-            {
-                writeProtocolInt(activesettings.rc_channel_sbus_out_mapping[i]+1, endpoint);
-            }
-            writeProtocolOK(endpoint);
+            writeProtocolInt(activesettings.rc_channel_sbus_out_mapping[i]+1, endpoint);
         }
+        writeProtocolOK(endpoint);
+        break;
+    }
+    case PROTOCOL_INPUT_GIMBAL_DEFAULT:
+    {
+        int16_t p[8];
+        argument_index = sscanf(&commandlinebuffer[2], "%hd %hd %hd %hd %hd %hd %hd %hd", &p[0], &p[1], &p[2], &p[3], &p[4], &p[5], &p[6], &p[7]);
+
+        if (argument_index >= 1)
+        {
+            for (int i=0; i<8; i++)
+            {
+                if (i<argument_index && p[i] > 0 && p[i] <= 2000)
+                {
+                    activesettings.rc_channel_sbus_out_default[i] = p[i];
+                }
+                else
+                {
+                    activesettings.rc_channel_sbus_out_mapping[i] = 0;
+                }
+            }
+        }
+        writeProtocolHead(PROTOCOL_INPUT_GIMBAL_DEFAULT, endpoint);
+        for (int i=0; i<8; i++)
+        {
+            writeProtocolInt(activesettings.rc_channel_sbus_out_default[i], endpoint);
+        }
+        writeProtocolOK(endpoint);
         break;
     }
     case PROTOCOL_INPUT_SINGLE:
@@ -1280,6 +1308,20 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         {
             writeProtocolHead(PROTOCOL_VERSION, endpoint);
             writeProtocolText(activesettings.version, endpoint);
+            writeProtocolOK(endpoint);
+            break;
+        }
+    case PROTOCOL_BOOT:
+        {
+            /*** Jump to System Memory (ST Bootloader) ************************************/
+            JumpToBootloader();
+            // Does never return
+        }
+    case PROTOCOL_VESC_CONFIG:
+        {
+            controllerstatus.vesc_config = true;
+            writeProtocolHead(PROTOCOL_VESC_CONFIG, endpoint);
+            writeProtocolText("ON", endpoint);
             writeProtocolOK(endpoint);
             break;
         }
@@ -1434,6 +1476,7 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("$A [<int>]                              set or print AUX output neutral pos and +- neutral range and the +-max range", endpoint);
     PrintlnSerial_string("$B                                      Configure the HC-05 Bluetooth module on FlexiPort (RX3/TX3)", endpoint);
     // PrintlnSerial_string("$c [<int> <int>]                        VESC handbrake current and min tacho speed to engage handbrake", endpoint);
+    PrintlnSerial_string("$D [<int1> ... <int8>]                  set or print gimbal default values for each channel", endpoint);
     PrintlnSerial_string("$e [<long>]                             set or print maximum eRPMs as set in the VESC speed controller. 100% stick = this eRPM", endpoint);
     PrintlnSerial_string("$E                                      print the status of the VESC ESC", endpoint);
     PrintlnSerial_string("$g [<float>]                            set or print the max positional error -> exceeding it causes an emergency stop", endpoint);
@@ -1675,8 +1718,36 @@ void printCurrentRCInput(Endpoints endpoint)
         PrintlnSerial(endpoint);
     }
     PrintlnSerial(endpoint);
+
+    if (activesettings.receivertype == RECEIVER_TYPE_SUMPPM)
+    {
+        PrintSumPPMRawData(endpoint);
+    }
+
+
+
     PrintSerial_string("current ESC out signal Servo 1 = ", endpoint);
     PrintlnSerial_int(TIM3->CCR3, endpoint);
     PrintSerial_string("current AUX out signal Servo 2 = ", endpoint);
     PrintlnSerial_int(TIM3->CCR4, endpoint);
+
+    PrintlnSerial_string("Gimbal Out:", endpoint);
+    for (i=0; i<8; i++)
+    {
+        PrintSerial_string("channel", endpoint);
+        PrintSerial_int(i+1, endpoint);
+        PrintSerial_string(" =", endpoint);
+        switch (i)
+        {
+            case 0: PrintlnSerial_int(sBusFrameGimbal.frame.chan0, endpoint); break;
+            case 1: PrintlnSerial_int(sBusFrameGimbal.frame.chan1, endpoint); break;
+            case 2: PrintlnSerial_int(sBusFrameGimbal.frame.chan2, endpoint); break;
+            case 3: PrintlnSerial_int(sBusFrameGimbal.frame.chan3, endpoint); break;
+            case 4: PrintlnSerial_int(sBusFrameGimbal.frame.chan4, endpoint); break;
+            case 5: PrintlnSerial_int(sBusFrameGimbal.frame.chan5, endpoint); break;
+            case 6: PrintlnSerial_int(sBusFrameGimbal.frame.chan6, endpoint); break;
+            case 7: PrintlnSerial_int(sBusFrameGimbal.frame.chan7, endpoint); break;
+        }
+    }
+
 }

@@ -10,6 +10,7 @@
 #define PROTOCOL_BINARY           'b'   // Hidden command to print the binary active settings or play them back (Useful to quickly transfer settings)
 #define PROTOCOL_BLUETOOTH        'B'   // no argument
 #define PROTOCOL_VESC_BRAKE       'c'
+#define PROTOCOL_INPUT_GIMBAL_DEFAULT     'D'   // up to 8 int arguments, the gimbal channel default output via SBus TX
 #define PROTOCOL_VESC_MAX_ERPM    'e'   // 1 int argument, the maximum eRPM value set in the VESC. Goal is that 100% throttle = this eRPM value
 #define PROTOCOL_VESC_STATUS      'E'   // no argument
 #define PROTOCOL_MAX_ERROR_DIST   'g'   // 1 float argument
@@ -32,6 +33,8 @@
 #define PROTOCOL_EXPO_FACTOR      'x'   // 1 float argument
 #define PROTOCOL_SETUP            '1'
 #define PROTOCOL_READ_ERRORHANDLER 'H'  // Error handler hidden command
+#define PROTOCOL_BOOT             '_'   // Boot to Dfu Bootloader
+#define PROTOCOL_VESC_CONFIG      '-'
 
 #define MODE_PASSTHROUGH		1
 #define MODE_LIMITER			2
@@ -128,6 +131,7 @@ typedef struct
     int16_t aux_neutral_range;
     int16_t aux_value_range;
     uint8_t noop_padding_2[2]; // Needed to align the structure to 32bit
+    uint16_t rc_channel_sbus_out_default[8];
 } settings_t;
 
 
@@ -166,6 +170,7 @@ typedef struct
     uint32_t play_endpoint_reached_at; // Used to calculate the pause before running into the other direction
     float stick_max_accel;
     float stick_max_speed;
+    bool vesc_config;
 } controllerstatus_t;
 
 extern controllerstatus_t controllerstatus;

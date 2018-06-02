@@ -1,6 +1,7 @@
 #include "stm32f4xx_hal.h"
 #include "uart_callback.h"
 #include "usbd_cdc_if.h"
+#include "protocol.h"
 
 char uart3_commandlinebuffer[RXBUFFERSIZE];
 int16_t uart3_commandlinebuffer_pos = 0;
@@ -9,7 +10,7 @@ uint8_t uart3_rxbuffer_overflow = 0;
 
 
 extern UART_HandleTypeDef huart3;
-
+extern UART_HandleTypeDef huart2;
 
 void uart_init(UART_HandleTypeDef *huart, uint8_t * rxbuffer, uint16_t rxbuffersize)
 {
@@ -32,8 +33,16 @@ void UARTX_IRQHandler(UART_HandleTypeDef *huart)
         /* UART in mode Receiver -------------------------------------------------*/
         if(((isrflags & USART_SR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET))
         {
-            huart->pRxBuffPtr[huart->RxXferCount % huart->RxXferSize] = byteReceived;
-            huart->RxXferCount++;
+            if (controllerstatus.vesc_config)
+            {
+                // In this mode send all received chars from bluetooth to the VESC
+                HAL_UART_Transmit(&huart2, (uint8_t *) &byteReceived, 1, 10);
+            }
+            else
+            {
+                huart->pRxBuffPtr[huart->RxXferCount % huart->RxXferSize] = byteReceived;
+                huart->RxXferCount++;
+            }
         }
     }
     else

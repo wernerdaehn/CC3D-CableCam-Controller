@@ -61,6 +61,7 @@
 #include "eeprom.h"
 #include "math.h"
 #include "vesc.h"
+#include "systembootloader.h"
 
 #include "uart_callback.h"
 
@@ -132,7 +133,6 @@ int main(void)
     initProtocol();
     VESC_init();
 
-
     /* Start encoder in interrupt mode so the counter value is changed and the time of a counter tick can be evaluated */
     HAL_TIM_Encoder_Start_IT(&htim5, TIM_CHANNEL_1 | TIM_CHANNEL_2);
 
@@ -155,7 +155,7 @@ int main(void)
         Error_Handler();
     }
 
-    strcpy(activesettings.version, "20180523");
+    strcpy(activesettings.version, "20180531");
     activesettings.esc_direction = 0;
     activesettings.max_position_error = 100.0f;
     activesettings.mode = MODE_PASSTHROUGH;
@@ -192,6 +192,7 @@ int main(void)
     for (int i=0; i<8; i++)
     {
         activesettings.rc_channel_sbus_out_mapping[i] = 255;
+        activesettings.rc_channel_sbus_out_default[i] = 992;
     }
     activesettings.structure_length = sizeof(activesettings);
 
@@ -320,7 +321,7 @@ int main(void)
         {
             serialCom(EndPoint_USB, usb_commandlinebuffer);
         }
-        if (UART3_ReceiveString())
+        if (UART3_ReceiveString()) // with controllerstatus.vesc_config there is no data being added to the receive buffer, hence this function returns false always
         {
             serialCom(EndPoint_UART3, uart3_commandlinebuffer);
         }
@@ -361,7 +362,7 @@ void SystemClock_Config(void)
         _Error_Handler(__FILE__, __LINE__);
     }
 
-    /**Initializes the CPU, AHB and APB busses clocks
+    /**Initializes the CPU, AHB and APB bus clocks
     */
     RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                                   |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
@@ -563,7 +564,8 @@ static void MX_TIM1_Init(void)
 
     sSlaveConfig.SlaveMode = TIM_SLAVEMODE_RESET;
     sSlaveConfig.InputTrigger = TIM_TS_TI2FP2;
-    sSlaveConfig.TriggerPolarity = TIM_TRIGGERPOLARITY_FALLING;
+    // sSlaveConfig.TriggerPolarity = TIM_TRIGGERPOLARITY_FALLING;
+    sSlaveConfig.TriggerPolarity = TIM_TRIGGERPOLARITY_RISING;
     sSlaveConfig.TriggerFilter = 0;
     if (HAL_TIM_SlaveConfigSynchronization(&htim1, &sSlaveConfig) != HAL_OK)
     {
@@ -578,7 +580,8 @@ static void MX_TIM1_Init(void)
     }
 
 
-    sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+    // sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+    sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_FALLING;
     sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
     sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
     sConfigIC.ICFilter = 0;
@@ -587,7 +590,8 @@ static void MX_TIM1_Init(void)
         _Error_Handler(__FILE__, __LINE__);
     }
 
-    sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_FALLING;
+    // sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_FALLING;
+    sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
     sConfigIC.ICSelection = TIM_ICSELECTION_INDIRECTTI;
     if (HAL_TIM_IC_ConfigChannel(&htim1, &sConfigIC, TIM_CHANNEL_4) != HAL_OK)
     {
@@ -741,8 +745,10 @@ void initPPMReceiver()
 
     MX_TIM1_Init();
 
-    /* Turn off SBUS Inverter */
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
+    /* ATTENTION: Inverter turned ON as well, hence the SumPPM Interrupt needs to be inverted!!!!!!!!!!
+     * Turn on SBUS Inverter as well. It seems some boards do not have this pin connected but use the inverter all the time
+     */
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
 
     HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_3);
     HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_4);
@@ -766,7 +772,7 @@ void _Error_Handler(const char * file, int line)
     memcpy(&buffer[0], &line, 2);
     memcpy(&buffer[2], file, strlen(file)+1);
 
-    eeprom_write_sector_safe(buffer, 4096, 1);
+    eeprom_write_sector_safe(buffer, 4096, 5);
 
     while(1)
     {

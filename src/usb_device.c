@@ -71,6 +71,8 @@ void MX_USB_DEVICE_Init(void)
     USBD_Start(&hUsbDeviceFS);
 
 }
+
+
 /**
   * @}
   */

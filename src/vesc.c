@@ -53,6 +53,7 @@ uint8_t vesc_rxbuffer[VESC_RXBUFFER_SIZE];
 uint32_t vesc_packet_start_timestamp;
 
 extern UART_HandleTypeDef huart2;
+extern UART_HandleTypeDef huart3;
 
 void VESC_init()
 {
@@ -107,40 +108,52 @@ int16_t vesc_get_int(uint16_t uartfield)
 
 void VESC_Output(float esc_output)
 {
-    if (isnan(esc_output))
+    if (!controllerstatus.vesc_config) // No VESC Output when Bluetooth has control about the VESC
     {
-        VESC_set_rpm(0);
-    }
-    else
-    {
-        // controllerstatus.stick_max_speed reduces the vesc erpm by this factor at stick=100%
-        int32_t vesc_erpm = (int32_t) ((esc_output * controllerstatus.stick_max_speed * ((float) activesettings.vesc_max_erpm)));
-        VESC_set_rpm(vesc_erpm);
+        if (isnan(esc_output))
+        {
+            VESC_set_rpm(0);
+        }
+        else
+        {
+            // controllerstatus.stick_max_speed reduces the vesc erpm by this factor at stick=100%
+            int32_t vesc_erpm = (int32_t) ((esc_output * controllerstatus.stick_max_speed * ((float) activesettings.vesc_max_erpm)));
+            VESC_set_rpm(vesc_erpm);
+        }
     }
 }
 
 void VESC_set_rpm(int32_t erpm)
 {
-    rpmpacket.frame.speed = __REV(erpm);
-    rpmpacket.frame.crc = __REV16(crc16(&rpmpacket.bytes[2], rpmpacket.frame.length));
+    if (!controllerstatus.vesc_config) // No VESC Output when Bluetooth has control about the VESC
+    {
+        rpmpacket.frame.speed = __REV(erpm);
+        rpmpacket.frame.crc = __REV16(crc16(&rpmpacket.bytes[2], rpmpacket.frame.length));
 
-    HAL_UART_Transmit(&huart2, rpmpacket.bytes, sizeof(rpmpacket.bytes), 1000);
+        HAL_UART_Transmit(&huart2, rpmpacket.bytes, sizeof(rpmpacket.bytes), 1000);
+    }
 }
 
 void VESC_set_handbrake_current(int32_t brake_current)
 {
-    handbrakepacket.frame.brakecurrent_1000 = __REV(brake_current*1000);
-    handbrakepacket.frame.crc = __REV16(crc16(&handbrakepacket.bytes[2], handbrakepacket.frame.length));
+    if (!controllerstatus.vesc_config) // No VESC Output when Bluetooth has control about the VESC
+    {
+        handbrakepacket.frame.brakecurrent_1000 = __REV(brake_current*1000);
+        handbrakepacket.frame.crc = __REV16(crc16(&handbrakepacket.bytes[2], handbrakepacket.frame.length));
 
-    HAL_UART_Transmit(&huart2, handbrakepacket.bytes, sizeof(handbrakepacket.bytes), 1000);
+        HAL_UART_Transmit(&huart2, handbrakepacket.bytes, sizeof(handbrakepacket.bytes), 1000);
+    }
 }
 
 void VESC_set_currentbrake_current(int32_t brake_current)
 {
-    currentbrakepacket.frame.brakecurrent_1000 = __REV(brake_current*1000);
-    currentbrakepacket.frame.crc = __REV16(crc16(&currentbrakepacket.bytes[2], currentbrakepacket.frame.length));
+    if (!controllerstatus.vesc_config) // No VESC Output when Bluetooth has control about the VESC
+    {
+        currentbrakepacket.frame.brakecurrent_1000 = __REV(brake_current*1000);
+        currentbrakepacket.frame.crc = __REV16(crc16(&currentbrakepacket.bytes[2], currentbrakepacket.frame.length));
 
-    HAL_UART_Transmit(&huart2, currentbrakepacket.bytes, sizeof(currentbrakepacket.bytes), 1000);
+        HAL_UART_Transmit(&huart2, currentbrakepacket.bytes, sizeof(currentbrakepacket.bytes), 1000);
+    }
 }
 
 uint16_t crc16(uint8_t *buf, uint16_t len) {
@@ -154,8 +167,11 @@ uint16_t crc16(uint8_t *buf, uint16_t len) {
 
 void VESC_request_values()
 {
-    requestvaluespacket.frame.crc = __REV16(crc16(&requestvaluespacket.bytes[2], requestvaluespacket.frame.length));
-    HAL_UART_Transmit(&huart2, requestvaluespacket.bytes, sizeof(requestvaluespacket.bytes), 1000);
+    if (!controllerstatus.vesc_config) // No VESC Output when Bluetooth has control about the VESC
+    {
+        requestvaluespacket.frame.crc = __REV16(crc16(&requestvaluespacket.bytes[2], requestvaluespacket.frame.length));
+        HAL_UART_Transmit(&huart2, requestvaluespacket.bytes, sizeof(requestvaluespacket.bytes), 1000);
+    }
 }
 
 
@@ -177,73 +193,81 @@ void VESC_IRQHandler(UART_HandleTypeDef *huart)
         /* UART in mode Receiver -------------------------------------------------*/
         if(((isrflags & USART_SR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET))
         {
-            uint32_t now = HAL_GetTick();
-            uint32_t frameduration = now - vesc_packet_start_timestamp;
-
-            if (frameduration > 500)
+            if (controllerstatus.vesc_config)
             {
-                huart->pRxBuffPtr = vesc_rxbuffer;
-                huart->RxXferCount = VESC_RXBUFFER_SIZE;
-                vesc_packet_start_timestamp = now;
-                packetend = VESC_RXBUFFER_SIZE;
+                // In this mode send all VESC bytes back to bluetooth
+                HAL_UART_Transmit(&huart3, (uint8_t *) &byteReceived, 1, 10);
             }
-
-            if (huart->RxXferCount > 0)
-            {
-                *huart->pRxBuffPtr = byteReceived;
-
-                if (huart->RxXferCount == VESC_RXBUFFER_SIZE && *huart->pRxBuffPtr != 0x02)
-                {
-                    /* It is a first byte and it is not a valid start-byte, so we are in the middle of a frame.
-                     *	 Hence do not forward the pointer but wait for a valid start byte.
-                     */
-                }
-                else
-                {
-                    huart->RxXferCount--;
-                    huart->pRxBuffPtr += 1U;
-                    if (huart->RxXferCount == VESC_RXBUFFER_SIZE-2)
-                    {
-                       /*
-                         * The length byte
-                         */
-                        packetend = VESC_RXBUFFER_SIZE - byteReceived - 2 - 3;
-                    }
-                    else if (huart->RxXferCount == packetend)
-                    {
-                        // Last byte of the frame has to be the stop byte
-                        if (byteReceived == 0x03)
-                        {
-                            uint16_t crc_calculated = crc16(&vesc_rxbuffer[2], vesc_rxbuffer[1]); // payload data starts at index 2, the vesc_rxbuffer[1] contains the payload length byte
-                            uint16_t crc_data = (vesc_rxbuffer[VESC_RXBUFFER_SIZE-packetend-3] << 8) + vesc_rxbuffer[VESC_RXBUFFER_SIZE-packetend-2];
-                            if (crc_calculated == crc_data)
-                            {
-                                switch (vesc_rxbuffer[2])
-                                {
-                                case COMM_GET_VALUES:
-                                    {
-                                        if (vesc_rxbuffer[1] >= GETVALUES_SIZE)
-                                        {
-                                            // PrintlnSerial_hexstring(vesc_rxbuffer, VESC_RXBUFFER_SIZE-packetend, EndPoint_All);
-                                            memcpy(&vescvalues.bytes[0], &vesc_rxbuffer[3], GETVALUES_SIZE);
-                                            // PrintlnSerial_hexstring(vescvalues.bytes, GETVALUES_SIZE, EndPoint_All);
-                                        }
-                                    }
-                                    break;
-                                default:
-                                    break;
-                                }
-                            }
-                        }
-                        huart->pRxBuffPtr = vesc_rxbuffer;
-                        huart->RxXferCount = VESC_RXBUFFER_SIZE;
-                    }
-                }
-            } // else overflow happened
             else
             {
-                huart->pRxBuffPtr = vesc_rxbuffer;
-                huart->RxXferCount = VESC_RXBUFFER_SIZE;
+                uint32_t now = HAL_GetTick();
+                uint32_t frameduration = now - vesc_packet_start_timestamp;
+
+                if (frameduration > 500)
+                {
+                    huart->pRxBuffPtr = vesc_rxbuffer;
+                    huart->RxXferCount = VESC_RXBUFFER_SIZE;
+                    vesc_packet_start_timestamp = now;
+                    packetend = VESC_RXBUFFER_SIZE;
+                }
+
+                if (huart->RxXferCount > 0)
+                {
+                    *huart->pRxBuffPtr = byteReceived;
+
+                    if (huart->RxXferCount == VESC_RXBUFFER_SIZE && *huart->pRxBuffPtr != 0x02)
+                    {
+                        /* It is a first byte and it is not a valid start-byte, so we are in the middle of a frame.
+                         *	 Hence do not forward the pointer but wait for a valid start byte.
+                         */
+                    }
+                    else
+                    {
+                        huart->RxXferCount--;
+                        huart->pRxBuffPtr += 1U;
+                        if (huart->RxXferCount == VESC_RXBUFFER_SIZE-2)
+                        {
+                           /*
+                             * The length byte
+                             */
+                            packetend = VESC_RXBUFFER_SIZE - byteReceived - 2 - 3;
+                        }
+                        else if (huart->RxXferCount == packetend)
+                        {
+                            // Last byte of the frame has to be the stop byte
+                            if (byteReceived == 0x03)
+                            {
+                                uint16_t crc_calculated = crc16(&vesc_rxbuffer[2], vesc_rxbuffer[1]); // payload data starts at index 2, the vesc_rxbuffer[1] contains the payload length byte
+                                uint16_t crc_data = (vesc_rxbuffer[VESC_RXBUFFER_SIZE-packetend-3] << 8) + vesc_rxbuffer[VESC_RXBUFFER_SIZE-packetend-2];
+                                if (crc_calculated == crc_data)
+                                {
+                                    switch (vesc_rxbuffer[2])
+                                    {
+                                    case COMM_GET_VALUES:
+                                        {
+                                            if (vesc_rxbuffer[1] >= GETVALUES_SIZE)
+                                            {
+                                                // PrintlnSerial_hexstring(vesc_rxbuffer, VESC_RXBUFFER_SIZE-packetend, EndPoint_All);
+                                                memcpy(&vescvalues.bytes[0], &vesc_rxbuffer[3], GETVALUES_SIZE);
+                                                // PrintlnSerial_hexstring(vescvalues.bytes, GETVALUES_SIZE, EndPoint_All);
+                                            }
+                                        }
+                                        break;
+                                    default:
+                                        break;
+                                    }
+                                }
+                            }
+                            huart->pRxBuffPtr = vesc_rxbuffer;
+                            huart->RxXferCount = VESC_RXBUFFER_SIZE;
+                        }
+                    }
+                } // else overflow happened
+                else
+                {
+                    huart->pRxBuffPtr = vesc_rxbuffer;
+                    huart->RxXferCount = VESC_RXBUFFER_SIZE;
+                }
             }
         }
     }
@@ -283,7 +307,6 @@ void VESC_IRQHandler(UART_HandleTypeDef *huart)
         }
         if (haserror != 0)
         {
-            // sbusdata.counter_sbus_errors++;
             huart->pRxBuffPtr = vesc_rxbuffer;
             huart->RxXferCount = VESC_RXBUFFER_SIZE;
             packetend = VESC_RXBUFFER_SIZE;
