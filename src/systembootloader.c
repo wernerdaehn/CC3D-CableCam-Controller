@@ -32,8 +32,12 @@ void JumpToBootloader(void) {
 
     USBD_DeInit(&hUsbDeviceFS);
 
+    __HAL_RCC_USB_OTG_FS_FORCE_RESET();
+
     LED_STATUS_ON;
     HAL_Delay(5000); // Wait for 5 seconds so that it looks to Windows as if the USB cable has been unplugged.
+
+    __HAL_RCC_USB_OTG_FS_RELEASE_RESET();
 
     /**USB_OTG_FS GPIO Configuration
     PA11     ------> USB_OTG_FS_DM

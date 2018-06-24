@@ -120,6 +120,10 @@ void VESC_Output(float esc_output)
             int32_t vesc_erpm = (int32_t) ((esc_output * controllerstatus.stick_max_speed * ((float) activesettings.vesc_max_erpm)));
             VESC_set_rpm(vesc_erpm);
         }
+        if (is5Hz())
+        {
+            VESC_request_values();
+        }
     }
 }
 

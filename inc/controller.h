@@ -9,7 +9,7 @@
 void initController(void);
 void controllercycle(void);
 
-float getPos(void);
+void setPos(void);
 float getStick(void);
 
 float getProgrammingSwitch(void);
@@ -19,8 +19,5 @@ float getMaxSpeedPoti(void);
 float getModeSwitch(void);
 float getPlaySwitch(void);
 float getAuxInput(void);
-
-float getSpeedPosSensor(void);
-float getSpeedPosDifference(void);
 
 #endif

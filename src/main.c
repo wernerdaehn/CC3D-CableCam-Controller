@@ -189,6 +189,7 @@ int main(void)
     activesettings.aux_value_range = 700;
     activesettings.aux_neutral_pos = 1500;
     activesettings.aux_neutral_range = 0;
+    activesettings.pos_source = 0;
     for (int i=0; i<8; i++)
     {
         activesettings.rc_channel_sbus_out_mapping[i] = 255;

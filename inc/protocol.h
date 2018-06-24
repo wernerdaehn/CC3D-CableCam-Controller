@@ -31,6 +31,7 @@
 #define PROTOCOL_MAX_SPEED        'v'   // 1 float argument
 #define PROTOCOL_VERSION          'V'   // no argument
 #define PROTOCOL_EXPO_FACTOR      'x'   // 1 float argument
+#define PROTOCOL_POS_SOURCE       'Z'   // 1 int argument
 #define PROTOCOL_SETUP            '1'
 #define PROTOCOL_READ_ERRORHANDLER 'H'  // Error handler hidden command
 #define PROTOCOL_BOOT             '_'   // Boot to Dfu Bootloader
@@ -126,7 +127,8 @@ typedef struct
     uint8_t rc_channel_play;
     uint8_t rc_channel_sbus_out_mapping[8];
     uint16_t structure_length;
-    uint8_t noop_padding_1[2]; // Needed to align the structure to 32bit
+    uint8_t pos_source;
+    uint8_t noop_padding_1; // Needed to align the structure to 32bit
     int16_t aux_neutral_pos;
     int16_t aux_neutral_range;
     int16_t aux_value_range;
@@ -171,6 +173,10 @@ typedef struct
     float stick_max_accel;
     float stick_max_speed;
     bool vesc_config;
+    float pos;
+    float pos_diff;
+    uint32_t last_pos_change;
+    float speed;
 } controllerstatus_t;
 
 extern controllerstatus_t controllerstatus;

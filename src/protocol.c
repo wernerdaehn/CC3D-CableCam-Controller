@@ -402,9 +402,8 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         writeProtocolHead(PROTOCOL_POS, endpoint);
         writeProtocolLong(semipermanentsettings.pos_start, endpoint);
         writeProtocolLong(semipermanentsettings.pos_end, endpoint);
-        writeProtocolFloat(getPos(), endpoint);
-        writeProtocolFloat(getSpeedPosDifference(), endpoint);
-        writeProtocolFloat(getSpeedPosSensor(), endpoint);
+        writeProtocolFloat(controllerstatus.pos, endpoint);
+        writeProtocolFloat(controllerstatus.speed, endpoint);
         writeProtocolOK(endpoint);
         break;
     }
@@ -1290,18 +1289,25 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             argument_index = sscanf(&commandlinebuffer[2], "%hd", &p);
             if (argument_index == 1)
             {
-                writeProtocolHead(PROTOCOL_PLAY, endpoint);
                 controllerstatus.play_running = p;
                 controllerstatus.play_time_lastsignal = HAL_GetTick();
-                writeProtocolInt(controllerstatus.play_running, endpoint);
-                writeProtocolOK(endpoint);
             }
-            else
+            writeProtocolHead(PROTOCOL_PLAY, endpoint);
+            writeProtocolInt(controllerstatus.play_running, endpoint);
+            writeProtocolOK(endpoint);
+            break;
+        }
+    case PROTOCOL_POS_SOURCE:
+        {
+            int16_t p;
+            argument_index = sscanf(&commandlinebuffer[2], "%hd", &p);
+            if (argument_index == 1)
             {
-                writeProtocolHead(PROTOCOL_PLAY, endpoint);
-                writeProtocolInt(controllerstatus.play_running, endpoint);
-                writeProtocolOK(endpoint);
+                activesettings.pos_source = p;
             }
+            writeProtocolHead(PROTOCOL_POS_SOURCE, endpoint);
+            writeProtocolInt(activesettings.pos_source, endpoint);
+            writeProtocolOK(endpoint);
             break;
         }
     case PROTOCOL_VERSION:
@@ -1505,12 +1511,13 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("$N [<int> <int> <int>]                  set or print ESC output neutral pos and +-neutral range and the +-max range", endpoint);
     PrintlnSerial_string("$p                                      print positions", endpoint);
     PrintlnSerial_string("$P <int>                                turn the Play command (automatic movement) on (1) or off (0) for the next 2 seconds. Send frequently.", endpoint);
-    PrintlnSerial_string("$r [<int>]                              set or print rotation direction of the ESC output, either +1 or -1", endpoint);
+    PrintlnSerial_string("$r [<float>]                            set or print rotation direction of the ESC output, either +1 or -1", endpoint);
     PrintlnSerial_string("$S                                      print all settings", endpoint);
     PrintlnSerial_string("$v [<int> <int>]                        set or print the maximum output % when stick is at 100% in normal and programming mode", endpoint);
     PrintlnSerial_string("$V                                      print firmware version", endpoint);
     PrintlnSerial_string("$w                                      write settings to eeprom", endpoint);
     PrintlnSerial_string("$x [<float>]                            expo factor 1.0 means linear, everything between 1 and 0 is a exponential input", endpoint);
+    PrintlnSerial_string("$Z [<int>]                              set or print the encoder source 0..external encoder, 1..VESC Tacho", endpoint);
 
 }
 
@@ -1539,7 +1546,6 @@ void printActiveSettings(Endpoints endpoint)
     PrintlnSerial_string(getSafeModeLabel(), endpoint);
 
     PrintlnSerial_string("Currently the endpoint limits are configured as ", endpoint);
-    float pos = getPos();
 
      // ------- Endpoint
     if (semipermanentsettings.pos_start > semipermanentsettings.pos_end)
@@ -1551,23 +1557,23 @@ void printActiveSettings(Endpoints endpoint)
     }
 
     PrintSerial_string(" ", endpoint);
-    if (pos < semipermanentsettings.pos_start)
+    if (controllerstatus.pos < semipermanentsettings.pos_start)
     {
-        PrintSerial_long((int32_t) pos, endpoint);
+        PrintSerial_long((int32_t) controllerstatus.pos, endpoint);
         PrintSerial_string("--- ", endpoint);
     }
     PrintSerial_long((int32_t) semipermanentsettings.pos_start, endpoint);
     PrintSerial_string(" <--------- ", endpoint);
-    if (semipermanentsettings.pos_start <= pos && pos <= semipermanentsettings.pos_end)
+    if (semipermanentsettings.pos_start <= controllerstatus.pos && controllerstatus.pos <= semipermanentsettings.pos_end)
     {
-        PrintSerial_long((int32_t) pos, endpoint);
+        PrintSerial_long((int32_t) controllerstatus.pos, endpoint);
     }
     PrintSerial_string(" ---------> ", endpoint);
     PrintSerial_long((int32_t) semipermanentsettings.pos_end, endpoint);
-    if (pos > semipermanentsettings.pos_end)
+    if (controllerstatus.pos > semipermanentsettings.pos_end)
     {
         PrintSerial_string("--- ", endpoint);
-        PrintSerial_long((int32_t) pos, endpoint);
+        PrintSerial_long((int32_t) controllerstatus.pos, endpoint);
     }
     PrintlnSerial(endpoint);
 

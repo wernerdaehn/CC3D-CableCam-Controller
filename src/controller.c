@@ -8,6 +8,8 @@
 #include "math.h"
 #include "eeprom.h"
 
+extern getvalues_t vescvalues;
+
 void printControlLoop(int16_t input, float speed, float pos, float brakedistance, uint16_t esc, Endpoints endpoint);
 float stickCycle(float brakedistance);
 float getStickPositionRaw(void);
@@ -18,15 +20,12 @@ float getGimbalDuty(uint8_t channel);
  * Preserve the previous filtered stick value to calculate the acceleration
  */
 float stick_last_value = 0.0f;
-
+float last_pos = 0.0f;
 uint32_t possensorduration = 0;
 uint32_t last_possensortick = 0;
 
-float speed_current = 0.0f;
 static float stickintegral = 0.0f;
 
-
-int32_t pos_current_old = 0L;
 
 uint8_t endpointclicks = 0;
 float lastendpointswitch = 0.0f;
@@ -35,50 +34,95 @@ uint8_t lastmodeswitchsetting = 255;
 float gimbalout[8];
 
 
-float getSpeedPosSensor(void)
-{
-    if (HAL_GetTick() - last_possensortick > 2000)
-    {
-        return 0.0f;
-    }
-    else if (possensorduration == 0)
-    {
-        return 0.0f;
-    }
-    else
-    {
-        /* Speed is the number of signals per 0.02 (=Ta) secs.
-         * Hence refactor Ta to millisenconds to match the HAL_GetTick() millisecond time scale.
-         * The encoder is set to by an X4 type and increases on falling and raising flanks
-         * whereas the interrupt fires on one pin and rising flank only - hence times 4.
-         */
-        return CONTROLLERLOOPTIME_FLOAT * 1000.0f * 4.0f / ((float) possensorduration);
-    }
-}
-
-float getSpeedPosDifference(void)
-{
-    return speed_current;
-}
-
 
 float getStick(void)
 {
     return stick_last_value;
 }
 
-float getPos(void)
+void setPos(void)
 {
-    int32_t v = ENCODER_VALUE; // Convert uint to int
+    int32_t v;
 
-    if (activesettings.esc_direction == 0.0f)
+    /*
+     * Depending on the setting, either the VESC Tacho is used or the encoder.
+     */
+    if (activesettings.pos_source == 1)
     {
-        return (float) v;
+        // The pos sensor value comes from the VESC internal tachometer
+        v = vesc_get_long(vescvalues.frame.tachometer); // Convert uint to int
     }
     else
     {
-        return ((float) v) * activesettings.esc_direction;
+        // The pos sensor value is created by the external sensor
+        v = ENCODER_VALUE; // Convert uint to int
     }
+
+    /*
+     * Deal with the esc_direction setting, which can be +1, -1 or unknown, in which case +1 is assumed
+     */
+    if (activesettings.esc_direction == 0.0f)
+    {
+        controllerstatus.pos = (float) v;
+    }
+    else
+    {
+        controllerstatus.pos =  ((float) v) * activesettings.esc_direction;
+    }
+
+    /*
+     * In order to deal with pos changes below 1 per controller cycle, the controller status structure holds
+     * the time when the position did change the last time.
+     *
+     * Example: current time = 1; last_change_time = 0; position did change by 2; --->  speed = 2.
+     * Example: current time = 5; last_change_time = 0; position did change by 1; --->  speed = 1/5.
+     *
+     */
+    uint32_t current_cylce_counter = getCounter(); // Get the number of 20ms intervals
+    if (controllerstatus.pos != last_pos)
+    {
+        uint32_t time_diff = current_cylce_counter - controllerstatus.last_pos_change;
+        controllerstatus.pos_diff = controllerstatus.pos - last_pos;
+        controllerstatus.speed = abs_d(controllerstatus.pos_diff / ((float) time_diff ));
+        controllerstatus.last_pos_change = current_cylce_counter;
+        last_pos = controllerstatus.pos;
+    }
+    else if (current_cylce_counter - controllerstatus.last_pos_change > 100L)
+    {
+        /*
+         * In case the position did not change for 2 seconds, a speed=0 is assumed.
+         */
+        controllerstatus.speed = 0.0f;
+        controllerstatus.pos_diff = 0.0f;
+        last_pos = controllerstatus.pos;
+    }
+    /*
+    else if (activesettings.pos_source != 1)
+    {
+        last_pos = controllerstatus.pos;
+        if (possensorduration == 0)
+        {
+            //
+            // Failsafe for below's division.
+            //
+            controllerstatus.speed = 0.0f;
+            controllerstatus.pos_diff = 0.0f;
+        }
+        else
+        {
+            //
+            // If the encoder is used, then there is a more accurate way to calculate the speed, that is measuring the time using
+            // the hardware interrupt (input capture) of the encoder. This has a higher precision than 0.02 seconds.
+            //
+            // Speed is the number of signals per 0.02 (=Ta) secs.
+            // Hence refactor Ta to milliseconds to match the HAL_GetTick() millisecond time scale.
+            // The encoder is set to by an X4 type and increases on falling and raising flanks
+            // whereas the interrupt fires on one pin and rising flank only - hence times 4.
+            //
+            controllerstatus.speed = CONTROLLERLOOPTIME_FLOAT * 1000.0f * 4.0f / ((float) possensorduration);
+        }
+    }
+    */
 }
 
 void initController(void)
@@ -184,7 +228,6 @@ float getStickPositionRaw()
         }
         else
         {
-            float pos_current = getPos();
             if (controllerstatus.play_running == 1)
             {
                 if (controllerstatus.safemode != OPERATIONAL)
@@ -233,10 +276,10 @@ float getStickPositionRaw()
                          */
                         if (controllerstatus.play_direction == 0)
                         {
-                            if (pos_current - semipermanentsettings.pos_start < semipermanentsettings.pos_end - pos_current)
+                            if (controllerstatus.pos - semipermanentsettings.pos_start < semipermanentsettings.pos_end - controllerstatus.pos)
                             {
                                 /*
-                                 * Example: pos_current = 400; pos_start = 0; pos_end = 1000;
+                                 * Example: pos = 400; pos_start = 0; pos_end = 1000;
                                  * 400 - 0 < 1000-400
                                  *
                                  * --> Closer to the start point, so drive to pos_end first
@@ -257,7 +300,7 @@ float getStickPositionRaw()
                         {
                             if (controllerstatus.play_direction == 1) // Drive towards the end point
                             {
-                                if (pos_current < semipermanentsettings.pos_end - 44.0f)
+                                if (controllerstatus.pos < semipermanentsettings.pos_end - 44.0f)
                                 {
                                     // Continue driving towards the end point
                                     value = activesettings.stick_max_speed;
@@ -272,7 +315,7 @@ float getStickPositionRaw()
                             else
                             {
                                 // Driving towards the start point
-                                if (pos_current > semipermanentsettings.pos_start + 44.0f)
+                                if (controllerstatus.pos > semipermanentsettings.pos_start + 44.0f)
                                 {
                                     // current position is far away from the start point, hence continue driving towards it
                                     value = -activesettings.stick_max_speed;
@@ -320,7 +363,6 @@ float getStickPositionRaw()
 float stickCycle(float brakedistance)
 {
     float stickpercent = getStickPositionRaw();
-    float pos = getPos();
 
 
     // output = ( (1 - factor) x input^3 ) + ( factor x input )     with input and output between -1 and +1
@@ -399,7 +441,7 @@ float stickCycle(float brakedistance)
             /*
              * First check if the position is safe, both end points cannot be overshot at the current speed. In that case no braking calculation is needed.
              */
-            if (pos + brakedistance < semipermanentsettings.pos_end && pos - brakedistance > semipermanentsettings.pos_start)
+            if (controllerstatus.pos + brakedistance < semipermanentsettings.pos_end && controllerstatus.pos - brakedistance > semipermanentsettings.pos_start)
             {
                 controllerstatus.endpointbrake = false;
                 controllerstatus.emergencybrake = false;
@@ -409,7 +451,7 @@ float stickCycle(float brakedistance)
                 /*
                  * Which end point is in danger? The cablecam might be very close to the start point but is driving towards the other end point -> no problem.
                  */
-                if (pos + brakedistance >= semipermanentsettings.pos_end)
+                if (controllerstatus.pos + brakedistance >= semipermanentsettings.pos_end)
                 {
                     /*
                      * In case the CableCam will overshoot the end point reduce the speed to zero.
@@ -423,7 +465,7 @@ float stickCycle(float brakedistance)
                          * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
                          * As there is some elasticity between motor and actual position, add a value here.
                          */
-                        if (pos >= semipermanentsettings.pos_end)
+                        if (controllerstatus.pos >= semipermanentsettings.pos_end)
                         {
                             stick_last_value = 0.0f;
                             return stick_last_value;
@@ -438,7 +480,7 @@ float stickCycle(float brakedistance)
                             if (controllerstatus.endpointbrake == false)
                             {
                                 PrintSerial_string("Endpoint brake on. Distance=", EndPoint_All);
-                                PrintSerial_float(semipermanentsettings.pos_end-pos, EndPoint_All);
+                                PrintSerial_float(semipermanentsettings.pos_end-controllerstatus.pos, EndPoint_All);
                                 PrintSerial_string(", calculated braking distance=", EndPoint_All);
                                 PrintlnSerial_float(brakedistance, EndPoint_All);
                             }
@@ -450,7 +492,7 @@ float stickCycle(float brakedistance)
                              *
                              */
                             if (activesettings.max_position_error != 0.0f &&
-                                pos + brakedistance >= semipermanentsettings.pos_end + activesettings.max_position_error)
+                                controllerstatus.pos + brakedistance >= semipermanentsettings.pos_end + activesettings.max_position_error)
                             {
                                 /*
                                  * We are in danger to overshoot the end point by max_position_error. Hence kick in the emergency brake.
@@ -476,7 +518,7 @@ float stickCycle(float brakedistance)
                 }
 
 
-                if (pos - brakedistance <= semipermanentsettings.pos_start)
+                if (controllerstatus.pos - brakedistance <= semipermanentsettings.pos_start)
                 {
                     /*
                      * In case the CableCam will overshoot the start point reduce the speed to zero.
@@ -489,7 +531,7 @@ float stickCycle(float brakedistance)
                         /*
                          * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
                          */
-                        if (pos <= semipermanentsettings.pos_start)
+                        if (controllerstatus.pos <= semipermanentsettings.pos_start)
                         {
                             stick_last_value = 0.0f;
                             return 0.0f;
@@ -504,7 +546,7 @@ float stickCycle(float brakedistance)
                             if (controllerstatus.endpointbrake == false)
                             {
                                 PrintSerial_string("Endpoint brake on. Distance=", EndPoint_All);
-                                PrintSerial_float(pos - semipermanentsettings.pos_start, EndPoint_All);
+                                PrintSerial_float(controllerstatus.pos - semipermanentsettings.pos_start, EndPoint_All);
                                 PrintSerial_string(", calculated braking distance=", EndPoint_All);
                                 PrintlnSerial_float(brakedistance, EndPoint_All);
                             }
@@ -515,7 +557,7 @@ float stickCycle(float brakedistance)
                              * Because at high speeds the calculation might not be that accurate, add a factor depending on the brake distance
                              */
                             if (activesettings.max_position_error != 0.0f &&
-                                pos - brakedistance <= semipermanentsettings.pos_start - activesettings.max_position_error)
+                                controllerstatus.pos - brakedistance <= semipermanentsettings.pos_start - activesettings.max_position_error)
                             {
                                 /*
                                  * We are in danger to overshoot the start point by max_position_error. Hence kick in the emergency brake.
@@ -595,7 +637,7 @@ float stickCycle(float brakedistance)
     {
         if (endpointclicks == 0)
         {
-            semipermanentsettings.pos_start = pos;
+            semipermanentsettings.pos_start = controllerstatus.pos;
             endpointclicks = 1;
             PrintlnSerial_string("Point 1 set", EndPoint_All);
             stickintegral = 0.0f;
@@ -617,7 +659,7 @@ float stickCycle(float brakedistance)
              *    be with the wrong sign. Let's hope this never happens during the initial setup. That is also the reason why the esc direction
              *    is calculated only if the esc direction is unset yet.
              */
-            semipermanentsettings.pos_end = pos;
+            semipermanentsettings.pos_end = controllerstatus.pos;
             if (stickintegral > -3.0f && stickintegral < 3.0f)
             {
                 PrintlnSerial_string("Endpoints too close together based on the stick signals. Move the cablecam via the RC.", EndPoint_All);
@@ -812,22 +854,11 @@ void controllercycle()
      *    ----------------------------------
      *      time_to_stop
      */
-    int32_t pos_current = getPos();
-    speed_current = abs_d((float) (pos_current_old - pos_current));
-    float speed_timer = getSpeedPosSensor();
-    float speed = speed_current;
-
-    /* If the pos difference is less than 5.0f per 20ms, then the resolution is not high enough. In that
-     * case use the time between to pos sensor interrupts to calculate a more precise speed.
-     */
-    if (speed_current <= 5.0f)
-    {
-        speed = speed_timer;
-    }
+    setPos();
 
     float time_to_stop = abs_d(getStick()/controllerstatus.stick_max_accel);
 
-    float distance_to_stop = speed * time_to_stop / 2.0f;
+    float distance_to_stop = controllerstatus.speed * time_to_stop / 2.0f;
     float stick_filtered_value = stickCycle(distance_to_stop); // go through the stick position calculation with its limiters, max accel etc
 
     /*
@@ -869,10 +900,6 @@ void controllercycle()
         gimbalout[ch] = getGimbalDuty(ch);
     }
     setGimbalValues(gimbalout);
-
-
-    pos_current_old = pos_current; // required for the actual speed calculation
-
 }
 
 float getGimbalDuty(uint8_t channel)
