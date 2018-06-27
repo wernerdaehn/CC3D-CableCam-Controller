@@ -781,14 +781,14 @@ float stickCycle(float brakedistance)
     float modeswitch = getModeSwitch();
     if (!isnan(modeswitch))
     {
-        if (modeswitch < 0.0f)
+        if (modeswitch < -0.3f)
         {
             /*
              * Passthrough
              */
             activesettings.mode = MODE_PASSTHROUGH;
         }
-        else if (modeswitch > 0.0f)
+        else if (modeswitch > 0.3f)
         {
             /*
              * Full Limiters

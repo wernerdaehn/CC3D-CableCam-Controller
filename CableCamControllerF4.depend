@@ -1497,7 +1497,7 @@
 1497518473 c:\users\werne\onedrive\github\cc3d-cablecam-controller\inc\clock_50hz.h
 	"stm32f4xx_hal.h"
 
-1529855646 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\controller.c
+1530093152 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\controller.c
 	"config.h"
 	"protocol.h"
 	"controller.h"
@@ -1526,7 +1526,7 @@
 	"stm32f4xx.h"
 	"serial_print.h"
 
-1529839082 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\protocol.c
+1530094609 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\protocol.c
 	"config.h"
 	"protocol.h"
 	<errno.h>

@@ -61,7 +61,7 @@
 			<Cursor1 position="3567" topLine="11" />
 		</Cursor>
 	</File>
-	<File name="inc\protocol.h" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="inc\protocol.h" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="6166" topLine="87" />
 		</Cursor>
@@ -156,9 +156,9 @@
 			<Cursor1 position="495" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\controller.c" open="1" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="-1" zoom_2="0">
+	<File name="src\controller.c" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="-1" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="997" topLine="0" />
+			<Cursor1 position="36351" topLine="745" />
 		</Cursor>
 	</File>
 	<File name="src\eeprom.c" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -166,49 +166,49 @@
 			<Cursor1 position="2900" topLine="61" />
 		</Cursor>
 	</File>
-	<File name="src\main.c" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\main.c" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="14725" topLine="337" />
 		</Cursor>
 	</File>
-	<File name="src\protocol.c" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\protocol.c" open="1" top="1" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="61267" topLine="560" />
+			<Cursor1 position="17606" topLine="358" />
 		</Cursor>
 		<Folding>
-			<Collapse line="342" />
-			<Collapse line="375" />
-			<Collapse line="400" />
-			<Collapse line="411" />
-			<Collapse line="443" />
-			<Collapse line="459" />
-			<Collapse line="468" />
-			<Collapse line="571" />
-			<Collapse line="606" />
-			<Collapse line="640" />
-			<Collapse line="674" />
-			<Collapse line="700" />
-			<Collapse line="725" />
-			<Collapse line="769" />
-			<Collapse line="796" />
-			<Collapse line="808" />
-			<Collapse line="861" />
-			<Collapse line="887" />
-			<Collapse line="902" />
-			<Collapse line="931" />
-			<Collapse line="993" />
-			<Collapse line="1122" />
-			<Collapse line="1135" />
-			<Collapse line="1162" />
-			<Collapse line="1189" />
-			<Collapse line="1287" />
-			<Collapse line="1301" />
-			<Collapse line="1314" />
-			<Collapse line="1321" />
-			<Collapse line="1327" />
+			<Collapse line="344" />
+			<Collapse line="377" />
+			<Collapse line="402" />
+			<Collapse line="412" />
+			<Collapse line="444" />
+			<Collapse line="460" />
+			<Collapse line="469" />
+			<Collapse line="548" />
+			<Collapse line="583" />
+			<Collapse line="617" />
+			<Collapse line="651" />
+			<Collapse line="677" />
+			<Collapse line="702" />
+			<Collapse line="746" />
+			<Collapse line="773" />
+			<Collapse line="785" />
+			<Collapse line="838" />
+			<Collapse line="865" />
+			<Collapse line="879" />
+			<Collapse line="908" />
+			<Collapse line="970" />
+			<Collapse line="1099" />
+			<Collapse line="1112" />
+			<Collapse line="1139" />
+			<Collapse line="1166" />
+			<Collapse line="1264" />
+			<Collapse line="1278" />
+			<Collapse line="1291" />
+			<Collapse line="1298" />
+			<Collapse line="1304" />
 		</Folding>
 	</File>
-	<File name="src\sbus.c" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\sbus.c" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="1810" topLine="42" />
 		</Cursor>
@@ -243,7 +243,7 @@
 			<Cursor1 position="18535" topLine="460" />
 		</Cursor>
 	</File>
-	<File name="src\systembootloader.c" open="1" top="1" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\systembootloader.c" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="1991" topLine="6" />
 		</Cursor>
@@ -278,7 +278,7 @@
 			<Cursor1 position="8001" topLine="196" />
 		</Cursor>
 	</File>
-	<File name="src\vesc.c" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\vesc.c" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="2594" topLine="0" />
 		</Cursor>
@@ -323,12 +323,12 @@
 			<Cursor1 position="0" topLine="12" />
 		</Cursor>
 	</File>
-	<File name="STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_rcc.h" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_rcc.h" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="19010" topLine="1392" />
 		</Cursor>
 	</File>
-	<File name="STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_rcc_ex.h" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_rcc_ex.h" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="62137" topLine="1141" />
 		</Cursor>

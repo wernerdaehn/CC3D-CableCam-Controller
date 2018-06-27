@@ -95,6 +95,8 @@ void printChannelDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, Endpoints en
 
 void printCurrentRCInput(Endpoints endpoint);
 
+int16_t valid_channelassignment(int16_t c);
+
 typedef  void (*pFunction)(void);
 
 void initProtocol()
@@ -474,10 +476,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
 
         if (argument_index >= 1)
         {
-            if (p[0] > 0 && p[0] <= SBUS_MAX_CHANNEL &&
-                    p[1] > 0 && p[1] <= SBUS_MAX_CHANNEL &&
-                    p[2] > 0 && p[2] <= SBUS_MAX_CHANNEL &&
-                    p[0] != p[1] && p[0] != p[2] && p[1] != p[2])
+            if (p[0] > 0 && p[0] <= SBUS_MAX_CHANNEL)
             {
                 activesettings.rc_channel_speed = p[0]-1;
 
@@ -485,59 +484,38 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                 writeProtocolInt(activesettings.rc_channel_speed+1, endpoint);
                 if (argument_index >= 2)
                 {
-                    if (p[1] > 0 && p[1] <= SBUS_MAX_CHANNEL)
-                    {
-                        activesettings.rc_channel_programming = p[1]-1;
-                        writeProtocolInt(activesettings.rc_channel_programming+1, endpoint);
-                    }
+                    activesettings.rc_channel_programming = valid_channelassignment(p[1])-1;
+                    writeProtocolInt(activesettings.rc_channel_programming+1, endpoint);
                 }
                 if (argument_index >= 3)
                 {
-                    if (p[2] > 0 && p[2] <= SBUS_MAX_CHANNEL)
-                    {
-                        activesettings.rc_channel_endpoint = p[2]-1;
-                        writeProtocolInt(activesettings.rc_channel_endpoint+1, endpoint);
-                    }
+                    activesettings.rc_channel_endpoint = valid_channelassignment(p[2])-1;
+                    writeProtocolInt(activesettings.rc_channel_endpoint+1, endpoint);
                 }
                 if (argument_index >= 4)
                 {
-                    if (p[3] > 0 && p[3] <= SBUS_MAX_CHANNEL)
-                    {
-                        activesettings.rc_channel_max_accel = p[3]-1;
-                        writeProtocolInt(activesettings.rc_channel_max_accel+1, endpoint);
-                    }
+                    activesettings.rc_channel_max_accel = valid_channelassignment(p[3])-1;
+                    writeProtocolInt(activesettings.rc_channel_max_accel+1, endpoint);
                 }
                 if (argument_index >= 5)
                 {
-                    if (p[4] > 0 && p[4] <= SBUS_MAX_CHANNEL)
-                    {
-                        activesettings.rc_channel_max_speed = p[4]-1;
-                        writeProtocolInt(activesettings.rc_channel_max_speed+1, endpoint);
-                    }
+                    activesettings.rc_channel_max_speed = valid_channelassignment(p[4])-1;
+                    writeProtocolInt(activesettings.rc_channel_max_speed+1, endpoint);
                 }
                 if (argument_index >= 6)
                 {
-                    if (p[5] > 0 && p[5] <= SBUS_MAX_CHANNEL)
-                    {
-                        activesettings.rc_channel_mode = p[5]-1;
-                        writeProtocolInt(activesettings.rc_channel_mode+1, endpoint);
-                    }
+                    activesettings.rc_channel_mode = valid_channelassignment(p[5])-1;
+                    writeProtocolInt(activesettings.rc_channel_mode+1, endpoint);
                 }
                 if (argument_index >= 7)
                 {
-                    if (p[6] > 0 && p[6] <= SBUS_MAX_CHANNEL)
-                    {
-                        activesettings.rc_channel_aux = p[6]-1;
-                        writeProtocolInt(activesettings.rc_channel_aux+1, endpoint);
-                    }
+                    activesettings.rc_channel_aux = valid_channelassignment(p[6])-1;
+                    writeProtocolInt(activesettings.rc_channel_aux+1, endpoint);
                 }
                 if (argument_index >= 8)
                 {
-                    if (p[7] > 0 && p[7] <= SBUS_MAX_CHANNEL)
-                    {
-                        activesettings.rc_channel_play= p[7]-1;
-                        writeProtocolInt(activesettings.rc_channel_play+1, endpoint);
-                    }
+                    activesettings.rc_channel_play = valid_channelassignment(p[7])-1;
+                    writeProtocolInt(activesettings.rc_channel_play+1, endpoint);
                 }
                 writeProtocolOK(endpoint);
             }
@@ -1336,6 +1314,19 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         break;
     }
 }
+
+int16_t valid_channelassignment(int16_t c)
+{
+    if (c > 0 && c <= SBUS_MAX_CHANNEL)
+    {
+        return c;
+    }
+    else
+    {
+        return 256;
+    }
+}
+
 
 uint8_t check_for_neutral_is_in_the_middle(sbusData_t * rcavg, sbusData_t * rcneutral, uint8_t channel, Endpoints endpoint)
 {
