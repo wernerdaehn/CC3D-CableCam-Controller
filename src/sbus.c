@@ -19,7 +19,7 @@
  * time to send frame: 3ms.
  */
 
-#define SBUS_TIME_NEEDED_PER_FRAME 3
+#define SBUS_TIME_NEEDED_PER_FRAME 4
 
 
 #define SBUS_STATE_FAILSAFE (1 << 0)
@@ -97,7 +97,11 @@ uint16_t convertDutyIntoSBus(float channel_values[], uint8_t channel)
 
 void setServoValues()
 {
-    if (sbusFrame.frame.syncByte == SBUS_FRAME_BEGIN_BYTE && sbusFrame.frame.endByte == SBUS_FRAME_END_BYTE)
+    // if (sbusFrame.frame.syncByte == SBUS_FRAME_BEGIN_BYTE && sbusFrame.frame.endByte == SBUS_FRAME_END_BYTE)
+    /*
+     * Removed the end byte check as futaba receivers follow their own logic there
+     */
+    if (sbusFrame.frame.syncByte == SBUS_FRAME_BEGIN_BYTE)
     {
         sbusdata.sbusLastValidFrame = HAL_GetTick();
         sbusdata.servovalues[0].duty = (sbusFrame.frame.chan0);

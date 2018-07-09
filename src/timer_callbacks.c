@@ -34,13 +34,20 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
      * For that reason the TIM1_CH3 fires on the rising flank and an interrupt on the slave's falling edge is not triggered.
      */
 
+    /*
+     * 404   1107   404   1107   404
+     * 7460   405   1107   404   1107   404   1107   405   1107   404   1107   405   1675   405   1107   404   1107   405
+     * 7461   404   1107   405   1106   405   1108   404   1108   404   1108   405   1676   405   1107   404   1108   404
+     * 7461   404   1107   405   1107   405   1110   405   1106   405   1106   405   1675   404   1107   405   1106   405
+     * 7457   404   1107   405   1107
+     */
     if (htim->Instance == TIM1)
     {
         if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3)
         {
             /*
              * The Channel3 Interrupt fires at the falling edge, thus we know the duty
-             * l______________4               3___
+             * 3______________4               3___
              * |              |_______________|   ......
              */
 
@@ -64,7 +71,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
             }
 
             /*
-             *  ______________4               3______________
+             * 3______________4               3______________4
              * |              |_______________|              |___________
              */
             uint16_t pause = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3) - HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4);
