@@ -53,6 +53,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 
             // It is important to use a uint16 here as the timer returns a 16 value, although it is defined as 32 bit uint
             uint16_t duty = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4) - lastrising;
+            // uint16_t duty = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3) - HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4);
             setNextDuty(duty);
 
             if (duty > 4000)   // a long duty signal is the packet-end of a sum ppm
@@ -75,6 +76,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
              * |              |_______________|              |___________
              */
             uint16_t pause = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3) - HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4);
+            // uint16_t pause = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4) - lastrising;
             setNextDuty(pause);
             if (pause < 700)   // a pause of length less than 700us is a sum-ppm channel-pause
             {

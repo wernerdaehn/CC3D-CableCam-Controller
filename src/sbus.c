@@ -5,6 +5,7 @@
 #include "sbus.h"
 #include "protocol.h"
 #include "math.h"
+#include "string.h"
 
 
 /*
@@ -40,7 +41,6 @@ extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart6;
 
 void setServoValues(void);
-uint32_t getInvalidFrameCount(void);
 uint16_t convertDutyIntoSBus(float channel_values[], uint8_t channel);
 
 sbusFrame_t sbusFrame;
@@ -68,6 +68,14 @@ void initSBusData(uint8_t receivertype)
     sBusFrameGimbal.frame.flags = 0;
     sBusFrameGimbal.frame.syncByte = SBUS_FRAME_BEGIN_BYTE;
     sBusFrameGimbal.frame.endByte = SBUS_FRAME_END_BYTE;
+
+    controllerstatus.dsbus_pause = 0;
+    controllerstatus.dsbus_valid = 0;
+    controllerstatus.dsbus_errors = 0;
+    controllerstatus.dsbus_frame_errors = 0;
+    controllerstatus.dsbus_parity_errors = 0;
+    controllerstatus.dsbus_noise_errors = 0;
+    controllerstatus.dsbus_overrun_errors = 0;
 }
 
 void setGimbalValues(float channel_values[])
@@ -232,12 +240,6 @@ uint8_t* getSBUSFrameGimbalAddress(void)
     return &sBusFrameGimbal.bytes[0];
 }
 
-uint32_t getInvalidFrameCount(void)
-{
-    return sbusdata.counter_sbus_frame_errors;
-}
-
-
 void SBUS_IRQHandler(UART_HandleTypeDef *huart)
 {
     uint32_t isrflags   = READ_REG(huart->Instance->SR);
@@ -262,7 +264,8 @@ void SBUS_IRQHandler(UART_HandleTypeDef *huart)
                 huart->pRxBuffPtr = &sbusFrame.bytes[0];
                 huart->RxXferCount = SBUS_FRAME_SIZE;
                 sbusdata.sbusFrameStartTime = now;
-                sbusdata.counter_sbus_frame_errors++;
+                controllerstatus.dsbus_pause++;
+                memcpy(controllerstatus.dsbus, sbusFrame.bytes, SBUS_FRAME_SIZE);
             }
 
             if (huart->RxXferCount > 0)
@@ -277,10 +280,6 @@ void SBUS_IRQHandler(UART_HandleTypeDef *huart)
                 }
                 else
                 {
-                    if (huart->RxXferCount == SBUS_FRAME_SIZE)
-                    {
-                        sbusdata.sbusFrameStartTime = now;
-                    }
                     huart->RxXferCount--;
                     huart->pRxBuffPtr += 1U;
                     if (huart->RxXferCount == 0)
@@ -289,7 +288,7 @@ void SBUS_IRQHandler(UART_HandleTypeDef *huart)
                         setServoValues();
                         huart->pRxBuffPtr = &sbusFrame.bytes[0];
                         huart->RxXferCount = SBUS_FRAME_SIZE;
-                        sbusdata.counter_sbus_frames++;
+                        controllerstatus.dsbus_valid++;
                     }
                 }
             } // else overflow happened
@@ -303,7 +302,7 @@ void SBUS_IRQHandler(UART_HandleTypeDef *huart)
         {
             huart->ErrorCode |= HAL_UART_ERROR_PE;
             __HAL_UART_CLEAR_PEFLAG(huart);
-            sbusdata.counter_parity_errors++;
+            controllerstatus.dsbus_parity_errors++;
             haserror = 1;
         }
 
@@ -321,7 +320,7 @@ void SBUS_IRQHandler(UART_HandleTypeDef *huart)
         {
             huart->ErrorCode |= HAL_UART_ERROR_FE;
             __HAL_UART_CLEAR_FEFLAG(huart);
-            sbusdata.counter_frame_errors++;
+            controllerstatus.dsbus_frame_errors++;
             haserror = 1;
         }
 
@@ -330,12 +329,12 @@ void SBUS_IRQHandler(UART_HandleTypeDef *huart)
         {
             huart->ErrorCode |= HAL_UART_ERROR_ORE;
             __HAL_UART_CLEAR_OREFLAG(huart);
-            sbusdata.counter_overrun_errors++;
+            controllerstatus.dsbus_overrun_errors++;
             haserror = 1;
         }
         if (haserror != 0)
         {
-            sbusdata.counter_sbus_errors++;
+            controllerstatus.dsbus_errors++;
         }
 
     } /* End if some error occurs */
@@ -391,16 +390,13 @@ void printSBUSChannels(Endpoints endpoint)
 
 void PrintSumPPMRawData(Endpoints endpoint)
 {
-    if (activesettings.receivertype == RECEIVER_TYPE_SUMPPM)
+    PrintSerial_string("Duty & Pause Timing for SumPPM:", endpoint);
+    for (int i = 0; i < 64; i++)
     {
-        PrintSerial_string("Duty & Pause Timing for SumPPM:", endpoint);
-        for (int i = 0; i < 64; i++)
-        {
-            PrintSerial_string("  ", endpoint);
-            PrintSerial_int(dutyarray[i], endpoint);
-        }
-        PrintlnSerial(endpoint);
+        PrintSerial_string("  ", endpoint);
+        PrintSerial_int(dutyarray[i], endpoint);
     }
+    PrintlnSerial(endpoint);
 }
 
 

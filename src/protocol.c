@@ -777,11 +777,48 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         printActiveSettings(endpoint);
         break;
     }
-    /* case PROTOCOL_D_CYCLES:
+    case PROTOCOL_DEBUG:
     {
-        printDebugCycles(endpoint);
+        char c;
+        argument_index = sscanf(&commandlinebuffer[2], "%1s", &c);
+        if (argument_index == 1)
+        {
+            switch (c)
+            {
+            case 's':
+                PrintSerial_string("SBUS packets:", endpoint);
+                PrintSerial_int(controllerstatus.dsbus_pause, endpoint);
+                PrintSerial_string(", valid:", endpoint);
+                PrintSerial_int(controllerstatus.dsbus_valid, endpoint);
+                PrintSerial_string(", errors:", endpoint);
+                PrintSerial_int(controllerstatus.dsbus_errors, endpoint);
+                PrintSerial_string(" (frame errors:", endpoint);
+                PrintSerial_int(controllerstatus.dsbus_frame_errors, endpoint);
+                PrintSerial_string(", parity errors:", endpoint);
+                PrintSerial_int(controllerstatus.dsbus_parity_errors, endpoint);
+                PrintSerial_string(", noise errors:", endpoint);
+                PrintSerial_int(controllerstatus.dsbus_noise_errors, endpoint);
+                PrintSerial_string(", overrun errors:", endpoint);
+                PrintSerial_int(controllerstatus.dsbus_overrun_errors, endpoint);
+                PrintlnSerial_string(")", endpoint);
+
+                PrintSerial_string("Last packet:", endpoint);
+                PrintlnSerial_hexstring(controllerstatus.dsbus, SBUS_FRAME_SIZE, endpoint);
+                break;
+            case 'p':
+                PrintSumPPMRawData(endpoint);
+                break;
+            default:
+                PrintlnSerial_string("unknown parameter, what to debug?", endpoint);
+                break;
+            }
+        }
+        else
+        {
+            PrintlnSerial_string("Missing argument what to debug", endpoint);
+        }
         break;
-    } */
+    }
     case PROTOCOL_BINARY:
     {
         uint8_t * tempsettingspointer;

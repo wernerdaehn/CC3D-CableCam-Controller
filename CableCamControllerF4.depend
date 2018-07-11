@@ -1510,10 +1510,11 @@
 
 1519209159 c:\users\werne\onedrive\github\cc3d-cablecam-controller\inc\config.h
 
-1529836586 c:\users\werne\onedrive\github\cc3d-cablecam-controller\inc\protocol.h
+1531325459 c:\users\werne\onedrive\github\cc3d-cablecam-controller\inc\protocol.h
 	"serial_print.h"
 	"controller.h"
 	"stdbool.h"
+	"sbus.h"
 
 1519591629 c:\users\werne\onedrive\github\cc3d-cablecam-controller\inc\serial_print.h
 	"main.h"
@@ -1526,7 +1527,7 @@
 	"stm32f4xx.h"
 	"serial_print.h"
 
-1530094609 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\protocol.c
+1531326255 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\protocol.c
 	"config.h"
 	"protocol.h"
 	<errno.h>
@@ -1937,7 +1938,7 @@
 1497112352 c:\users\werne\onedrive\github\cc3d-cablecam-controller\stm32f4xx_hal_driver\inc\stm32f4xx_ll_system.h
 	"stm32f4xx.h"
 
-1528616698 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\main.c
+1531325877 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\main.c
 	"main.h"
 	"stm32f4xx_hal.h"
 	"usb_device.h"
@@ -1968,13 +1969,14 @@
 
 1522683470 c:\users\werne\onedrive\github\cc3d-cablecam-controller\inc\stm32f4xx_it.h
 
-1527960018 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\sbus.c
+1531325535 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\sbus.c
 	"stm32f4xx_hal.h"
 	"clock_50Hz.h"
 	"config.h"
 	"sbus.h"
 	"protocol.h"
 	"math.h"
+	"string.h"
 
 1526747358 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\eeprom.c
 	"eeprom.h"
@@ -1991,7 +1993,7 @@
 	"spi_flash.h"
 	"main.h"
 
-1527779922 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\timer_callbacks.c
+1531325877 source:c:\users\werne\onedrive\github\cc3d-cablecam-controller\src\timer_callbacks.c
 	"stm32f4xx_hal.h"
 	"clock_50Hz.h"
 	"config.h"

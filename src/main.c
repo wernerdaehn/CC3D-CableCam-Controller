@@ -565,8 +565,7 @@ static void MX_TIM1_Init(void)
 
     sSlaveConfig.SlaveMode = TIM_SLAVEMODE_RESET;
     sSlaveConfig.InputTrigger = TIM_TS_TI2FP2;
-    // sSlaveConfig.TriggerPolarity = TIM_TRIGGERPOLARITY_FALLING;
-    sSlaveConfig.TriggerPolarity = TIM_TRIGGERPOLARITY_RISING;
+    sSlaveConfig.TriggerPolarity = TIM_TRIGGERPOLARITY_FALLING;
     sSlaveConfig.TriggerFilter = 0;
     if (HAL_TIM_SlaveConfigSynchronization(&htim1, &sSlaveConfig) != HAL_OK)
     {

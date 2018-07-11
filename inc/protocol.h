@@ -4,12 +4,14 @@
 #include "serial_print.h"
 #include "controller.h"
 #include "stdbool.h"
+#include "sbus.h"
 
 #define PROTOCOL_MAX_ACCEL        'a'   // 1 float argument
 #define PROTOCOL_AUX_NEUTRAL      'A'	// 3 int neutral microseconds, +-neutral range microseconds, +- 100% throttle
 #define PROTOCOL_BINARY           'b'   // Hidden command to print the binary active settings or play them back (Useful to quickly transfer settings)
 #define PROTOCOL_BLUETOOTH        'B'   // no argument
 #define PROTOCOL_VESC_BRAKE       'c'
+#define PROTOCOL_DEBUG            'd'   // one char to identify what debug to print out
 #define PROTOCOL_INPUT_GIMBAL_DEFAULT     'D'   // up to 8 int arguments, the gimbal channel default output via SBus TX
 #define PROTOCOL_VESC_MAX_ERPM    'e'   // 1 int argument, the maximum eRPM value set in the VESC. Goal is that 100% throttle = this eRPM value
 #define PROTOCOL_VESC_STATUS      'E'   // no argument
@@ -177,6 +179,14 @@ typedef struct
     float pos_diff;
     uint32_t last_pos_change;
     float speed;
+    uint8_t dsbus[SBUS_FRAME_SIZE];
+    uint32_t dsbus_pause;
+    uint32_t dsbus_valid;
+    uint32_t dsbus_errors;
+    uint32_t dsbus_frame_errors;
+    uint32_t dsbus_parity_errors;
+    uint32_t dsbus_noise_errors;
+    uint32_t dsbus_overrun_errors;
 } controllerstatus_t;
 
 extern controllerstatus_t controllerstatus;
