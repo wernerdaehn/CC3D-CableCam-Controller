@@ -17,15 +17,15 @@ The controller supports getting commands via UART as well, usually connected to 
 
 #### Pinout
 
-![UART Pins](_images\Flip32_F4_Pins_UART.jpg)
+![UART Pins](_images/Flip32_F4_Pins_UART.jpg)
 
 
 
-![UART Pins](_images\Flip32_F4_Pins_UART_RL.jpg)
+![UART Pins](_images/Flip32_F4_Pins_UART_RL.jpg)
 
 
 
-![UART Pins](_images\Flip32_F4_Pins_UART_BT_Module.jpg)
+![UART Pins](_images/Flip32_F4_Pins_UART_BT_Module.jpg)
 
 
 
