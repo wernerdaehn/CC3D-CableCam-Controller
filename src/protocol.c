@@ -1506,7 +1506,7 @@ void printHelp(Endpoints endpoint)
     USBPeriodElapsed();
 
     PrintlnSerial_string("$1                                      start a guided setup to set the most important input channels", endpoint);
-    PrintlnSerial_string("$a [<int> <int>]                        set or print maximum allowed acceleration in normal and programming mode", endpoint);
+    PrintlnSerial_string("$a [<float> <float>]                    set or print maximum allowed acceleration in normal and programming mode [%/sec]", endpoint);
     PrintlnSerial_string("$A [<int>]                              set or print AUX output neutral pos and +- neutral range and the +-max range", endpoint);
     PrintlnSerial_string("$B                                      Configure the HC-05 Bluetooth module on FlexiPort (RX3/TX3)", endpoint);
     // PrintlnSerial_string("$c [<int> <int>]                        VESC handbrake current and min tacho speed to engage handbrake", endpoint);
@@ -1541,7 +1541,7 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("$P <int>                                turn the Play command (automatic movement) on (1) or off (0) for the next 2 seconds. Send frequently.", endpoint);
     PrintlnSerial_string("$r [<float>]                            set or print rotation direction of the ESC output, either +1 or -1", endpoint);
     PrintlnSerial_string("$S                                      print all settings", endpoint);
-    PrintlnSerial_string("$v [<int> <int>]                        set or print the maximum output % when stick is at 100% in normal and programming mode", endpoint);
+    PrintlnSerial_string("$v [<float> <float>]                    set or print the maximum output % when stick is at 100% (=1.0) in normal and programming mode", endpoint);
     PrintlnSerial_string("$V                                      print firmware version", endpoint);
     PrintlnSerial_string("$w                                      write settings to eeprom", endpoint);
     PrintlnSerial_string("$x [<float>]                            expo factor 1.0 means linear, everything between 1 and 0 is a exponential input", endpoint);
