@@ -94,6 +94,7 @@ void getDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, sbusData_t * rcavg, u
 void printChannelDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, Endpoints endpoint);
 
 void printCurrentRCInput(Endpoints endpoint);
+void printCurrentSBusOut(Endpoints endpoint);
 
 int16_t valid_channelassignment(int16_t c);
 
@@ -1171,6 +1172,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             writeProtocolInt(activesettings.rc_channel_sbus_out_mapping[i]+1, endpoint);
         }
         writeProtocolOK(endpoint);
+        printCurrentSBusOut(endpoint);
         break;
     }
     case PROTOCOL_INPUT_GIMBAL_DEFAULT:
@@ -1753,12 +1755,6 @@ void printCurrentRCInput(Endpoints endpoint)
     }
     PrintlnSerial(endpoint);
 
-    if (activesettings.receivertype == RECEIVER_TYPE_SUMPPM)
-    {
-        PrintSumPPMRawData(endpoint);
-    }
-
-
 
     PrintSerial_string("current ESC out signal Servo 1 = ", endpoint);
     PrintlnSerial_int(TIM3->CCR3, endpoint);
@@ -1785,3 +1781,50 @@ void printCurrentRCInput(Endpoints endpoint)
     }
 
 }
+
+void printCurrentSBusOut(Endpoints endpoint)
+{
+    PrintSerial_string("Last RC signal received", endpoint);
+    PrintSerial_long(HAL_GetTick() - sbusdata.sbusLastValidFrame, endpoint);
+    PrintlnSerial_string("ms ago", endpoint);
+
+    PrintlnSerial_string("Gimbal Out:", endpoint);
+    for (int i=0; i<8; i++)
+    {
+        int16_t found_channel_input = -1;
+        for (int j=0; j<SBUS_MAX_CHANNEL; j++)
+        {
+            if (activesettings.rc_channel_sbus_out_mapping[j] == i)
+            {
+                found_channel_input = j;
+                break;
+            }
+        }
+        if (found_channel_input == -1)
+        {
+            PrintSerial_string("                    ", endpoint);
+        }
+        else
+        {
+            PrintSerial_string("input channel", endpoint);
+            PrintSerial_int(found_channel_input+1, endpoint);
+            PrintSerial_string(" ==> ", endpoint);
+        }
+        PrintSerial_string("\t SBus out channel", endpoint);
+        PrintSerial_int(i+1, endpoint);
+        PrintSerial_string(", current output =", endpoint);
+        switch (i)
+        {
+            case 0: PrintlnSerial_int(sBusFrameGimbal.frame.chan0, endpoint); break;
+            case 1: PrintlnSerial_int(sBusFrameGimbal.frame.chan1, endpoint); break;
+            case 2: PrintlnSerial_int(sBusFrameGimbal.frame.chan2, endpoint); break;
+            case 3: PrintlnSerial_int(sBusFrameGimbal.frame.chan3, endpoint); break;
+            case 4: PrintlnSerial_int(sBusFrameGimbal.frame.chan4, endpoint); break;
+            case 5: PrintlnSerial_int(sBusFrameGimbal.frame.chan5, endpoint); break;
+            case 6: PrintlnSerial_int(sBusFrameGimbal.frame.chan6, endpoint); break;
+            case 7: PrintlnSerial_int(sBusFrameGimbal.frame.chan7, endpoint); break;
+        }
+    }
+
+}
+

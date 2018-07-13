@@ -20,7 +20,7 @@ But actually, this AUX channel can be used for many things, control a camera foc
 
 
 
-## Assoziated commands
+## Associated commands
 
 | Command                                              | Allowed values           | Description                          |
 | ---------------------------------------------------- | ------------------------ | ------------------------------------ |

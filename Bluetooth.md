@@ -29,7 +29,7 @@ The controller supports getting commands via UART as well, usually connected to 
 
 
 
-## Assoziated commands
+## Associated commands
 
 | Command | Allowed values | Description                                                  |
 | ------- | -------------- | ------------------------------------------------------------ |
