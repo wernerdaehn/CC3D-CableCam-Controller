@@ -29,6 +29,14 @@ The controller supports getting commands via UART as well, usually connected to 
 
 
 
+## Assoziated commands
+
+| Command | Allowed values | Description                                                  |
+| ------- | -------------- | ------------------------------------------------------------ |
+| \$B     |                | Run the HC-06 configuration wizard. Works with HC-06 bluetooth modules only. |
+
+
+
 ## Settings
 
 The UART port is configured for 38400 8n1 and the bluetooth module needs to match that setting. How to change the settings is dependent on the bluetooth module being used.
