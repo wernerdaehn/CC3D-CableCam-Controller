@@ -17,7 +17,7 @@ At the moment however the SBus input channels are mapped to output channels and 
 
 | Function                | MCU Pin | MCU Function | Connector Pin | Flip32 F4  |
 | ----------------------- | ------- | ------------ | ------------- | ---------- |
-| SBus Out (non-inverted) | PC7     | USART6_TX    | FlexIO Pin7   | CH6/TX6/J6 |
+| SBus Out (non-inverted) | PC7     | USART6_TX    | FlexIO Pin8   | CH6/TX6/J6 |
 | GND                     |         |              | FlexIO Pin1   | GND/J2     |
 
 Attention: **Do not connect the +5V line** with the board! Since both, gimbal and board do provide 5V power, it could cause damage. Would be like connecting two batteries with each other.
