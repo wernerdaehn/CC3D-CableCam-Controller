@@ -128,7 +128,7 @@ void setPos(void)
 void initController(void)
 {
     controllerstatus.safemode = INVALID_RC;
-    controllerstatus.play_running = OFF;
+    controllerstatus.play_running = FORCE_OFF;
 }
 
 float abs_d(float v)
