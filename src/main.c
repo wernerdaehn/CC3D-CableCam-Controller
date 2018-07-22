@@ -155,7 +155,7 @@ int main(void)
         Error_Handler();
     }
 
-    strcpy(activesettings.version, "20180531");
+    strcpy(activesettings.version, "20180722");
     activesettings.esc_direction = 0;
     activesettings.max_position_error = 100.0f;
     activesettings.mode = MODE_PASSTHROUGH;
@@ -195,20 +195,18 @@ int main(void)
         activesettings.rc_channel_sbus_out_mapping[i] = 255;
         activesettings.rc_channel_sbus_out_default[i] = 992;
     }
+    activesettings.play_reverse_waiting_time = 5000L;
     activesettings.structure_length = sizeof(activesettings);
 
     eeprom_read_sector((uint8_t *)&defaultsettings, sizeof(defaultsettings), EEPROM_SECTOR_FOR_SETTINGS);
     if (strncmp(activesettings.version, defaultsettings.version, sizeof(activesettings.version)) == 0)
     {
         // Version is the same
-        memcpy(&activesettings, &defaultsettings, sizeof(defaultsettings));
+        memcpy(&activesettings, &defaultsettings, defaultsettings.structure_length);
         strcpy(controllerstatus.boottext_eeprom, "defaults loaded from eeprom");
     }
-    else if (strncmp(defaultsettings.version, "2017", 4) == 0)
-    {
-        strcpy(controllerstatus.boottext_eeprom, "Values in the EEPROM outdated, please setup all again");
-    }
-    else if (strncmp(defaultsettings.version, "2018", 4) >= 0)
+    else if (strncmp(defaultsettings.version, "2018", 4) >= 0 &&
+             strncmp(defaultsettings.version, "20", 2) == 0 ) // flash erase sets all to 0xFFFF
     {
         /*
          * Version stored is valid but older, hence copy the old structure over the activestructure.

@@ -27,6 +27,7 @@
 #define PROTOCOL_POS              'p'
 #define PROTOCOL_PLAY             'P'   // 1 int argument, play=1 or don't play
 #define PROTOCOL_ROTATION_DIR     'r'   // 1 int argument
+#define PROTOCOL_REVERSE_WAIT     'R'   // 1 int argument
 #define PROTOCOL_SETTINGS         'S'   // no argument
 #define PROTOCOL_EEPROM_WRITE     'w'   // no argument
 #define PROTOCOL_EEPROM_VOID      'W'   // no argument
@@ -107,8 +108,8 @@ typedef struct
     uint8_t rc_channel_mode;
     uint8_t mode;
     float max_position_error;
-    float ignore1_pos_start;
-    float ignore2_pos_end;
+    float ignore1;
+    float ignore2;
     uint8_t receivertype;
     int16_t esc_neutral_pos;
     int16_t esc_neutral_range;
@@ -136,6 +137,7 @@ typedef struct
     int16_t aux_value_range;
     uint8_t noop_padding_2[2]; // Needed to align the structure to 32bit
     uint16_t rc_channel_sbus_out_default[8];
+    uint32_t play_reverse_waiting_time;
 } settings_t;
 
 
@@ -168,7 +170,7 @@ typedef struct
     bool speed_limiter;
     bool endpointbrake;
     bool emergencybrake;
-    uint8_t play_running;
+    PLAY_RUNNING_t play_running;
     int8_t play_direction;
     uint32_t play_time_lastsignal; // Failsafe. If the play signal is not received for a given amount of time, stop playing the program. RC or app seems to be disconnected.
     uint32_t play_endpoint_reached_at; // Used to calculate the pause before running into the other direction

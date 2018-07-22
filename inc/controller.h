@@ -20,4 +20,19 @@ float getModeSwitch(void);
 float getPlaySwitch(void);
 float getAuxInput(void);
 
+
+/*
+ * This is the Play state machine. Valid changes are:
+ * OFF -> ON
+ * ON -> OFF, TEMPORARY_OFF, FORCE_OFF
+ * TEMPORARY_OFF -> OFF, ON
+ * FORCE_OFF -> OFF
+ */
+typedef enum {
+	OFF = 0,  			// State machine shows that Play has not bee requested
+	ON,		            // State machine shows that Play is on
+	TEMPORARY_OFF,		// The current state asks Play to be turned Off, condition might change
+	FORCE_OFF           // A condition requires Play to set Off, need to switch Play Off to continue
+} PLAY_RUNNING_t;
+
 #endif

@@ -128,6 +128,7 @@ void setPos(void)
 void initController(void)
 {
     controllerstatus.safemode = INVALID_RC;
+    controllerstatus.play_running = OFF;
 }
 
 float abs_d(float v)
@@ -228,36 +229,36 @@ float getStickPositionRaw()
         }
         else
         {
-            if (controllerstatus.play_running == 1)
+            if (controllerstatus.play_running == ON)
             {
                 if (controllerstatus.safemode != OPERATIONAL)
                 {
-                    controllerstatus.play_running = 2;
+                    controllerstatus.play_running = FORCE_OFF;
                     PrintlnSerial_string("Cannot Play, not in operational mode but endpoint programming mode", EndPoint_All);
                 }
                 else if (activesettings.mode != MODE_LIMITER_ENDPOINTS)
                 {
-                    controllerstatus.play_running = 2;
+                    controllerstatus.play_running = FORCE_OFF;
                     PrintlnSerial_string("Cannot Play, not limiter with endpoints mode", EndPoint_All);
                 }
                 else if (value != 0.0f)
                 {
-                    controllerstatus.play_running = 2;
+                    controllerstatus.play_running = FORCE_OFF;
                     PrintlnSerial_string("Cannot Play, stick is not in neutral", EndPoint_All);
                 }
                 else if (semipermanentsettings.pos_start == -POS_END_NOT_SET)
                 {
-                    controllerstatus.play_running = 2;
+                    controllerstatus.play_running = FORCE_OFF;
                     PrintlnSerial_string("Cannot Play, pos_end is not set", EndPoint_All);
                 }
                 else if (semipermanentsettings.pos_end == POS_END_NOT_SET )
                 {
-                    controllerstatus.play_running = 2;
+                    controllerstatus.play_running = FORCE_OFF;
                     PrintlnSerial_string("Cannot Play, pos_start is not set", EndPoint_All);
                 }
                 else if (activesettings.esc_direction == 0.0f)
                 {
-                    controllerstatus.play_running = 2;
+                    controllerstatus.play_running = FORCE_OFF;
                     PrintlnSerial_string("Cannot Play, esc direction is not set. See $r", EndPoint_All);
                 } else
                 {
@@ -292,7 +293,7 @@ float getStickPositionRaw()
                             }
                         }
 
-                        if (HAL_GetTick() - controllerstatus.play_endpoint_reached_at < 5000L)  // wait for 5 seconds at the start/end point
+                        if (HAL_GetTick() - controllerstatus.play_endpoint_reached_at < activesettings.play_reverse_waiting_time)  // wait for 5 seconds at the start/end point
                         {
                             value = 0.0f;
                         }
@@ -808,15 +809,27 @@ float stickCycle(float brakedistance)
 
     }
 
-    float playswitch = getPlaySwitch();
-    if (!isnan(playswitch) && playswitch > 0.8f)
+    if (activesettings.rc_channel_play < SBUS_MAX_CHANNEL)
     {
-        controllerstatus.play_running = 1;
-        controllerstatus.play_time_lastsignal = HAL_GetTick();
-    }
-    else
-    {
-        controllerstatus.play_running = 0;
+        float playswitch = getPlaySwitch();
+        if (!isnan(playswitch) && playswitch > 0.8f)
+        {
+            /*
+             * Switch on play_running only if there is no permanent error.
+             * This is to avoid running the play directly after power on by accident.
+             * In such cases Play needs to be switched OFF, then play_running is set to Off and then
+             * can be turned on again.
+             */
+            if (controllerstatus.play_running != FORCE_OFF)
+            {
+                controllerstatus.play_running = ON;
+                controllerstatus.play_time_lastsignal = HAL_GetTick();
+            }
+        }
+        else
+        {
+            controllerstatus.play_running = OFF;
+        }
     }
 
     return value;

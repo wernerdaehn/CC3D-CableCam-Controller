@@ -148,7 +148,7 @@
 	</File>
 	<File name="src\bluetooth.c" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="719" topLine="3" />
+			<Cursor1 position="354" topLine="6" />
 		</Cursor>
 	</File>
 	<File name="src\clock_50Hz.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -158,8 +158,11 @@
 	</File>
 	<File name="src\controller.c" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="-1" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="36351" topLine="745" />
+			<Cursor1 position="26956" topLine="342" />
 		</Cursor>
+		<Folding>
+			<Collapse line="372" />
+		</Folding>
 	</File>
 	<File name="src\eeprom.c" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
@@ -168,40 +171,50 @@
 	</File>
 	<File name="src\main.c" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="20952" topLine="548" />
+			<Cursor1 position="7253" topLine="140" />
 		</Cursor>
 	</File>
-	<File name="src\protocol.c" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\protocol.c" open="1" top="1" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="70452" topLine="861" />
+			<Cursor1 position="71713" topLine="381" />
 		</Cursor>
 		<Folding>
-			<Collapse line="344" />
-			<Collapse line="377" />
-			<Collapse line="402" />
-			<Collapse line="412" />
-			<Collapse line="444" />
-			<Collapse line="460" />
-			<Collapse line="469" />
-			<Collapse line="548" />
-			<Collapse line="583" />
-			<Collapse line="617" />
-			<Collapse line="651" />
-			<Collapse line="677" />
-			<Collapse line="702" />
-			<Collapse line="746" />
-			<Collapse line="773" />
-			<Collapse line="1203" />
-			<Collapse line="1301" />
-			<Collapse line="1315" />
-			<Collapse line="1328" />
-			<Collapse line="1335" />
-			<Collapse line="1341" />
+			<Collapse line="345" />
+			<Collapse line="378" />
+			<Collapse line="403" />
+			<Collapse line="413" />
+			<Collapse line="445" />
+			<Collapse line="461" />
+			<Collapse line="470" />
+			<Collapse line="549" />
+			<Collapse line="584" />
+			<Collapse line="618" />
+			<Collapse line="652" />
+			<Collapse line="678" />
+			<Collapse line="703" />
+			<Collapse line="747" />
+			<Collapse line="774" />
+			<Collapse line="781" />
+			<Collapse line="823" />
+			<Collapse line="876" />
+			<Collapse line="903" />
+			<Collapse line="917" />
+			<Collapse line="946" />
+			<Collapse line="1008" />
+			<Collapse line="1137" />
+			<Collapse line="1150" />
+			<Collapse line="1178" />
+			<Collapse line="1205" />
+			<Collapse line="1303" />
+			<Collapse line="1317" />
+			<Collapse line="1330" />
+			<Collapse line="1337" />
+			<Collapse line="1343" />
 		</Folding>
 	</File>
-	<File name="src\sbus.c" open="1" top="1" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\sbus.c" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="14295" topLine="359" />
+			<Cursor1 position="14295" topLine="351" />
 		</Cursor>
 	</File>
 	<File name="src\serial_print.c" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">

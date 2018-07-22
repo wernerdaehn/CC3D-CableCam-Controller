@@ -352,27 +352,24 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             {
                 activesettings.stick_max_accel = p[0]*CONTROLLERLOOPTIME_FLOAT;
                 activesettings.stick_max_accel_safemode = p[1]*CONTROLLERLOOPTIME_FLOAT;
-                writeProtocolHead(PROTOCOL_MAX_ACCEL, endpoint);
-                writeProtocolOK(endpoint);
             }
             else
             {
                 writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                return;
             }
         }
-        else if (argument_index <= 0)
-        {
-            writeProtocolHead(PROTOCOL_MAX_ACCEL, endpoint);
-            writeProtocolFloat(activesettings.stick_max_accel/CONTROLLERLOOPTIME_FLOAT, endpoint);
-            writeProtocolFloat(activesettings.stick_max_accel_safemode/CONTROLLERLOOPTIME_FLOAT, endpoint);
-            writeProtocolOK(endpoint);
-            PrintSerial_string("Current value: ", endpoint);
-            PrintlnSerial_float(controllerstatus.accel_limiter, endpoint);
-        }
-        else
+        else if (argument_index != EOF)
         {
             writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
         }
+        writeProtocolHead(PROTOCOL_MAX_ACCEL, endpoint);
+        writeProtocolFloat(activesettings.stick_max_accel/CONTROLLERLOOPTIME_FLOAT, endpoint);
+        writeProtocolFloat(activesettings.stick_max_accel_safemode/CONTROLLERLOOPTIME_FLOAT, endpoint);
+        writeProtocolOK(endpoint);
+        PrintSerial_string("Current value: ", endpoint);
+        PrintlnSerial_float(controllerstatus.accel_limiter, endpoint);
         break;
     }
     case PROTOCOL_MAX_ERROR_DIST:
@@ -384,20 +381,21 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             if (d > 0.0f)
             {
                 activesettings.max_position_error = d;
-                writeProtocolHead(PROTOCOL_MAX_ERROR_DIST, endpoint);
-                writeProtocolOK(endpoint);
             }
             else
             {
                 writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                return;
             }
         }
-        else
+        else if (argument_index != EOF)
         {
-            writeProtocolHead(PROTOCOL_MAX_ERROR_DIST, endpoint);
-            writeProtocolFloat(activesettings.max_position_error, endpoint);
-            writeProtocolOK(endpoint);
+            writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
         }
+        writeProtocolHead(PROTOCOL_MAX_ERROR_DIST, endpoint);
+        writeProtocolFloat(activesettings.max_position_error, endpoint);
+        writeProtocolOK(endpoint);
         break;
     }
     case PROTOCOL_POS:
@@ -421,25 +419,22 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             {
                 activesettings.stick_max_speed = p[0];
                 activesettings.stick_max_speed_safemode = p[1];
-                writeProtocolHead(PROTOCOL_MAX_SPEED, endpoint);
-                writeProtocolOK(endpoint);
             }
             else
             {
                 writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                return;
             }
         }
-        else if (argument_index <= 0)
-        {
-            writeProtocolHead(PROTOCOL_MAX_SPEED, endpoint);
-            writeProtocolFloat(activesettings.stick_max_speed, endpoint);
-            writeProtocolFloat(activesettings.stick_max_speed_safemode, endpoint);
-            writeProtocolOK(endpoint);
-        }
-        else
+        else if (argument_index != EOF)
         {
             writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
         }
+        writeProtocolHead(PROTOCOL_MAX_SPEED, endpoint);
+        writeProtocolFloat(activesettings.stick_max_speed, endpoint);
+        writeProtocolFloat(activesettings.stick_max_speed_safemode, endpoint);
+        writeProtocolOK(endpoint);
         break;
     }
     case PROTOCOL_EEPROM_WRITE:
@@ -480,70 +475,58 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             if (p[0] > 0 && p[0] <= SBUS_MAX_CHANNEL)
             {
                 activesettings.rc_channel_speed = p[0]-1;
-
-                writeProtocolHead(PROTOCOL_INPUT_CHANNELS, endpoint);
-                writeProtocolInt(activesettings.rc_channel_speed+1, endpoint);
                 if (argument_index >= 2)
                 {
                     activesettings.rc_channel_programming = valid_channelassignment(p[1])-1;
-                    writeProtocolInt(activesettings.rc_channel_programming+1, endpoint);
                 }
                 if (argument_index >= 3)
                 {
                     activesettings.rc_channel_endpoint = valid_channelassignment(p[2])-1;
-                    writeProtocolInt(activesettings.rc_channel_endpoint+1, endpoint);
                 }
                 if (argument_index >= 4)
                 {
                     activesettings.rc_channel_max_accel = valid_channelassignment(p[3])-1;
-                    writeProtocolInt(activesettings.rc_channel_max_accel+1, endpoint);
                 }
                 if (argument_index >= 5)
                 {
                     activesettings.rc_channel_max_speed = valid_channelassignment(p[4])-1;
-                    writeProtocolInt(activesettings.rc_channel_max_speed+1, endpoint);
                 }
                 if (argument_index >= 6)
                 {
                     activesettings.rc_channel_mode = valid_channelassignment(p[5])-1;
-                    writeProtocolInt(activesettings.rc_channel_mode+1, endpoint);
                 }
                 if (argument_index >= 7)
                 {
                     activesettings.rc_channel_aux = valid_channelassignment(p[6])-1;
-                    writeProtocolInt(activesettings.rc_channel_aux+1, endpoint);
                 }
                 if (argument_index >= 8)
                 {
                     activesettings.rc_channel_play = valid_channelassignment(p[7])-1;
-                    writeProtocolInt(activesettings.rc_channel_play+1, endpoint);
                 }
-                writeProtocolOK(endpoint);
             }
             else
             {
                 writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                return;
             }
         }
-        else if (argument_index <= 0)
-        {
-            writeProtocolHead(PROTOCOL_INPUT_CHANNELS, endpoint);
-            writeProtocolInt(activesettings.rc_channel_speed+1, endpoint);
-            writeProtocolInt(activesettings.rc_channel_programming+1, endpoint);
-            writeProtocolInt(activesettings.rc_channel_endpoint+1, endpoint);
-            writeProtocolInt(activesettings.rc_channel_max_accel+1, endpoint);
-            writeProtocolInt(activesettings.rc_channel_max_speed+1, endpoint);
-            writeProtocolInt(activesettings.rc_channel_mode+1, endpoint);
-            writeProtocolInt(activesettings.rc_channel_aux+1, endpoint);
-            writeProtocolInt(activesettings.rc_channel_play+1, endpoint);
-            writeProtocolOK(endpoint);
-
-            printCurrentRCInput(endpoint);
-        }
-        else
+        else if (argument_index != EOF)
         {
             writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
         }
+        writeProtocolHead(PROTOCOL_INPUT_CHANNELS, endpoint);
+        writeProtocolInt(activesettings.rc_channel_speed+1, endpoint);
+        writeProtocolInt(activesettings.rc_channel_programming+1, endpoint);
+        writeProtocolInt(activesettings.rc_channel_endpoint+1, endpoint);
+        writeProtocolInt(activesettings.rc_channel_max_accel+1, endpoint);
+        writeProtocolInt(activesettings.rc_channel_max_speed+1, endpoint);
+        writeProtocolInt(activesettings.rc_channel_mode+1, endpoint);
+        writeProtocolInt(activesettings.rc_channel_aux+1, endpoint);
+        writeProtocolInt(activesettings.rc_channel_play+1, endpoint);
+        writeProtocolOK(endpoint);
+
+        printCurrentRCInput(endpoint);
         break;
     }
     case PROTOCOL_NEUTRAL:
@@ -556,29 +539,26 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                     p[1] > 0 && p[1] < 100 &&
                     p[2] > 300 && p[2] < 1400)
             {
-                writeProtocolHead(PROTOCOL_NEUTRAL, endpoint);
                 activesettings.stick_neutral_pos = p[0];
                 activesettings.stick_neutral_range = p[1];
                 activesettings.stick_value_range = p[2];
-                writeProtocolOK(endpoint);
             }
             else
             {
                 writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                return;
             }
         }
-        else if (argument_index <= 0)
-        {
-            writeProtocolHead(PROTOCOL_NEUTRAL, endpoint);
-            writeProtocolInt(activesettings.stick_neutral_pos, endpoint);
-            writeProtocolInt(activesettings.stick_neutral_range, endpoint);
-            writeProtocolInt(activesettings.stick_value_range, endpoint);
-            writeProtocolOK(endpoint);
-        }
-        else
+        else if (argument_index != EOF)
         {
             writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
         }
+        writeProtocolHead(PROTOCOL_NEUTRAL, endpoint);
+        writeProtocolInt(activesettings.stick_neutral_pos, endpoint);
+        writeProtocolInt(activesettings.stick_neutral_range, endpoint);
+        writeProtocolInt(activesettings.stick_value_range, endpoint);
+        writeProtocolOK(endpoint);
         break;
     }
     case PROTOCOL_ESC_NEUTRAL:
@@ -590,29 +570,26 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             if (p[0] > 500 && p[0] < 2000 &&
                     p[1] > 0 && p[1] < 100 && p[2] > 300 && p[2] < 900)
             {
-                writeProtocolHead(PROTOCOL_ESC_NEUTRAL, endpoint);
                 activesettings.esc_neutral_pos = p[0];
                 activesettings.esc_neutral_range = p[1];
                 activesettings.esc_value_range = p[2];
-                writeProtocolOK(endpoint);
             }
             else
             {
                 writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                return;
             }
         }
-        else if (argument_index <= 0)
-        {
-            writeProtocolHead(PROTOCOL_ESC_NEUTRAL, endpoint);
-            writeProtocolInt(activesettings.esc_neutral_pos, endpoint);
-            writeProtocolInt(activesettings.esc_neutral_range, endpoint);
-            writeProtocolInt(activesettings.esc_value_range, endpoint);
-            writeProtocolOK(endpoint);
-        }
-        else
+        else if (argument_index != EOF)
         {
             writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
         }
+        writeProtocolHead(PROTOCOL_ESC_NEUTRAL, endpoint);
+        writeProtocolInt(activesettings.esc_neutral_pos, endpoint);
+        writeProtocolInt(activesettings.esc_neutral_range, endpoint);
+        writeProtocolInt(activesettings.esc_value_range, endpoint);
+        writeProtocolOK(endpoint);
         break;
     }
     case PROTOCOL_AUX_NEUTRAL:
@@ -624,29 +601,26 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             if (p[0] > 500 && p[0] < 2000 &&
                     p[1] > 0 && p[1] < 100 && p[2] > 300 && p[2] < 900)
             {
-                writeProtocolHead(PROTOCOL_AUX_NEUTRAL, endpoint);
                 activesettings.aux_neutral_pos = p[0];
                 activesettings.aux_neutral_range = p[1];
                 activesettings.aux_value_range = p[2];
-                writeProtocolOK(endpoint);
             }
             else
             {
                 writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                return;
             }
         }
-        else if (argument_index <= 0)
-        {
-            writeProtocolHead(PROTOCOL_AUX_NEUTRAL, endpoint);
-            writeProtocolInt(activesettings.aux_neutral_pos, endpoint);
-            writeProtocolInt(activesettings.aux_neutral_range, endpoint);
-            writeProtocolInt(activesettings.aux_value_range, endpoint);
-            writeProtocolOK(endpoint);
-        }
-        else
+        else if (argument_index != EOF)
         {
             writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
         }
+        writeProtocolHead(PROTOCOL_AUX_NEUTRAL, endpoint);
+        writeProtocolInt(activesettings.aux_neutral_pos, endpoint);
+        writeProtocolInt(activesettings.aux_neutral_range, endpoint);
+        writeProtocolInt(activesettings.aux_value_range, endpoint);
+        writeProtocolOK(endpoint);
         break;
     }
     case PROTOCOL_ROTATION_DIR:
@@ -657,22 +631,22 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         {
             if (p == 1 || p == -1 || p == 0)
             {
-                writeProtocolHead(PROTOCOL_ROTATION_DIR, endpoint);
                 activesettings.esc_direction = (float) p;
-                writeProtocolInt( (int16_t) activesettings.esc_direction, endpoint);
-                writeProtocolOK(endpoint);
             }
             else
             {
                 writeProtocolError(ERROR_ESC_DIRECTION, endpoint);
+                return;
             }
         }
-        else
+        else if (argument_index != EOF)
         {
-            writeProtocolHead(PROTOCOL_ROTATION_DIR, endpoint);
-            writeProtocolInt( (int16_t) activesettings.esc_direction, endpoint);
-            writeProtocolOK(endpoint);
+            writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
         }
+        writeProtocolHead(PROTOCOL_ROTATION_DIR, endpoint);
+        writeProtocolInt( (int16_t) activesettings.esc_direction, endpoint);
+        writeProtocolOK(endpoint);
         break;
     }
     case PROTOCOL_VESC_MAX_ERPM:
@@ -690,14 +664,17 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             else
             {
                 writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                return;
             }
         }
-        else
+        else if (argument_index != EOF)
         {
-            writeProtocolHead(PROTOCOL_VESC_MAX_ERPM, endpoint);
-            writeProtocolLong(activesettings.vesc_max_erpm, endpoint);
-            writeProtocolOK(endpoint);
+            writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
         }
+        writeProtocolHead(PROTOCOL_VESC_MAX_ERPM, endpoint);
+        writeProtocolLong(activesettings.vesc_max_erpm, endpoint);
+        writeProtocolOK(endpoint);
         break;
     }
     case PROTOCOL_INPUT_SOURCE:
@@ -708,37 +685,36 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         {
             if (p == 0)
             {
-                writeProtocolHead(PROTOCOL_INPUT_SOURCE, endpoint);
                 activesettings.receivertype = RECEIVER_TYPE_SUMPPM;
                 initPPMReceiver();
-                writeProtocolOK(endpoint);
             }
             else if (p == 1)
             {
-                writeProtocolHead(PROTOCOL_INPUT_SOURCE, endpoint);
                 activesettings.receivertype = RECEIVER_TYPE_SBUS;
                 initSBusReceiver();
-                writeProtocolOK(endpoint);
             }
             else
             {
                 writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                return;
             }
+        }
+        else if (argument_index != EOF)
+        {
+            writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
+        }
+        writeProtocolHead(PROTOCOL_INPUT_SOURCE, endpoint);
+        writeProtocolInt(activesettings.receivertype, endpoint);
+        if (activesettings.receivertype == RECEIVER_TYPE_SUMPPM)
+        {
+            writeProtocolText("(Receiver is of type Sum-PPM) ", endpoint);
         }
         else
         {
-            writeProtocolHead(PROTOCOL_INPUT_SOURCE, endpoint);
-            writeProtocolInt(activesettings.receivertype, endpoint);
-            if (activesettings.receivertype == RECEIVER_TYPE_SUMPPM)
-            {
-                writeProtocolText("(Receiver is of type Sum-PPM) ", endpoint);
-            }
-            else
-            {
-                writeProtocolText("(Receiver is of type SBus) ", endpoint);
-            }
-            writeProtocolOK(endpoint);
+            writeProtocolText("(Receiver is of type SBus) ", endpoint);
         }
+        writeProtocolOK(endpoint);
         break;
     }
     case PROTOCOL_HELP:
@@ -752,23 +728,24 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         {
             if (p == MODE_LIMITER || p == MODE_LIMITER_ENDPOINTS || p == MODE_PASSTHROUGH)
             {
-                writeProtocolHead(PROTOCOL_MODE, endpoint);
                 activesettings.mode = p;
-                writeProtocolOK(endpoint);
             }
             else
             {
                 writeProtocolError(ERROR_MODE, endpoint);
+                return;
             }
         }
-        else
+        else if (argument_index != EOF)
         {
-            writeProtocolHead(PROTOCOL_MODE, endpoint);
-            writeProtocolInt(activesettings.mode, endpoint);
-            writeProtocolText("...", endpoint);
-            writeProtocolText(getCurrentModeLabel(activesettings.mode), endpoint);
-            writeProtocolOK(endpoint);
+            writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
         }
+        writeProtocolHead(PROTOCOL_MODE, endpoint);
+        writeProtocolInt(activesettings.mode, endpoint);
+        writeProtocolText("...", endpoint);
+        writeProtocolText(getCurrentModeLabel(activesettings.mode), endpoint);
+        writeProtocolOK(endpoint);
         break;
     }
     case PROTOCOL_SETTINGS:
@@ -882,21 +859,21 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             if (d > 0.0f && d <= 1.0f)
             {
                 activesettings.expo_factor = d;
-                writeProtocolHead(PROTOCOL_EXPO_FACTOR, endpoint);
-                writeProtocolOK(endpoint);
             }
             else
             {
                 writeProtocolError(ERROR_INVALID_VALUE, endpoint);
                 return;
             }
-         }
-        else
-        {
-            writeProtocolHead(PROTOCOL_EXPO_FACTOR, endpoint);
-            writeProtocolFloat(activesettings.expo_factor, endpoint);
-            writeProtocolOK(endpoint);
         }
+        else if (argument_index != EOF)
+        {
+            writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
+        }
+        writeProtocolHead(PROTOCOL_EXPO_FACTOR, endpoint);
+        writeProtocolFloat(activesettings.expo_factor, endpoint);
+        writeProtocolOK(endpoint);
         break;
     }
 	case PROTOCOL_BLUETOOTH:
@@ -925,22 +902,22 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                 activesettings.vesc_brake_handbrake_max = 0; // not used
                 activesettings.vesc_brake_handbrake_min = p[0];
                 activesettings.vesc_brake_min_speed = p[1];
-                writeProtocolHead(PROTOCOL_VESC_BRAKE, endpoint);
-                writeProtocolOK(endpoint);
             }
             else
             {
                 writeProtocolError(ERROR_INVALID_VALUE, endpoint);
                 return;
             }
-         }
-        else
-        {
-            writeProtocolHead(PROTOCOL_VESC_BRAKE, endpoint);
-            writeProtocolInt(activesettings.vesc_brake_handbrake_min, endpoint);
-            writeProtocolInt(activesettings.vesc_brake_min_speed, endpoint);
-            writeProtocolOK(endpoint);
         }
+        else if (argument_index != EOF)
+        {
+            writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
+        }
+        writeProtocolHead(PROTOCOL_VESC_BRAKE, endpoint);
+        writeProtocolInt(activesettings.vesc_brake_handbrake_min, endpoint);
+        writeProtocolInt(activesettings.vesc_brake_min_speed, endpoint);
+        writeProtocolOK(endpoint);
         break;
     }
     case PROTOCOL_VESC_STATUS:
@@ -1152,7 +1129,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         int16_t p[8];
         argument_index = sscanf(&commandlinebuffer[2], "%hd %hd %hd %hd %hd %hd %hd %hd", &p[0], &p[1], &p[2], &p[3], &p[4], &p[5], &p[6], &p[7]);
 
-        if (argument_index >= 1)
+        if (argument_index >= 1 && argument_index <= 8)
         {
             for (int i=0; i<8; i++)
             {
@@ -1165,6 +1142,11 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                     activesettings.rc_channel_sbus_out_mapping[i] = 255;
                 }
             }
+        }
+        else if (argument_index != EOF)
+        {
+            writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
         }
         writeProtocolHead(PROTOCOL_INPUT_GIMBAL, endpoint);
         for (int i=0; i<8; i++)
@@ -1180,7 +1162,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         int16_t p[8];
         argument_index = sscanf(&commandlinebuffer[2], "%hd %hd %hd %hd %hd %hd %hd %hd", &p[0], &p[1], &p[2], &p[3], &p[4], &p[5], &p[6], &p[7]);
 
-        if (argument_index >= 1)
+        if (argument_index >= 1 && argument_index <= 8)
         {
             for (int i=0; i<8; i++)
             {
@@ -1194,6 +1176,11 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                 }
             }
         }
+        else if (argument_index != EOF)
+        {
+            writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
+        }
         writeProtocolHead(PROTOCOL_INPUT_GIMBAL_DEFAULT, endpoint);
         for (int i=0; i<8; i++)
         {
@@ -1203,151 +1190,182 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         break;
     }
     case PROTOCOL_INPUT_SINGLE:
+    {
+        char c;
+        int16_t p;
+        argument_index = sscanf(&commandlinebuffer[2], "%1s %hd", &c, &p);
+        if (argument_index == 2)
         {
-            char c;
-            int16_t p;
-            argument_index = sscanf(&commandlinebuffer[2], "%1s %hd", &c, &p);
-            if (argument_index == 2)
-            {
-                if (p > 0 && p <= 256)
-                {
-                    switch (c)
-                    {
-                    case 'a':
-                        activesettings.rc_channel_aux = p-1;
-                        break;
-                    case 'm':
-                        activesettings.rc_channel_mode = p-1;
-                        break;
-                    case 'p':
-                        activesettings.rc_channel_play = p-1;
-                        break;
-                    case 'e':
-                        activesettings.rc_channel_endpoint = p-1;
-                        break;
-                    case 'A':
-                        activesettings.rc_channel_max_accel = p-1;
-                        break;
-                    case 'V':
-                        activesettings.rc_channel_max_speed = p-1;
-                        break;
-                    case 'P':
-                        activesettings.rc_channel_programming = p-1;
-                        break;
-                    case 'v':
-                        activesettings.rc_channel_speed = p-1;
-                        break;
-                    default:
-                        writeProtocolError(ERROR_INVALID_VALUE, endpoint);
-                        return;
-                    }
-                    writeProtocolHead(PROTOCOL_INPUT_SINGLE, endpoint);
-                    writeProtocolOK(endpoint);
-                }
-                else
-                {
-                    writeProtocolError(ERROR_INVALID_VALUE, endpoint);
-                    return;
-                }
-            }
-            else if (argument_index == 1)
+            if (p > 0 && p <= 256)
             {
                 switch (c)
                 {
                 case 'a':
-                    p = activesettings.rc_channel_aux;
+                    activesettings.rc_channel_aux = p-1;
                     break;
                 case 'm':
-                    p = activesettings.rc_channel_mode;
+                    activesettings.rc_channel_mode = p-1;
                     break;
                 case 'p':
-                    p = activesettings.rc_channel_play;
+                    activesettings.rc_channel_play = p-1;
                     break;
                 case 'e':
-                    p = activesettings.rc_channel_endpoint;
+                    activesettings.rc_channel_endpoint = p-1;
                     break;
                 case 'A':
-                    p = activesettings.rc_channel_max_accel;
+                    activesettings.rc_channel_max_accel = p-1;
                     break;
                 case 'V':
-                    p = activesettings.rc_channel_max_speed;
+                    activesettings.rc_channel_max_speed = p-1;
                     break;
                 case 'P':
-                    p = activesettings.rc_channel_programming;
+                    activesettings.rc_channel_programming = p-1;
                     break;
                 case 'v':
-                    p = activesettings.rc_channel_speed;
+                    activesettings.rc_channel_speed = p-1;
                     break;
                 default:
-                    p = -1;
-                }
-                if (p == -1)
-                {
                     writeProtocolError(ERROR_INVALID_VALUE, endpoint);
-                }
-                else
-                {
-                    writeProtocolHead(PROTOCOL_INPUT_SINGLE, endpoint);
-                    writeProtocolChar(c, endpoint);
-                    writeProtocolInt(p+1, endpoint);
-                    writeProtocolOK(endpoint);
+                    return;
                 }
             }
             else
             {
-                writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+                writeProtocolError(ERROR_INVALID_VALUE, endpoint);
                 return;
             }
-            break;
         }
+        else if (argument_index != 1)
+        {
+            writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
+        }
+        switch (c)
+        {
+        case 'a':
+            p = activesettings.rc_channel_aux;
+            break;
+        case 'm':
+            p = activesettings.rc_channel_mode;
+            break;
+        case 'p':
+            p = activesettings.rc_channel_play;
+            break;
+        case 'e':
+            p = activesettings.rc_channel_endpoint;
+            break;
+        case 'A':
+            p = activesettings.rc_channel_max_accel;
+            break;
+        case 'V':
+            p = activesettings.rc_channel_max_speed;
+            break;
+        case 'P':
+            p = activesettings.rc_channel_programming;
+            break;
+        case 'v':
+            p = activesettings.rc_channel_speed;
+            break;
+        default:
+            p = -1;
+        }
+        if (p == -1)
+        {
+            writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+        }
+        else
+        {
+            writeProtocolHead(PROTOCOL_INPUT_SINGLE, endpoint);
+            writeProtocolChar(c, endpoint);
+            writeProtocolInt(p+1, endpoint);
+            writeProtocolOK(endpoint);
+        }
+        break;
+    }
     case PROTOCOL_PLAY:
+    {
+        int16_t p;
+        argument_index = sscanf(&commandlinebuffer[2], "%hd", &p);
+        if (argument_index == 1)
         {
-            int16_t p;
-            argument_index = sscanf(&commandlinebuffer[2], "%hd", &p);
-            if (argument_index == 1)
-            {
-                controllerstatus.play_running = p;
-                controllerstatus.play_time_lastsignal = HAL_GetTick();
-            }
-            writeProtocolHead(PROTOCOL_PLAY, endpoint);
-            writeProtocolInt(controllerstatus.play_running, endpoint);
-            writeProtocolOK(endpoint);
-            break;
+            controllerstatus.play_running = p;
+            controllerstatus.play_time_lastsignal = HAL_GetTick();
         }
+        else if (argument_index != EOF)
+        {
+            writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
+        }
+        writeProtocolHead(PROTOCOL_PLAY, endpoint);
+        writeProtocolInt(controllerstatus.play_running, endpoint);
+        writeProtocolOK(endpoint);
+        break;
+    }
+    case PROTOCOL_REVERSE_WAIT:
+    {
+        uint32_t p;
+        argument_index = sscanf(&commandlinebuffer[2], "%lu", &p);
+        if (argument_index == 1)
+        {
+            if (p > 0L && p < 600L)
+            {
+                activesettings.play_reverse_waiting_time = p * 1000L;
+            }
+            else
+            {
+                writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                return;
+            }
+        }
+        else if (argument_index != EOF)
+        {
+            writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
+        }
+        writeProtocolHead(PROTOCOL_REVERSE_WAIT, endpoint);
+        writeProtocolInt(activesettings.play_reverse_waiting_time/1000L, endpoint);
+        writeProtocolOK(endpoint);
+        break;
+    }
     case PROTOCOL_POS_SOURCE:
+    {
+        int16_t p;
+        argument_index = sscanf(&commandlinebuffer[2], "%hd", &p);
+        if (argument_index == 1)
         {
-            int16_t p;
-            argument_index = sscanf(&commandlinebuffer[2], "%hd", &p);
-            if (argument_index == 1)
-            {
-                activesettings.pos_source = p;
-            }
-            writeProtocolHead(PROTOCOL_POS_SOURCE, endpoint);
-            writeProtocolInt(activesettings.pos_source, endpoint);
-            writeProtocolOK(endpoint);
-            break;
+            activesettings.pos_source = p;
         }
+        else if (argument_index != EOF)
+        {
+            writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
+        }
+        writeProtocolHead(PROTOCOL_POS_SOURCE, endpoint);
+        writeProtocolInt(activesettings.pos_source, endpoint);
+        writeProtocolOK(endpoint);
+        break;
+    }
     case PROTOCOL_VERSION:
-        {
-            writeProtocolHead(PROTOCOL_VERSION, endpoint);
-            writeProtocolText(activesettings.version, endpoint);
-            writeProtocolOK(endpoint);
-            break;
-        }
+    {
+        writeProtocolHead(PROTOCOL_VERSION, endpoint);
+        writeProtocolText(activesettings.version, endpoint);
+        writeProtocolOK(endpoint);
+        break;
+    }
     case PROTOCOL_BOOT:
-        {
-            /*** Jump to System Memory (ST Bootloader) ************************************/
-            JumpToBootloader();
-            // Does never return
-        }
+    {
+        /*** Jump to System Memory (ST Bootloader) ************************************/
+        JumpToBootloader();
+        // Does never return
+    }
     case PROTOCOL_VESC_CONFIG:
-        {
-            controllerstatus.vesc_config = true;
-            writeProtocolHead(PROTOCOL_VESC_CONFIG, endpoint);
-            writeProtocolText("ON", endpoint);
-            writeProtocolOK(endpoint);
-            break;
-        }
+    {
+        controllerstatus.vesc_config = true;
+        writeProtocolHead(PROTOCOL_VESC_CONFIG, endpoint);
+        writeProtocolText("ON", endpoint);
+        writeProtocolOK(endpoint);
+        break;
+    }
     default:  // we do not know how to handle the (valid) message, indicate error MSP $M!
         writeProtocolError(ERROR_UNKNOWN_COMMAND, endpoint);
         break;
@@ -1642,7 +1660,7 @@ void printActiveSettings(Endpoints endpoint)
     USBPeriodElapsed();
 
     // ------- States
-    if (controllerstatus.play_running == 1)
+    if (controllerstatus.play_running == ON)
     {
         PrintSerial_string("Play program requested ", endpoint);
         if (controllerstatus.safemode != OPERATIONAL)
