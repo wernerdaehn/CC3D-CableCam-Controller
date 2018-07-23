@@ -49,5 +49,5 @@ Using the speed dial the maximum speed can be configured. And with the accel dia
 8. [Endpoints](Step%208%20-%20Endpoints.md)
 9. [Aux Channel](Step%209%20-%20Aux%20channel.md) (optional)
 10. [Bluetooth](Step%2010%20-%20Bluetooth.md) (optional)
-11. [Play Function](Step%2011%20-%20Play.md)
+11. [Play Function](Step%2011%20-%20Play.md) (optional)
 
