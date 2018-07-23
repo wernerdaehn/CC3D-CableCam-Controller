@@ -116,8 +116,16 @@ void VESC_Output(float esc_output)
         }
         else
         {
-            // controllerstatus.stick_max_speed reduces the vesc erpm by this factor at stick=100%
-            int32_t vesc_erpm = (int32_t) ((esc_output * controllerstatus.stick_max_speed * ((float) activesettings.vesc_max_erpm)));
+            int32_t vesc_erpm;
+            if (activesettings.mode == MODE_PASSTHROUGH)
+            {
+                vesc_erpm = (int32_t) ((esc_output * ((float) activesettings.vesc_max_erpm)));
+            }
+            else
+            {
+                // controllerstatus.stick_max_speed reduces the vesc erpm by this factor at stick=100%
+                vesc_erpm = (int32_t) ((esc_output * controllerstatus.stick_max_speed * ((float) activesettings.vesc_max_erpm)));
+            }
             VESC_set_rpm(vesc_erpm);
         }
         if (is5Hz())

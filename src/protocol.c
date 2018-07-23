@@ -348,7 +348,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         argument_index = sscanf(&commandlinebuffer[2], "%f %f", &p[0], &p[1]);
         if (argument_index == 2)
         {
-            if (p[0] > 0.0f && p[1] > 0.0f && p[0] < 1.0f && p[1] < 1.0f)
+            if (p[0] >= 0.001f && p[1] >= 0.001f && p[0] <= 1.0f && p[1] <= 1.0f)
             {
                 activesettings.stick_max_accel = p[0]*CONTROLLERLOOPTIME_FLOAT;
                 activesettings.stick_max_accel_safemode = p[1]*CONTROLLERLOOPTIME_FLOAT;
@@ -400,6 +400,31 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
     }
     case PROTOCOL_POS:
     {
+        int32_t p[2];
+        argument_index = sscanf(&commandlinebuffer[2], "%ld %ld", &p[0], &p[1]);
+        if (argument_index == 2)
+        {
+            if (p[0] < p[1] && p[1]-p[0] > 200L )
+            {
+                semipermanentsettings.pos_start = p[0];
+                semipermanentsettings.pos_end = p[1];
+            }
+            else if (p[1] < p[0] && p[0]-p[1] > 200L )
+            {
+                semipermanentsettings.pos_start = p[1];
+                semipermanentsettings.pos_end = p[0];
+            }
+            else
+            {
+                writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                return;
+            }
+        }
+        else if (argument_index != EOF)
+        {
+            writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
+        }
         writeProtocolHead(PROTOCOL_POS, endpoint);
         writeProtocolLong(semipermanentsettings.pos_start, endpoint);
         writeProtocolLong(semipermanentsettings.pos_end, endpoint);
@@ -415,7 +440,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
 
         if (argument_index == 2)
         {
-            if (p[0] > 0.0f && p[1] > 0.0f && p[0] <= 1.0f && p[1] < 1.0f)
+            if (p[0] >= 0.1f && p[1] >= 0.1f && p[0] <= 1.0f && p[1] <= 1.0f)
             {
                 activesettings.stick_max_speed = p[0];
                 activesettings.stick_max_speed_safemode = p[1];
@@ -1276,6 +1301,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         else
         {
             writeProtocolHead(PROTOCOL_INPUT_SINGLE, endpoint);
+            writeProtocolChar(' ', endpoint);
             writeProtocolChar(c, endpoint);
             writeProtocolInt(p+1, endpoint);
             writeProtocolOK(endpoint);
@@ -1528,7 +1554,7 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("$1                                      start a guided setup to set the most important input channels", endpoint);
     PrintlnSerial_string("$a [<float> <float>]                    set or print maximum allowed acceleration in normal and programming mode [%/sec]", endpoint);
     PrintlnSerial_string("$A [<int>]                              set or print AUX output neutral pos and +- neutral range and the +-max range", endpoint);
-    PrintlnSerial_string("$B                                      Configure the HC-05 Bluetooth module on FlexiPort (RX3/TX3)", endpoint);
+    PrintlnSerial_string("$B                                      Configure the HC-06 Bluetooth module on FlexiPort (RX3/TX3)", endpoint);
     // PrintlnSerial_string("$c [<int> <int>]                        VESC handbrake current and min tacho speed to engage handbrake", endpoint);
     PrintlnSerial_string("$D [<int1> ... <int8>]                  set or print gimbal default values for each channel", endpoint);
     PrintlnSerial_string("$e [<long>]                             set or print maximum eRPMs as set in the VESC speed controller. 100% stick = this eRPM", endpoint);
@@ -1557,9 +1583,10 @@ void printHelp(Endpoints endpoint)
 
     PrintlnSerial_string("$n [<int> <int> <int>]                  set or print receiver neutral pos and +-neutral range and +-max range", endpoint);
     PrintlnSerial_string("$N [<int> <int> <int>]                  set or print ESC output neutral pos and +-neutral range and the +-max range", endpoint);
-    PrintlnSerial_string("$p                                      print positions", endpoint);
+    PrintlnSerial_string("$p [<int> <int>]                        print or set start/end positions", endpoint);
     PrintlnSerial_string("$P <int>                                turn the Play command (automatic movement) on (1) or off (0) for the next 2 seconds. Send frequently.", endpoint);
     PrintlnSerial_string("$r [<float>]                            set or print rotation direction of the ESC output, either +1 or -1", endpoint);
+    PrintlnSerial_string("$R [<int>]                              set or print the time [s] before reversing in Play mode", endpoint);
     PrintlnSerial_string("$S                                      print all settings", endpoint);
     PrintlnSerial_string("$v [<float> <float>]                    set or print the maximum output % when stick is at 100% (=1.0) in normal and programming mode", endpoint);
     PrintlnSerial_string("$V                                      print firmware version", endpoint);
