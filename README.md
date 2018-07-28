@@ -35,19 +35,19 @@ Using the speed dial the maximum speed can be configured. And with the accel dia
 
 ## Setup
 
-1. [Flashing the Firmware](Step%201%20-%20Flashing%20the%20Firmware.md)
-2. [Connecting the board](Step%202%20-%20Connect%20to%20the%20board.md) to the computer for first tests and settings
+1. [Flashing the Firmware](docs/Step%201%20-%20Flashing%20the%20Firmware.md)
+2. [Connecting the board](docs/Step%202%20-%20Connect%20to%20the%20board.md) to the computer for first tests and settings
 3. Choosing the receiver
-   1. [SBus](Step%203a%20-%20Receiver%20Input%20SBus.md)
-   2. [SumPPM](Step%203b%20-%20Receiver%20Input%20SumPPM.md)
-4. [Assigning input channels](Step%203b%20-%20Receiver%20Input%20SumPPM.md)
+   1. [SBus](docs/Step%203a%20-%20Receiver%20Input%20SBus.md)
+   2. [SumPPM](docs/Step%203b%20-%20Receiver%20Input%20SumPPM.md)
+4. [Assigning input channels](docs/Step%203b%20-%20Receiver%20Input%20SumPPM.md)
 5. Connecting the motor controller (ESC)
-   1. Using a [servo signal to control the ESC](Step%205a%20-%20Regular%20ESC.md)
-   2. Using the [VESC6 as motor controller](Step%205b%20-%20VESC%20as%20motor%20controller.md)
-6. [Connecting the position sensor](Step%206%20-%20Connecting%20the%20Position%20Sensor.md)
-7. [Limiters](Step%207%20-%20Limiters.md)
-8. [Endpoints](Step%208%20-%20Endpoints.md)
-9. [Aux Channel](Step%209%20-%20Aux%20channel.md) (optional)
-10. [Bluetooth](Step%2010%20-%20Bluetooth.md) (optional)
-11. [Play Function](Step%2011%20-%20Play.md) (optional)
+   1. Using a [servo signal to control the ESC](docs/Step%205a%20-%20Regular%20ESC.md)
+   2. Using the [VESC6 as motor controller](docs/Step%205b%20-%20VESC%20as%20motor%20controller.md)
+6. [Connecting the position sensor](docs/Step%206%20-%20Connecting%20the%20Position%20Sensor.md)
+7. [Limiters](docs/Step%207%20-%20Limiters.md)
+8. [Endpoints](docs/Step%208%20-%20Endpoints.md)
+9. [Aux Channel](docs/Step%209%20-%20Aux%20channel.md) (optional)
+10. [Bluetooth](docs/Step%2010%20-%20Bluetooth.md) (optional)
+11. [Play Function](docs/Step%2011%20-%20Play.md) (optional)
 

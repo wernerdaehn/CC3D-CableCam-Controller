@@ -4,7 +4,7 @@ When driving an RC car, applying full thrust instantly is fun, as the wheels sta
 As long as the user stays within the acceleration limit, he has full control. But if he exceeds the acceleration by e.g. pushing the stick forward too quickly, the stick movement is limited to the maximum allowed acceleration. So the acceleration limiter works by using the stick raw position, e.g. 50%, then apply the expo factor and that is the desired speed in percent. This speed-change is governed by the acceleration limiter.
 The speed limiter works on the output. If the max speed is limited to 50%, the the VESC max erpm or the servo output signal is only 50% of what it has been configured as absolute max via _$e_ or _$N_. In other words, 100% throttle would create a 50% output signal only in this example.
 
-![ramp](_images/ramp.png)
+![ramp](../_images/ramp.png)
 
 ### 
 
@@ -37,7 +37,7 @@ If a dial on the TX is assigned to act as a speed limiter, then the configured v
 
 In other words, the \$v value acts as the absolute maximum and the dial can be used to reduce that for the moment.
 
-<img src="_images/RC_SpeedDialHIGH.jpg" width="300">
+<img src="../_images/RC_SpeedDialHIGH.jpg" width="300">
 
 
 
@@ -47,5 +47,5 @@ For an even acceleration and hence professional looking shots, the acceleration 
 
 As with the speed limiter, the acceleration limiter can be set via a command, \$a in this case, and the dial on the TX - if configured - can be used to select an acceleration limit up to this value.
 
-<img src="_images/RC_AccelDialHIGH.jpg" width="300">
+<img src="../_images/RC_AccelDialHIGH.jpg" width="300">
 

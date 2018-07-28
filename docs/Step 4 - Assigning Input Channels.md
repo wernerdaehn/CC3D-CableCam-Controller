@@ -6,21 +6,21 @@ Hence the first step will be to decide what functions to use and program the RC 
 
 In this example, it is an **example** only(!), the RC sender has been programmed like this:
 
-![Channel Assignments](_images/RC_ChannelFunctions.jpg)
+![Channel Assignments](../_images/RC_ChannelFunctions.jpg)
 
  
 
-| Function                                                    | Example Channel# | Description                                                  |
-| ----------------------------------------------------------- | ---------------- | ------------------------------------------------------------ |
-| **ESC** ![Speed](_images/RC_ESC.jpg)                        | 8                | Controls the CableCam speed                                  |
-| **Prog** ![EndPoint](_images/RC_EndpointProgrammingOFF.jpg) | 11               | Endpoint Programming switch, flip to change from OPERATIONAL to ENDPOINT PROGRAMMING |
-| **EndPoint** ![EndPoint](_images/RC_SetEndpoint.jpg)        | 12               | A tip switch, when touched sets the current position as start/end point |
-| **MaxAccel** ![Dial1](_images/RC_AccelDialHIGH.jpg)         | 9                | A dial that allows changing the maximum acceleration         |
-| **MaxSpeed** ![Speed](_images/RC_SpeedDialHIGH.jpg)         | 10               | A dial that sets the max speed at stick 100%                 |
-| **CCMode** ![CCmode](_images/RC_ModeSwitchLIMITER.jpg)      | 14               | A three-way switch to change between Passthrough, Limiter and Enpoint-with-limiters operation mode |
-| **Play** ![Play](_images/RC_PlayOFF.jpg)                    | 13               | Allows the controller to move the cablecam between the end points automatically |
-| **Aux**                                                     |                  | Servo #2 output can be controlled via a channel as well      |
-| **Gimbal**                                                  | 1 to 7           | Channels to control the gimbal                               |
+| Function                                                     | Example Channel# | Description                                                  |
+| ------------------------------------------------------------ | ---------------- | ------------------------------------------------------------ |
+| **ESC** ![Speed](../_images/RC_ESC.jpg)                      | 8                | Controls the CableCam speed                                  |
+| **Prog** ![EndPoint](../_images/RC_EndpointProgrammingOFF.jpg) | 11               | Endpoint Programming switch, flip to change from OPERATIONAL to ENDPOINT PROGRAMMING |
+| **EndPoint** ![EndPoint](../_images/RC_SetEndpoint.jpg)      | 12               | A tip switch, when touched sets the current position as start/end point |
+| **MaxAccel** ![Dial1](../_images/RC_AccelDialHIGH.jpg)       | 9                | A dial that allows changing the maximum acceleration         |
+| **MaxSpeed** ![Speed](../_images/RC_SpeedDialHIGH.jpg)       | 10               | A dial that sets the max speed at stick 100%                 |
+| **CCMode** ![CCmode](../_images/RC_ModeSwitchLIMITER.jpg)    | 14               | A three-way switch to change between Passthrough, Limiter and Enpoint-with-limiters operation mode |
+| **Play** ![Play](../_images/RC_PlayOFF.jpg)                  | 13               | Allows the controller to move the cablecam between the end points automatically |
+| **Aux**                                                      |                  | Servo #2 output can be controlled via a channel as well      |
+| **Gimbal**                                                   | 1 to 7           | Channels to control the gimbal                               |
 
 
 
@@ -58,7 +58,7 @@ With the guided setup above only the most important functions can be assigned. F
 
 The \$i command also helps to get a quick overview of the assigned channels.
 
-![Input channel command](_images/console_input_config.png)
+![Input channel command](../_images/console_input_config.png)
 
 At the top it shows the information when the last signal was successfully decoded. 
 

@@ -17,15 +17,15 @@ The controller supports getting commands via UART as well, usually connected to 
 
 #### Pinout
 
-![UART Pins](_images/Flip32_F4_Pins_UART.jpg)
+![UART Pins](../_images/Flip32_F4_Pins_UART.jpg)
 
 
 
-![UART Pins](_images/Flip32_F4_Pins_UART_RL.jpg)
+![UART Pins](../_images/Flip32_F4_Pins_UART_RL.jpg)
 
 
 
-![UART Pins](_images/Flip32_F4_Pins_UART_BT_Module.jpg)
+![UART Pins](../_images/Flip32_F4_Pins_UART_BT_Module.jpg)
 
 
 
@@ -34,6 +34,8 @@ The controller supports getting commands via UART as well, usually connected to 
 | Command | Allowed values | Description                                                  |
 | ------- | -------------- | ------------------------------------------------------------ |
 | \$B     |                | Run the HC-06 configuration wizard. Works with HC-06 bluetooth modules only. |
+| $d b    |                | Turn on/off bluetooth debugging. Turned on means that all commands received from bluetooth are also printed on the USB terminal. |
+| $d B    |                | Show the last errorcode for the UART3 where bluetooth is connected. Should help if the baud rate or related settings are configured wrong |
 
 
 

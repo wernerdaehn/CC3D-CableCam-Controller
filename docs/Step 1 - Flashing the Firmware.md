@@ -7,10 +7,10 @@ _Note: All drivers used are included in a standard Windows 10 installation._
 1. As this activates the STM32F4 hardware bootloader and no firmware runs, only the Power LED should be on. If the Status LED does blink, the firmware is active. Try again above step.
 1. Download the firmware from this project https://github.com/wernerdaehn/CC3D-CableCam-Controller/blob/master/bin/Debug/CableCamControllerF4.dfu
 1. At the bottom of the utility, in the _Upgrade or Verify Action_ area, click on _Choose_ and select above's downloaded CableCamControllerF4.dfu file. 
-<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/dfuse_choose.jpg"><img src="_images/dfuse_choose.jpg" height="100px"/></a>
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/dfuse_choose.jpg"><img src="../_images/dfuse_choose.jpg" height="100px"/></a>
 1. The DfuSe Utility should show in the top box the text _STM Device in DFU Mode_. This indicates the board's hardware bootloader is running. 
 1. If it does, the _Upgrade_ button copies the firmware onto the board. 
-<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/dfuse_upgrade.jpg"><img src="_images/dfuse_upgrade.jpg" height="100px"/></a>
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/dfuse_upgrade.jpg"><img src="../_images/dfuse_upgrade.jpg" height="100px"/></a>
 1. The next dialog(s) is to be confirmed with _yes_. We are certain the firmware is for the STM32F405RG chip.
 1. To validate the flashing was successful, the _Verify_ action should be triggered, just to doublecheck.
 1. At the top is the _Leave DFU mode_ button to restart the controller with the new firmware.

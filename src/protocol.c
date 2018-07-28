@@ -65,6 +65,7 @@ settings_t activesettings;
 settings2_t semipermanentsettings;
 
 controllerstatus_t controllerstatus;
+extern UART_HandleTypeDef huart3;
 
 extern TIM_HandleTypeDef htim1;
 extern getvalues_t vescvalues;
@@ -95,6 +96,7 @@ void printChannelDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, Endpoints en
 
 void printCurrentRCInput(Endpoints endpoint);
 void printCurrentSBusOut(Endpoints endpoint);
+const char * getONOffLabel(bool test);
 
 int16_t valid_channelassignment(int16_t c);
 
@@ -788,6 +790,38 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         {
             switch (c)
             {
+            case 'b':
+                controllerstatus.bluetooth_passthrough = !controllerstatus.bluetooth_passthrough;
+                PrintSerial_string("Bluetooth debug: ", endpoint);
+                PrintlnSerial_string(getONOffLabel(controllerstatus.bluetooth_passthrough), endpoint);
+                break;
+            case 'B':
+                PrintSerial_string("Bluetooth UART's last error code flag says: ", endpoint);
+                if (huart3.ErrorCode &= HAL_UART_ERROR_PE)
+                {
+                    PrintlnSerial_string("Parity error", endpoint);
+                }
+                else if (huart3.ErrorCode &= HAL_UART_ERROR_NE)
+                {
+                    PrintlnSerial_string("Noise error", endpoint);
+                }
+                else if (huart3.ErrorCode &= HAL_UART_ERROR_FE)
+                {
+                    PrintlnSerial_string("Frame error", endpoint);
+                }
+                else if (huart3.ErrorCode &= HAL_UART_ERROR_ORE)
+                {
+                    PrintlnSerial_string("Buffer Overrun", endpoint);
+                }
+                else
+                {
+                    PrintlnSerial_string("no errors", endpoint);
+                }
+                huart3.ErrorCode = 0;
+                break;
+            case 'p':
+                PrintSumPPMRawData(endpoint);
+                break;
             case 's':
                 PrintSerial_string("SBUS packets:", endpoint);
                 PrintSerial_int(controllerstatus.dsbus_pause, endpoint);
@@ -808,8 +842,12 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                 PrintSerial_string("Last packet:", endpoint);
                 PrintlnSerial_hexstring(controllerstatus.dsbus, SBUS_FRAME_SIZE, endpoint);
                 break;
-            case 'p':
-                PrintSumPPMRawData(endpoint);
+            case 'V':
+                controllerstatus.vesc_config = !controllerstatus.vesc_config;
+                PrintSerial_string("Vesc Config via bluetooth is now: ", endpoint);
+                PrintlnSerial_string(getONOffLabel(controllerstatus.vesc_config), endpoint);
+                PrintlnSerial_string("When ON, the controller stops sending speed commands to the VESC but forwards all bluetooth ", endpoint);
+                PrintlnSerial_string("chars to it to enable the VESC app using the cablecam's bluetooth connection.", endpoint);
                 break;
             default:
                 PrintlnSerial_string("unknown parameter, what to debug?", endpoint);
@@ -1384,14 +1422,6 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         JumpToBootloader();
         // Does never return
     }
-    case PROTOCOL_VESC_CONFIG:
-    {
-        controllerstatus.vesc_config = true;
-        writeProtocolHead(PROTOCOL_VESC_CONFIG, endpoint);
-        writeProtocolText("ON", endpoint);
-        writeProtocolOK(endpoint);
-        break;
-    }
     default:  // we do not know how to handle the (valid) message, indicate error MSP $M!
         writeProtocolError(ERROR_UNKNOWN_COMMAND, endpoint);
         break;
@@ -1870,6 +1900,18 @@ void printCurrentSBusOut(Endpoints endpoint)
             case 7: PrintlnSerial_int(sBusFrameGimbal.frame.chan7, endpoint); break;
         }
     }
-
 }
+
+const char * getONOffLabel(bool test)
+{
+    if (test)
+    {
+        return "ON";
+    }
+    else
+    {
+        return "OFF";
+    }
+}
+
 

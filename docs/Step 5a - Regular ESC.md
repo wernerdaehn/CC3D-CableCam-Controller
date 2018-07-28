@@ -31,7 +31,7 @@ One that looks very promising is the [Hobbywing Xerun AXE](http://www.hobbywing.
 
 #### Pinout
 
-![ESC Pins](_images/Flip32_F4_Pins_ServoESC.jpg)
+![ESC Pins](../_images/Flip32_F4_Pins_ServoESC.jpg)
 
 In most cases the ESC will be used to power the entire CC3D Revo board and therefore the ESCs +6V signal will be connected. The CC3D Revo has power converters and protection circuits, hence the higher voltge is no problem and powering the board from USB and the ESC at the same time is supported as well.
 
@@ -55,7 +55,7 @@ The Servo1 does always generate an output signal based on the desired speed. How
 
 The ESC might have a setting like this:
 
-![Servo Ranges](_images/ESC_servo_range.png)
+![Servo Ranges](../_images/ESC_servo_range.png)
 
 The Throttle Status shows that values from 1028us to 2028us are allowed and a range of 79us around the midpoint of 1528us is considered Neutral. 
 
@@ -103,7 +103,7 @@ With above controller allows to change the output signal from neutral do somethi
 This is likely a combination of the acceleration limit and the ESC output neutral range _$N_.
 To visualize this, imagine the following situation:
 
-<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/neutral_range.png"><img src="_images/neutral_range.png"/></a>
+<a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/neutral_range.png"><img src="../_images/neutral_range.png"/></a>
 
 The neutral range of the CableCam Controller is way smaller (30us) than the range the ESC is actually using (50us). So it takes a bit until the stick is moved enough for the ESC to start moving the motor. How long depends on the amount - that will not be much - but also on the max accel setting _$a_. If it takes 1 second for the output signal to reach the +50, there is a delay of 1 second. Second, a signal of 1551 does not mean the cablecam moves. It might not be enough thrust to overcome the resistence yet. Having said that, with the configured defaults and the allowed value ranges, this should not be a huge delay.
 

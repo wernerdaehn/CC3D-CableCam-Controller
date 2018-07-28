@@ -5,7 +5,7 @@ When the programming switch on the TX is put back into the operational state, th
 
 To change the end points, the programming mode is entered again and the CableCam allows driving to any position, even outside of the previous set range. The sequence is always the same, first click after entering the programming mode sets the first point, all subsequent clicks modify the second end point.
 
-[![Using the CableCam Controller](_images/Using_the_CableCam_Controller_YouTube_Video.jpg)](https://youtu.be/ohzvkKzsO8Q "Using the CableCam Controller")
+[![Using the CableCam Controller](../_images/Using_the_CableCam_Controller_YouTube_Video.jpg)](https://youtu.be/ohzvkKzsO8Q "Using the CableCam Controller")
 
 
 

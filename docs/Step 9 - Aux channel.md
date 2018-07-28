@@ -16,7 +16,7 @@ But actually, this AUX channel can be used for many things, control a camera foc
 
 #### Pinout
 
-![UART Pins](_images/Flip32_F4_Pins_AUX.jpg)
+![UART Pins](../_images/Flip32_F4_Pins_AUX.jpg)
 
 
 

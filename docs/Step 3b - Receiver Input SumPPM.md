@@ -16,7 +16,7 @@ One supported receiver type is SumPPM commonly found with Graupner receivers and
 
 #### Pinout
 
-![UART Pins](_images/Flip32_F4_Pins_Receiver_Input_SumPPM.jpg)
+![UART Pins](../_images/Flip32_F4_Pins_Receiver_Input_SumPPM.jpg)
 
 
 
@@ -76,4 +76,4 @@ This is clearly a regular servo (single channel) only. It is a puls width of 109
 
 A normal \$i output would look like this:
 
-![UART Pins](_images/console_input_config.png)
+![UART Pins](../_images/console_input_config.png)

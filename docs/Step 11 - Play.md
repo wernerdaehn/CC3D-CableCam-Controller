@@ -4,7 +4,7 @@ The controller also allows driving between the end points automatically, either 
 
 See this [video](https://www.youtube.com/watch?v=D3UhXKbMN38):
 
-[![The Play function](_images/Play_Function_Youtube.jpg)](https://www.youtube.com/watch?v=D3UhXKbMN38 "The Play function")
+[![The Play function](../_images/Play_Function_Youtube.jpg)](https://www.youtube.com/watch?v=D3UhXKbMN38 "The Play function")
 
 
 

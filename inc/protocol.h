@@ -38,7 +38,6 @@
 #define PROTOCOL_SETUP            '1'
 #define PROTOCOL_READ_ERRORHANDLER 'H'  // Error handler hidden command
 #define PROTOCOL_BOOT             '_'   // Boot to Dfu Bootloader
-#define PROTOCOL_VESC_CONFIG      '-'
 
 #define MODE_PASSTHROUGH		1
 #define MODE_LIMITER			2
@@ -177,6 +176,7 @@ typedef struct
     float stick_max_accel;
     float stick_max_speed;
     bool vesc_config;
+    bool bluetooth_passthrough;
     float pos;
     float pos_diff;
     uint32_t last_pos_change;

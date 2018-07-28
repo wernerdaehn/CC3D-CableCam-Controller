@@ -16,9 +16,9 @@ One supported receiver type is SBus commonly used with Futaba and FrSky.
 
 #### Pinout
 
-![UART Pins](_images/Flip32_F4_Pins_Receiver_Input_SBus.jpg)
+![UART Pins](../_images/Flip32_F4_Pins_Receiver_Input_SBus.jpg)
 
-![UART Pins](_images/Flip32_F4_Pins_Receiver_Input_SBus_RL.jpg)
+![UART Pins](../_images/Flip32_F4_Pins_Receiver_Input_SBus_RL.jpg)
 
 ## Associated commands
 

@@ -17,11 +17,11 @@ Note: Yes, on the Flip32 the MCU pin PA1 is not connected to Servo6 but to RSSI!
 
 #### Pinout
 
-![UART Pins](_images/Flip32_F4_Pins_Pos_Sensor.jpg)
+![UART Pins](../_images/Flip32_F4_Pins_Pos_Sensor.jpg)
 
 
 
-![UART Pins](_images/Flip32_F4_Pins_Pos_Sensor_RL.jpg)
+![UART Pins](../_images/Flip32_F4_Pins_Pos_Sensor_RL.jpg)
 
 
 
@@ -40,7 +40,7 @@ Note: Yes, on the Flip32 the MCU pin PA1 is not connected to Servo6 but to RSSI!
 The hall sensor is very simple. The [Allegro Microsystems A1120](http://www.allegromicro.com/en/Products/Magnetic-Digital-Position-Sensor-ICs/Hall-Effect-Unipolar-Switches/A1120-1-2-5.aspx) sensor connects the output to Gnd if the magnetic field perpenticular to the chip surface exceeds a certain level and opens that switch if it falls below a level (=Open Drain). These two levels are different, hence avoiding noise in case the magnet field is exactly at the switch level (=Hysteresis). As a result, the sensor board can be very simple. Power between 3..24V is provided - hence perfectly suited for the Vcc_unreg provided by the ESC - and a capacitor nearby the chips is needed. The output signal of both is connected directly to the Servo5&6. A pullup resistor is not needed either, the STM32 MCU internal ones are turned on for those two pins.
 
 <a href="https://raw.githubusercontent.com/wernerdaehn/CC3D-CableCam-Controller/master/_images/Flip32_F4_Pins_Pos_Sensor_Schematic.png">
-  <img src="_images/Flip32_F4_Pins_Pos_Sensor_Schematic.png" width="50%"/>
+  <img src="../_images/Flip32_F4_Pins_Pos_Sensor_Schematic.png" width="50%"/>
 </a>
 
 The only important things to make sure are

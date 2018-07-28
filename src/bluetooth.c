@@ -3,9 +3,10 @@
 #include "serial_print.h"
 #include "stm32f4xx_hal.h"
 #include "usbd_cdc_if.h"
+#include "stdbool.h"
+#include "protocol.h"
 
 extern UART_HandleTypeDef huart3;
-
 
 
 void wait_for_bt_module_response(uint8_t *btchar_string, uint8_t * btchar_string_length);
@@ -129,6 +130,7 @@ uint8_t is_ok(uint8_t *btchar_string, uint8_t * btchar_string_length)
 
 void UARTInit(uint32_t baud)
 {
+    controllerstatus.bluetooth_passthrough = false;
     huart3.Init.BaudRate = baud;
     // HAL_UART_DeInit(&huart3);
     if (HAL_UART_Init(&huart3) != HAL_OK)

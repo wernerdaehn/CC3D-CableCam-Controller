@@ -19,11 +19,11 @@ However the VESC6 allows much more than just controlling the speed. As it is con
 
 #### Pinout
 
-![VESC Pins](_images/Flip32_F4_Pins_VESC.jpg)
+![VESC Pins](../_images/Flip32_F4_Pins_VESC.jpg)
 
 In order to take full advantage of the VESC, the CableCam controller talks to it via UART instead of PPM signals. This allows for more fine grained control.
 To connect the VESC with the CableCam Controller, Servo Out 3 is configured as UART RX - connected to VESC TX pin - and Servo Out 4 as TX - connected with VESC RX pin.
-![VESC_UART.png](_images/Flip32_F4_Pins_VESC_RL.png)
+![VESC_UART.png](../_images/Flip32_F4_Pins_VESC_RL.png)
 As with the RC ESC, the VESC powers the CableCam Controller board via the +5V and GND of the VESC connected to one of the Servo's +5V and GND pins.
 
 _Note: Power the CableCam Controller via +5V and **not the Vcc pin**. The latter might be a too high voltage_

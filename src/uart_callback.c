@@ -40,6 +40,10 @@ void UARTX_IRQHandler(UART_HandleTypeDef *huart)
             }
             else
             {
+                if (controllerstatus.bluetooth_passthrough)
+                {
+                    PrintSerial_char(byteReceived, EndPoint_USB);
+                }
                 huart->pRxBuffPtr[huart->RxXferCount % huart->RxXferSize] = byteReceived;
                 huart->RxXferCount++;
             }
