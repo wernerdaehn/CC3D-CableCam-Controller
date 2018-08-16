@@ -24,13 +24,13 @@ Attention: **Do not connect the +5V line** with the board! Since both, gimbal an
 
 #### Pinout
 
-![UART Pins](_images/Flip32_F4_Pins_SBus_Out.jpg)
+![UART Pins](../_images/Flip32_F4_Pins_SBus_Out.jpg)
 
 
 
 Because the CC3D Revo does not have an output with a SBus inverter, this needs to be added externally. A search for "SBus Signal Inverter" shows many options, e.g. [this](http://flyingfolk.com/S-BUS-Receiver-Signal-Inverter-Converter-NAZE32-Flip32-SP3-Racing-Flight-Controller).
 
-![UART Pins](_images/Flip32_F4_Pins_SBus_Out_SBus_Inverter.jpg)
+![UART Pins](../_images/Flip32_F4_Pins_SBus_Out_SBus_Inverter.jpg)
 
 ## Associated commands
 
