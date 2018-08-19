@@ -156,10 +156,14 @@
 			<Cursor1 position="495" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\controller.c" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="-1" zoom_2="0">
+	<File name="src\controller.c" open="1" top="1" tabpos="2" split="0" active="1" splitpos="0" zoom_1="-1" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="36109" topLine="727" />
+			<Cursor1 position="40457" topLine="642" />
 		</Cursor>
+		<Folding>
+			<Collapse line="51" />
+			<Collapse line="200" />
+		</Folding>
 	</File>
 	<File name="src\eeprom.c" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
@@ -171,9 +175,9 @@
 			<Cursor1 position="19624" topLine="547" />
 		</Cursor>
 	</File>
-	<File name="src\protocol.c" open="1" top="1" tabpos="4" split="0" active="1" splitpos="0" zoom_1="1" zoom_2="0">
+	<File name="src\protocol.c" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="1" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="15198" topLine="330" />
+			<Cursor1 position="29360" topLine="417" />
 		</Cursor>
 		<Folding>
 			<Collapse line="349" />
@@ -194,7 +198,6 @@
 			<Collapse line="712" />
 			<Collapse line="755" />
 			<Collapse line="783" />
-			<Collapse line="790" />
 			<Collapse line="892" />
 			<Collapse line="945" />
 			<Collapse line="971" />
@@ -243,7 +246,7 @@
 			<Cursor1 position="7897" topLine="189" />
 		</Cursor>
 	</File>
-	<File name="src\stm32f4xx_it.c" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\stm32f4xx_it.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="5387" topLine="135" />
 		</Cursor>

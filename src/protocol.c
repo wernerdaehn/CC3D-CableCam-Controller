@@ -824,11 +824,6 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                 }
                 huart3.ErrorCode = 0;
                 break;
-            case 'd':
-                controllerstatus.debug_endpoint = !controllerstatus.debug_endpoint;
-                PrintSerial_string("Endpoint debug: ", endpoint);
-                PrintlnSerial_string(getONOffLabel(controllerstatus.debug_endpoint), endpoint);
-                break;
             case 'e':
                 {
                     settings_t tmp;
@@ -850,6 +845,11 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                 }
             case 'p':
                 PrintSumPPMRawData(endpoint);
+                break;
+            case 'P':
+                controllerstatus.debug_endpoint = !controllerstatus.debug_endpoint;
+                PrintSerial_string("Endpoint debug: ", endpoint);
+                PrintlnSerial_string(getONOffLabel(controllerstatus.debug_endpoint), endpoint);
                 break;
             case 's':
                 PrintSerial_string("SBUS packets:", endpoint);

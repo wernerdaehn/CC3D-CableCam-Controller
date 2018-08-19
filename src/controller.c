@@ -15,7 +15,14 @@ float stickCycle(void);
 float getStickPositionRaw(void);
 float abs_d(float v);
 float getGimbalDuty(uint8_t channel);
-void printBrakeMessage(float value, float endpointdistance, float brakedistance, float speed, bool emergency);
+void printBrakeMessage(float value, float endpointdistance, float brakedistance, float speed, uint8_t type);
+void evalute_stick_programming_mode(float value);
+void evalute_stick_endpoint_switch(void);
+void evalute_stick_accel_dial(void);
+void evalute_stick_speed_dial(void);
+void evalute_stick_mode_switch(void);
+void evalute_stick_play_switch(void);
+
 
 /*
  * Preserve the previous filtered stick value to calculate the acceleration
@@ -367,6 +374,13 @@ float stickCycle()
     // output = ( (1 - factor) x input^3 ) + ( factor x input )     with input and output between -1 and +1
     float value = ((1.0f - (float) activesettings.expo_factor) * stickpercent * stickpercent * stickpercent) + (activesettings.expo_factor * stickpercent);
 
+    evalute_stick_programming_mode(stick_last_value);
+    evalute_stick_endpoint_switch();
+    evalute_stick_accel_dial();
+    evalute_stick_speed_dial();
+    evalute_stick_mode_switch();
+    evalute_stick_play_switch();
+
     // In passthrough mode the returned value is the raw value
     if (activesettings.mode != MODE_PASSTHROUGH)
     {
@@ -480,6 +494,11 @@ float stickCycle()
                         if (controllerstatus.pos >= semipermanentsettings.pos_end)
                         {
                             stick_last_value = 0.0f;
+                            if (controllerstatus.emergencybrake == false)
+                            {
+                                printBrakeMessage(value, semipermanentsettings.pos_end-controllerstatus.pos, brakedistance, speed, 2);
+                            }
+                            controllerstatus.emergencybrake = true;
                             return stick_last_value;
                         }
                         else
@@ -489,11 +508,6 @@ float stickCycle()
                             {
                                 value = 0.0f;
                             }
-                            if (controllerstatus.endpointbrake == false || controllerstatus.debug_endpoint)
-                            {
-                                printBrakeMessage(value, semipermanentsettings.pos_end-controllerstatus.pos, brakedistance, speed, false);
-                            }
-                            controllerstatus.endpointbrake = true;
 
                             /*
                              * Failsafe: If, at the current speed the end point will be overshot significantly, ignore the ramp logic and request a full brake by setting speed=0.
@@ -508,13 +522,17 @@ float stickCycle()
                                  */
                                 if (controllerstatus.emergencybrake == false || controllerstatus.debug_endpoint)
                                 {
-                                    printBrakeMessage(value, semipermanentsettings.pos_end-controllerstatus.pos, brakedistance, speed, true);
+                                    printBrakeMessage(value, semipermanentsettings.pos_end-controllerstatus.pos, brakedistance, speed, 0);
                                 }
                                 controllerstatus.emergencybrake = true;
-                                LED_WARN_ON;
                                 stick_last_value = value;
                                 return 0.0f;
                             }
+                            if (controllerstatus.endpointbrake == false || controllerstatus.debug_endpoint)
+                            {
+                                printBrakeMessage(value, semipermanentsettings.pos_end-controllerstatus.pos, brakedistance, speed, 1);
+                            }
+                            controllerstatus.endpointbrake = true;
                         }
                     }
                     else // moving away from the end point into the safe zone
@@ -543,6 +561,11 @@ float stickCycle()
                         if (controllerstatus.pos <= semipermanentsettings.pos_start)
                         {
                             stick_last_value = 0.0f;
+                            if (controllerstatus.emergencybrake == false)
+                            {
+                                printBrakeMessage(value, controllerstatus.pos-semipermanentsettings.pos_start, brakedistance, speed, 2);
+                            }
+                            controllerstatus.emergencybrake = true;
                             return 0.0f;
                         }
                         else
@@ -552,12 +575,6 @@ float stickCycle()
                             {
                                 value = 0.0f;
                             }
-                            if (controllerstatus.endpointbrake == false || controllerstatus.debug_endpoint)
-                            {
-                                printBrakeMessage(value, controllerstatus.pos-semipermanentsettings.pos_start, brakedistance, speed, false);
-                            }
-                            controllerstatus.endpointbrake = true;
-
                             /*
                              * Failsafe: If, at the current speed the end point will be overshot significantly, ignore the ramp logic and request a full brake by setting speed=0.
                              * Because at high speeds the calculation might not be that accurate, add a factor depending on the brake distance
@@ -570,13 +587,17 @@ float stickCycle()
                                  */
                                 if (controllerstatus.emergencybrake == false || controllerstatus.debug_endpoint)
                                 {
-                                    printBrakeMessage(value, controllerstatus.pos-semipermanentsettings.pos_start, brakedistance, speed, true);
+                                    printBrakeMessage(value, controllerstatus.pos-semipermanentsettings.pos_start, brakedistance, speed, 0);
                                 }
                                 controllerstatus.emergencybrake = true;
-                                LED_WARN_ON;
                                 stick_last_value = value;
                                 return 0.0f;
                             }
+                            if (controllerstatus.endpointbrake == false || controllerstatus.debug_endpoint)
+                            {
+                                printBrakeMessage(value, controllerstatus.pos-semipermanentsettings.pos_start, brakedistance, speed, 1);
+                            }
+                            controllerstatus.endpointbrake = true;
                         }
                     }
                     else
@@ -591,248 +612,6 @@ float stickCycle()
 
     }
     stick_last_value = value; // store the current effective stick position as value for the next cycle
-
-
-
-
-    /*
-     * Evaluate the programming mode switch.
-     *
-     * A HIGH value is considered normal operation
-     * Everything else
-     *                  LOW value
-     *                  value of neutral
-     *                  if the channel is not set at all (value == 0)
-     * is considered the programming mode with reduced speeds.
-     *
-     * The reason for including NEUTRAL as non-operational is because that would indicate this channel is not set properly.
-     */
-    if (getProgrammingSwitch() > 0.8f)
-    {
-        if (controllerstatus.safemode != OPERATIONAL)
-        {
-            PrintlnSerial_string("Entered OPERATIONAL mode", EndPoint_All);
-        }
-        controllerstatus.safemode = OPERATIONAL;
-    }
-    else
-    {
-        if (controllerstatus.safemode != PROGRAMMING)
-        {
-            /* We just entered the programing mode, hence wait for the first end point
-             * First endpoint is the first click, Second endpoint the second click.
-             */
-            endpointclicks = 0;
-            PrintlnSerial_string("Entered Endpoint Programming mode", EndPoint_All);
-        }
-        controllerstatus.safemode = PROGRAMMING;
-        stickintegral += value;
-    }
-
-
-
-
-    /*
-     * Evaluate the End Point Programming switch
-     */
-    float currentendpointswitch = getEndPointSwitch();
-    if (currentendpointswitch > 0.8f && controllerstatus.safemode == PROGRAMMING && lastendpointswitch <= 0.8f && !isnan(lastendpointswitch))
-    {
-        if (endpointclicks == 0)
-        {
-            semipermanentsettings.pos_start = controllerstatus.pos;
-            endpointclicks = 1;
-            PrintlnSerial_string("Point 1 set", EndPoint_All);
-            stickintegral = 0.0f;
-        }
-        else
-        {
-            /*
-             * Subsequent selections of the endpoint just move the 2nd Endpoint around. Else there
-             * is the danger the user selects point 1 at zero, then travels to 1000 and selects that as endpoint. Then clicks again
-             * for the third time. This logic therefore just updates the 2nd point but never the first.
-             * If the first point has to be changed, then the programming mode needs to be left and reengaged.
-             *
-             * Below logic has multiple loop holes that might occur.
-             * 1. Possensor not working or setting start and endpoint without moving the cablecam. In that case the range is zero and the
-             *    cablecam would stop moving. It is better this way than assuming everything was in order and the end points are unset.
-             * 2. When the esc direction is unset the code tries to guess the direction. It sums up the stick input values and if the value is
-             *    positive and the possensor did count up (or it is negative and the possensor did count down), then the direction is +1, else
-             *    it is -1. But what if the cablecam did roll downhill and the stick was used to slow down its movement? Then the values would
-             *    be with the wrong sign. Let's hope this never happens during the initial setup. That is also the reason why the esc direction
-             *    is calculated only if the esc direction is unset yet.
-             */
-            semipermanentsettings.pos_end = controllerstatus.pos;
-            if (stickintegral > -3.0f && stickintegral < 3.0f)
-            {
-                PrintlnSerial_string("Endpoints too close together based on the stick signals. Move the cablecam via the RC.", EndPoint_All);
-            }
-            else
-            {
-
-                PrintlnSerial_string("Point 2 set", EndPoint_All);
-
-                if (activesettings.esc_direction == 0.0f)
-                {
-                    /*
-                     * The esc_direction has never been set. Hence set it together with the end points.
-                     */
-                    if ((semipermanentsettings.pos_start < semipermanentsettings.pos_end && stickintegral > 0.0f) ||
-                        (semipermanentsettings.pos_start > semipermanentsettings.pos_end && stickintegral < 0.0f))
-                    {
-                        activesettings.esc_direction = +1.0f;
-                        PrintlnSerial_string("ESC direction not set yet. Correct value seems to be $r 1", EndPoint_All);
-                    }
-                    else
-                    {
-                        activesettings.esc_direction = -1.0f;
-                        semipermanentsettings.pos_start = -semipermanentsettings.pos_start;
-                        semipermanentsettings.pos_end = -semipermanentsettings.pos_end;
-                        PrintlnSerial_string("ESC direction not set yet. Correct value seems to be $r -1", EndPoint_All);
-                    }
-                    PrintlnSerial_string("Saving all settings ($w) to store the $r parameter permanently", EndPoint_All);
-                    uint32_t write_errors = eeprom_write_sector_safe((uint8_t*) &activesettings, sizeof(activesettings), EEPROM_SECTOR_FOR_SETTINGS);
-                    if (write_errors != 0)
-                    {
-                        PrintlnSerial_string("Saving the settings failed", EndPoint_All);
-                    }
-                }
-                else
-                {
-                    if ((((semipermanentsettings.pos_start < semipermanentsettings.pos_end && stickintegral > 0.0f) ||
-                        (semipermanentsettings.pos_start > semipermanentsettings.pos_end && stickintegral < 0.0f)) && activesettings.esc_direction == -1.0f) ||
-                        (((semipermanentsettings.pos_start > semipermanentsettings.pos_end && stickintegral < 0.0f) ||
-                        (semipermanentsettings.pos_start < semipermanentsettings.pos_end && stickintegral > 0.0f)) && activesettings.esc_direction == 1.0f))
-                    {
-                        PrintlnSerial_string("Is $r really correct? Does not look like it.", EndPoint_All);
-                    }
-                }
-                PrintSerial_string("Drove from", EndPoint_All);
-                PrintSerial_float(semipermanentsettings.pos_start, EndPoint_All);
-                PrintSerial_string(" to", EndPoint_All);
-                PrintlnSerial_float(semipermanentsettings.pos_end, EndPoint_All);
-
-
-                if (semipermanentsettings.pos_start > semipermanentsettings.pos_end)
-                {
-                    // Rule is that pos_start < pos_end. Hence swap the two.
-                    float tmp = semipermanentsettings.pos_start;
-                    semipermanentsettings.pos_start = semipermanentsettings.pos_end;
-                    semipermanentsettings.pos_end = tmp;
-                }
-                eeprom_write_sector_async((uint8_t*) &semipermanentsettings, sizeof(semipermanentsettings), EEPROM_SECTOR_FOR_SEMIPERMANENTSETTINGS);
-            }
-        }
-    }
-    lastendpointswitch = currentendpointswitch; // Needed to identify a raising flank on the tip switch
-
-
-    float max_accel_scale;
-    float max_speed_scale;
-    if (controllerstatus.safemode != OPERATIONAL)
-    {
-        max_accel_scale = activesettings.stick_max_accel_safemode;
-        max_speed_scale = activesettings.stick_max_speed_safemode;
-    }
-    else
-    {
-        max_accel_scale = activesettings.stick_max_accel;
-        max_speed_scale = activesettings.stick_max_speed;
-    }
-
-    /*
-     * Evaluate the Max Acceleration Potentiometer
-     */
-    float max_accel_poti = getMaxAccelPoti();
-    if (!isnan(max_accel_poti))
-    {
-        /*
-         * The value for max_accel coming from the dial can be anything between -1.0 and +1.0. As we want the full range
-         * this is shifted to 0.0 to 2.0. But how quickly should the stick move? In 1 second from 0 to +1.0? That would
-         * be an acceleration value of 1/1/50=0.02 (Assuming 50Hz controller cycles).
-         * And a minimum value of 0.00 does not make sense either as it would mean no stick movement at all.
-         * The absolute minimum shall be 20secs, so a value of 1/20/50 = 0.001
-         * The maximum value should be the activesettings.stick_max_accel value or stick_max_accel_safemode - see above
-         *
-         * Example: poti reads +1 -> (1.0+1.0)/2 * max_accel_scale + 0.001 = max_accel_scale + 0.001
-         */
-        controllerstatus.stick_max_accel = (1.0f + max_accel_poti)/2.0f * (max_accel_scale - 0.001f) + 0.001f;
-    }
-    else
-    {
-        // If the poti is not providing a value value, the max_accel is the absolute maximum as defined.
-        controllerstatus.stick_max_accel = max_accel_scale;
-    }
-
-    /*
-     * Evaluate the Max Speed Potentiometer
-     */
-    float max_speed_poti = getMaxSpeedPoti();
-    if (!isnan(max_speed_poti))
-    {
-        // Again, the full range of the poti from -1.0 to +1.0 should result in a value range of 0.1 to 1.0
-        controllerstatus.stick_max_speed = (1.0f + max_speed_poti)/2.0f * (max_speed_scale - 0.1f) + 0.1f;
-    }
-    else
-    {
-        controllerstatus.stick_max_speed = max_speed_scale;
-    }
-
-    /*
-     * Evaluate the Mode Switch
-     */
-    float modeswitch = getModeSwitch();
-    if (!isnan(modeswitch))
-    {
-        if (modeswitch < -0.3f)
-        {
-            /*
-             * Passthrough
-             */
-            activesettings.mode = MODE_PASSTHROUGH;
-        }
-        else if (modeswitch > 0.3f)
-        {
-            /*
-             * Full Limiters
-             */
-            activesettings.mode = MODE_LIMITER_ENDPOINTS;
-        }
-        else
-        {
-            activesettings.mode = MODE_LIMITER;
-        }
-
-        if (lastmodeswitchsetting != activesettings.mode)
-        {
-            lastmodeswitchsetting = activesettings.mode;
-            PrintlnSerial_string(getCurrentModeLabel(activesettings.mode), EndPoint_All);
-        }
-
-    }
-
-    if (activesettings.rc_channel_play < SBUS_MAX_CHANNEL)
-    {
-        float playswitch = getPlaySwitch();
-        if (!isnan(playswitch) && playswitch > 0.8f)
-        {
-            /*
-             * Switch on play_running only if there is no permanent error.
-             * This is to avoid running the play directly after power on by accident.
-             * In such cases Play needs to be switched OFF, then play_running is set to Off and then
-             * can be turned on again.
-             */
-            if (controllerstatus.play_running != FORCE_OFF)
-            {
-                controllerstatus.play_running = ON;
-                controllerstatus.play_time_lastsignal = HAL_GetTick();
-            }
-        }
-        else
-        {
-            controllerstatus.play_running = OFF;
-        }
-    }
 
     return value;
 }
@@ -988,15 +767,19 @@ void printControlLoop(int16_t input, float speed, float pos, float brakedistance
     PrintlnSerial_float(pos, endpoint);
 }
 
-void printBrakeMessage(float value, float endpointdistance, float brakedistance, float speed, bool emergency)
+void printBrakeMessage(float value, float endpointdistance, float brakedistance, float speed, uint8_t type)
 {
-    if (emergency)
+    if (type == 0)
     {
         PrintSerial_string("Emergency brake on. Distance=", EndPoint_All);
     }
-    else
+    else if (type == 1)
     {
         PrintSerial_string("Endpoint brake on. Distance=", EndPoint_All);
+    }
+    else if (type == 2)
+    {
+        PrintSerial_string("Endpoint overshot. Distance=", EndPoint_All);
     }
     PrintSerial_float(endpointdistance, EndPoint_All);
     PrintSerial_string(", calculated braking distance= abs(", EndPoint_All);
@@ -1008,3 +791,264 @@ void printBrakeMessage(float value, float endpointdistance, float brakedistance,
     PrintSerial_string("[steps/s] / 2 =", EndPoint_All);
     PrintlnSerial_float(brakedistance, EndPoint_All);
 }
+
+void evalute_stick_programming_mode(float value)
+{
+
+    /*
+     * Evaluate the programming mode switch.
+     *
+     * A HIGH value is considered normal operation
+     * Everything else
+     *                  LOW value
+     *                  value of neutral
+     *                  if the channel is not set at all (value == 0)
+     * is considered the programming mode with reduced speeds.
+     *
+     * The reason for including NEUTRAL as non-operational is because that would indicate this channel is not set properly.
+     */
+    if (getProgrammingSwitch() > 0.8f)
+    {
+        if (controllerstatus.safemode != OPERATIONAL)
+        {
+            PrintlnSerial_string("Entered OPERATIONAL mode", EndPoint_All);
+        }
+        controllerstatus.safemode = OPERATIONAL;
+    }
+    else
+    {
+        if (controllerstatus.safemode != PROGRAMMING)
+        {
+            /* We just entered the programing mode, hence wait for the first end point
+             * First endpoint is the first click, Second endpoint the second click.
+             */
+            endpointclicks = 0;
+            PrintlnSerial_string("Entered Endpoint Programming mode", EndPoint_All);
+        }
+        controllerstatus.safemode = PROGRAMMING;
+        stickintegral += value;
+    }
+}
+
+void evalute_stick_endpoint_switch()
+{
+    /*
+     * Evaluate the End Point Programming switch
+     */
+    float currentendpointswitch = getEndPointSwitch();
+    if (currentendpointswitch > 0.8f && controllerstatus.safemode == PROGRAMMING && lastendpointswitch <= 0.8f && !isnan(lastendpointswitch))
+    {
+        if (endpointclicks == 0)
+        {
+            semipermanentsettings.pos_start = controllerstatus.pos;
+            endpointclicks = 1;
+            PrintlnSerial_string("Point 1 set", EndPoint_All);
+            stickintegral = 0.0f;
+        }
+        else
+        {
+            /*
+             * Subsequent selections of the endpoint just move the 2nd Endpoint around. Else there
+             * is the danger the user selects point 1 at zero, then travels to 1000 and selects that as endpoint. Then clicks again
+             * for the third time. This logic therefore just updates the 2nd point but never the first.
+             * If the first point has to be changed, then the programming mode needs to be left and reengaged.
+             *
+             * Below logic has multiple loop holes that might occur.
+             * 1. Possensor not working or setting start and endpoint without moving the cablecam. In that case the range is zero and the
+             *    cablecam would stop moving. It is better this way than assuming everything was in order and the end points are unset.
+             * 2. When the esc direction is unset the code tries to guess the direction. It sums up the stick input values and if the value is
+             *    positive and the possensor did count up (or it is negative and the possensor did count down), then the direction is +1, else
+             *    it is -1. But what if the cablecam did roll downhill and the stick was used to slow down its movement? Then the values would
+             *    be with the wrong sign. Let's hope this never happens during the initial setup. That is also the reason why the esc direction
+             *    is calculated only if the esc direction is unset yet.
+             */
+            semipermanentsettings.pos_end = controllerstatus.pos;
+            if (stickintegral > -3.0f && stickintegral < 3.0f)
+            {
+                PrintlnSerial_string("Endpoints too close together based on the stick signals. Move the cablecam via the RC.", EndPoint_All);
+            }
+            else
+            {
+
+                PrintlnSerial_string("Point 2 set", EndPoint_All);
+
+                if (activesettings.esc_direction == 0.0f)
+                {
+                    /*
+                     * The esc_direction has never been set. Hence set it together with the end points.
+                     */
+                    if ((semipermanentsettings.pos_start < semipermanentsettings.pos_end && stickintegral > 0.0f) ||
+                        (semipermanentsettings.pos_start > semipermanentsettings.pos_end && stickintegral < 0.0f))
+                    {
+                        activesettings.esc_direction = +1.0f;
+                        PrintlnSerial_string("ESC direction not set yet. Correct value seems to be $r 1", EndPoint_All);
+                    }
+                    else
+                    {
+                        activesettings.esc_direction = -1.0f;
+                        semipermanentsettings.pos_start = -semipermanentsettings.pos_start;
+                        semipermanentsettings.pos_end = -semipermanentsettings.pos_end;
+                        PrintlnSerial_string("ESC direction not set yet. Correct value seems to be $r -1", EndPoint_All);
+                    }
+                    PrintlnSerial_string("Saving all settings ($w) to store the $r parameter permanently", EndPoint_All);
+                    uint32_t write_errors = eeprom_write_sector_safe((uint8_t*) &activesettings, sizeof(activesettings), EEPROM_SECTOR_FOR_SETTINGS);
+                    if (write_errors != 0)
+                    {
+                        PrintlnSerial_string("Saving the settings failed", EndPoint_All);
+                    }
+                }
+                else
+                {
+                    if ((((semipermanentsettings.pos_start < semipermanentsettings.pos_end && stickintegral < 0.0f) ||
+                        (semipermanentsettings.pos_start > semipermanentsettings.pos_end && stickintegral > 0.0f)) && activesettings.esc_direction == -1.0f) ||
+                        (((semipermanentsettings.pos_start > semipermanentsettings.pos_end && stickintegral < 0.0f) ||
+                        (semipermanentsettings.pos_start < semipermanentsettings.pos_end && stickintegral > 0.0f)) && activesettings.esc_direction == 1.0f))
+                    {
+                        PrintlnSerial_string("Is $r really correct? Does not look like it.", EndPoint_All);
+                    }
+                }
+                PrintSerial_string("Drove from", EndPoint_All);
+                PrintSerial_float(semipermanentsettings.pos_start, EndPoint_All);
+                PrintSerial_string(" to", EndPoint_All);
+                PrintlnSerial_float(semipermanentsettings.pos_end, EndPoint_All);
+
+
+                if (semipermanentsettings.pos_start > semipermanentsettings.pos_end)
+                {
+                    // Rule is that pos_start < pos_end. Hence swap the two.
+                    float tmp = semipermanentsettings.pos_start;
+                    semipermanentsettings.pos_start = semipermanentsettings.pos_end;
+                    semipermanentsettings.pos_end = tmp;
+                }
+                eeprom_write_sector_async((uint8_t*) &semipermanentsettings, sizeof(semipermanentsettings), EEPROM_SECTOR_FOR_SEMIPERMANENTSETTINGS);
+            }
+        }
+    }
+    lastendpointswitch = currentendpointswitch; // Needed to identify a raising flank on the tip switch
+}
+
+void evalute_stick_accel_dial(void)
+{
+    float max_accel_scale;
+    if (controllerstatus.safemode != OPERATIONAL)
+    {
+        max_accel_scale = activesettings.stick_max_accel_safemode;
+    }
+    else
+    {
+        max_accel_scale = activesettings.stick_max_accel;
+    }
+
+    /*
+     * Evaluate the Max Acceleration Potentiometer
+     */
+    float max_accel_poti = getMaxAccelPoti();
+    if (!isnan(max_accel_poti))
+    {
+        /*
+         * The value for max_accel coming from the dial can be anything between -1.0 and +1.0. As we want the full range
+         * this is shifted to 0.0 to 2.0. But how quickly should the stick move? In 1 second from 0 to +1.0? That would
+         * be an acceleration value of 1/1/50=0.02 (Assuming 50Hz controller cycles).
+         * And a minimum value of 0.00 does not make sense either as it would mean no stick movement at all.
+         * The absolute minimum shall be 20secs, so a value of 1/20/50 = 0.001
+         * The maximum value should be the activesettings.stick_max_accel value or stick_max_accel_safemode - see above
+         *
+         * Example: poti reads +1 -> (1.0+1.0)/2 * max_accel_scale + 0.001 = max_accel_scale + 0.001
+         */
+        controllerstatus.stick_max_accel = (1.0f + max_accel_poti)/2.0f * (max_accel_scale - 0.001f) + 0.001f;
+    }
+    else
+    {
+        // If the poti is not providing a value value, the max_accel is the absolute maximum as defined.
+        controllerstatus.stick_max_accel = max_accel_scale;
+    }
+}
+
+void evalute_stick_speed_dial(void)
+{
+    float max_speed_scale;
+    if (controllerstatus.safemode != OPERATIONAL)
+    {
+        max_speed_scale = activesettings.stick_max_speed_safemode;
+    }
+    else
+    {
+        max_speed_scale = activesettings.stick_max_speed;
+    }
+    /*
+     * Evaluate the Max Speed Potentiometer
+     */
+    float max_speed_poti = getMaxSpeedPoti();
+    if (!isnan(max_speed_poti))
+    {
+        // Again, the full range of the poti from -1.0 to +1.0 should result in a value range of 0.1 to 1.0
+        controllerstatus.stick_max_speed = (1.0f + max_speed_poti)/2.0f * (max_speed_scale - 0.1f) + 0.1f;
+    }
+    else
+    {
+        controllerstatus.stick_max_speed = max_speed_scale;
+    }
+}
+
+void evalute_stick_mode_switch(void)
+{
+    /*
+     * Evaluate the Mode Switch
+     */
+    float modeswitch = getModeSwitch();
+    if (!isnan(modeswitch))
+    {
+        if (modeswitch < -0.3f)
+        {
+            /*
+             * Passthrough
+             */
+            activesettings.mode = MODE_PASSTHROUGH;
+        }
+        else if (modeswitch > 0.3f)
+        {
+            /*
+             * Full Limiters
+             */
+            activesettings.mode = MODE_LIMITER_ENDPOINTS;
+        }
+        else
+        {
+            activesettings.mode = MODE_LIMITER;
+        }
+
+        if (lastmodeswitchsetting != activesettings.mode)
+        {
+            lastmodeswitchsetting = activesettings.mode;
+            PrintlnSerial_string(getCurrentModeLabel(activesettings.mode), EndPoint_All);
+        }
+    }
+}
+
+void evalute_stick_play_switch(void)
+{
+    if (activesettings.rc_channel_play < SBUS_MAX_CHANNEL)
+    {
+        float playswitch = getPlaySwitch();
+        if (!isnan(playswitch) && playswitch > 0.8f)
+        {
+            /*
+             * Switch on play_running only if there is no permanent error.
+             * This is to avoid running the play directly after power on by accident.
+             * In such cases Play needs to be switched OFF, then play_running is set to Off and then
+             * can be turned on again.
+             */
+            if (controllerstatus.play_running != FORCE_OFF)
+            {
+                controllerstatus.play_running = ON;
+                controllerstatus.play_time_lastsignal = HAL_GetTick();
+            }
+        }
+        else
+        {
+            controllerstatus.play_running = OFF;
+        }
+    }
+}
+
+
