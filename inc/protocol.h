@@ -177,10 +177,12 @@ typedef struct
     float stick_max_speed;
     bool vesc_config;
     bool bluetooth_passthrough;
+    bool debug_endpoint;
     float pos;
     float pos_diff;
     uint32_t last_pos_change;
-    float speed;
+    float speed_by_posdiff;
+    float speed_by_time;
     uint8_t dsbus[SBUS_FRAME_SIZE];
     uint32_t dsbus_pause;
     uint32_t dsbus_valid;

@@ -199,7 +199,7 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* htim_encoder)
 
         /**TIM5 GPIO Configuration
         PA0-WKUP     ------> TIM5_CH1
-        PA1     ------> TIM5_CH2
+        PA1          ------> TIM5_CH2
         */
         GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
         GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;

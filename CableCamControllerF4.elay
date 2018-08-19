@@ -3,7 +3,7 @@
 	<ActiveTarget name="Debug" />
 	<File name="cmsis\Device\ST\STM32F4xx\Include\stm32f405xx.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="1096100" topLine="14217" />
+			<Cursor1 position="10377" topLine="137" />
 		</Cursor>
 	</File>
 	<File name="cmsis\Device\ST\STM32F4xx\Include\stm32f4xx.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -61,9 +61,9 @@
 			<Cursor1 position="3567" topLine="20" />
 		</Cursor>
 	</File>
-	<File name="inc\protocol.h" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="inc\protocol.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="135" topLine="0" />
+			<Cursor1 position="6576" topLine="86" />
 		</Cursor>
 	</File>
 	<File name="inc\sbus.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -148,7 +148,7 @@
 	</File>
 	<File name="src\bluetooth.c" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="354" topLine="6" />
+			<Cursor1 position="189" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="src\clock_50Hz.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -156,75 +156,81 @@
 			<Cursor1 position="495" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\controller.c" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="-1" zoom_2="0">
+	<File name="src\controller.c" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="-1" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="26956" topLine="342" />
+			<Cursor1 position="36109" topLine="727" />
 		</Cursor>
-		<Folding>
-			<Collapse line="372" />
-		</Folding>
 	</File>
 	<File name="src\eeprom.c" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2900" topLine="61" />
+			<Cursor1 position="2285" topLine="61" />
 		</Cursor>
 	</File>
-	<File name="src\main.c" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\main.c" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="7253" topLine="140" />
+			<Cursor1 position="19624" topLine="547" />
 		</Cursor>
 	</File>
-	<File name="src\protocol.c" open="1" top="1" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\protocol.c" open="1" top="1" tabpos="4" split="0" active="1" splitpos="0" zoom_1="1" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="71713" topLine="381" />
+			<Cursor1 position="15198" topLine="330" />
 		</Cursor>
 		<Folding>
-			<Collapse line="345" />
-			<Collapse line="378" />
-			<Collapse line="403" />
-			<Collapse line="413" />
-			<Collapse line="445" />
-			<Collapse line="461" />
-			<Collapse line="470" />
-			<Collapse line="549" />
-			<Collapse line="584" />
-			<Collapse line="618" />
-			<Collapse line="652" />
-			<Collapse line="678" />
-			<Collapse line="703" />
-			<Collapse line="747" />
-			<Collapse line="774" />
-			<Collapse line="781" />
-			<Collapse line="823" />
-			<Collapse line="876" />
-			<Collapse line="903" />
-			<Collapse line="917" />
-			<Collapse line="946" />
-			<Collapse line="1008" />
-			<Collapse line="1137" />
-			<Collapse line="1150" />
-			<Collapse line="1178" />
-			<Collapse line="1205" />
-			<Collapse line="1303" />
-			<Collapse line="1317" />
-			<Collapse line="1330" />
-			<Collapse line="1337" />
-			<Collapse line="1343" />
+			<Collapse line="349" />
+			<Collapse line="379" />
+			<Collapse line="405" />
+			<Collapse line="441" />
+			<Collapse line="448" />
+			<Collapse line="453" />
+			<Collapse line="472" />
+			<Collapse line="477" />
+			<Collapse line="488" />
+			<Collapse line="497" />
+			<Collapse line="564" />
+			<Collapse line="596" />
+			<Collapse line="627" />
+			<Collapse line="658" />
+			<Collapse line="684" />
+			<Collapse line="712" />
+			<Collapse line="755" />
+			<Collapse line="783" />
+			<Collapse line="790" />
+			<Collapse line="892" />
+			<Collapse line="945" />
+			<Collapse line="971" />
+			<Collapse line="986" />
+			<Collapse line="1015" />
+			<Collapse line="1077" />
+			<Collapse line="1206" />
+			<Collapse line="1219" />
+			<Collapse line="1244" />
+			<Collapse line="1252" />
+			<Collapse line="1271" />
+			<Collapse line="1284" />
+			<Collapse line="1368" />
+			<Collapse line="1378" />
+			<Collapse line="1382" />
+			<Collapse line="1397" />
+			<Collapse line="1403" />
+			<Collapse line="1407" />
+			<Collapse line="1423" />
+			<Collapse line="1441" />
+			<Collapse line="1448" />
 		</Folding>
 	</File>
-	<File name="src\sbus.c" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\sbus.c" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="14295" topLine="351" />
 		</Cursor>
 	</File>
-	<File name="src\serial_print.c" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\serial_print.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="1534" topLine="57" />
 		</Cursor>
 	</File>
 	<File name="src\spi_flash.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="3130" topLine="39" />
+			<Cursor1 position="13689" topLine="391" />
 		</Cursor>
 	</File>
 	<File name="src\startup_stm32f4xx.S" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -232,14 +238,14 @@
 			<Cursor1 position="10188" topLine="168" />
 		</Cursor>
 	</File>
-	<File name="src\stm32f4xx_hal_msp.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\stm32f4xx_hal_msp.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="1" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="12555" topLine="60" />
+			<Cursor1 position="7897" topLine="189" />
 		</Cursor>
 	</File>
-	<File name="src\stm32f4xx_it.c" open="0" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\stm32f4xx_it.c" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="4886" topLine="124" />
+			<Cursor1 position="5387" topLine="135" />
 		</Cursor>
 	</File>
 	<File name="src\system_stm32f4xx.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -252,14 +258,14 @@
 			<Cursor1 position="1991" topLine="6" />
 		</Cursor>
 	</File>
-	<File name="src\timer_callbacks.c" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\timer_callbacks.c" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2656" topLine="46" />
+			<Cursor1 position="5317" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\uart_callback.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\uart_callback.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="341" topLine="0" />
+			<Cursor1 position="2618" topLine="42" />
 		</Cursor>
 	</File>
 	<File name="src\usb_device.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -282,7 +288,7 @@
 			<Cursor1 position="8001" topLine="196" />
 		</Cursor>
 	</File>
-	<File name="src\vesc.c" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\vesc.c" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="2594" topLine="0" />
 		</Cursor>
@@ -314,7 +320,7 @@
 	</File>
 	<File name="STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_gpio.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="7996" topLine="125" />
+			<Cursor1 position="8624" topLine="171" />
 		</Cursor>
 	</File>
 	<File name="STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_pcd.h" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">

@@ -105,6 +105,8 @@ typedef  void (*pFunction)(void);
 void initProtocol()
 {
     controllerstatus.vesc_config = false;
+    controllerstatus.debug_endpoint = false;
+    controllerstatus.bluetooth_passthrough = false;
 }
 
 void writeProtocolError(uint8_t e, Endpoints endpoint)
@@ -371,7 +373,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         writeProtocolFloat(activesettings.stick_max_accel_safemode/CONTROLLERLOOPTIME_FLOAT, endpoint);
         writeProtocolOK(endpoint);
         PrintSerial_string("Current value: ", endpoint);
-        PrintlnSerial_float(controllerstatus.accel_limiter, endpoint);
+        PrintlnSerial_float(controllerstatus.stick_max_accel, endpoint);
         break;
     }
     case PROTOCOL_MAX_ERROR_DIST:
@@ -431,7 +433,8 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         writeProtocolLong(semipermanentsettings.pos_start, endpoint);
         writeProtocolLong(semipermanentsettings.pos_end, endpoint);
         writeProtocolFloat(controllerstatus.pos, endpoint);
-        writeProtocolFloat(controllerstatus.speed, endpoint);
+        writeProtocolFloat(controllerstatus.speed_by_posdiff/CONTROLLERLOOPTIME_FLOAT, endpoint);
+        writeProtocolFloat(controllerstatus.speed_by_time/CONTROLLERLOOPTIME_FLOAT, endpoint);
         writeProtocolOK(endpoint);
         break;
     }
@@ -462,6 +465,8 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         writeProtocolFloat(activesettings.stick_max_speed, endpoint);
         writeProtocolFloat(activesettings.stick_max_speed_safemode, endpoint);
         writeProtocolOK(endpoint);
+        PrintSerial_string("Current value: ", endpoint);
+        PrintlnSerial_float(controllerstatus.stick_max_speed, endpoint);
         break;
     }
     case PROTOCOL_EEPROM_WRITE:
@@ -819,6 +824,30 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                 }
                 huart3.ErrorCode = 0;
                 break;
+            case 'd':
+                controllerstatus.debug_endpoint = !controllerstatus.debug_endpoint;
+                PrintSerial_string("Endpoint debug: ", endpoint);
+                PrintlnSerial_string(getONOffLabel(controllerstatus.debug_endpoint), endpoint);
+                break;
+            case 'e':
+                {
+                    settings_t tmp;
+                    uint32_t ret = eeprom_read_sector((uint8_t *)&tmp, sizeof(tmp), EEPROM_SECTOR_FOR_SETTINGS);
+                    if (ret != 0)
+                    {
+                        PrintSerial_string("EEPROM Read got an error:", endpoint);
+                        PrintlnSerial_long(ret, endpoint);
+                    }
+                    else
+                    {
+                        uint8_t * tempsettingspointer = (uint8_t *) &tmp;
+                        for (size_t pos=0; pos<sizeof(tmp); pos++)
+                        {
+                            writeProtocolHex(tempsettingspointer[pos], endpoint);
+                        }
+                    }
+                    break;
+                }
             case 'p':
                 PrintSumPPMRawData(endpoint);
                 break;

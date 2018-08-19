@@ -11,10 +11,11 @@
 extern getvalues_t vescvalues;
 
 void printControlLoop(int16_t input, float speed, float pos, float brakedistance, uint16_t esc, Endpoints endpoint);
-float stickCycle(float brakedistance);
+float stickCycle(void);
 float getStickPositionRaw(void);
 float abs_d(float v);
 float getGimbalDuty(uint8_t channel);
+void printBrakeMessage(float value, float endpointdistance, float brakedistance, float speed, bool emergency);
 
 /*
  * Preserve the previous filtered stick value to calculate the acceleration
@@ -83,7 +84,7 @@ void setPos(void)
     {
         uint32_t time_diff = current_cylce_counter - controllerstatus.last_pos_change;
         controllerstatus.pos_diff = controllerstatus.pos - last_pos;
-        controllerstatus.speed = abs_d(controllerstatus.pos_diff / ((float) time_diff ));
+        controllerstatus.speed_by_posdiff = abs_d(controllerstatus.pos_diff / ((float) time_diff ));
         controllerstatus.last_pos_change = current_cylce_counter;
         last_pos = controllerstatus.pos;
     }
@@ -92,37 +93,37 @@ void setPos(void)
         /*
          * In case the position did not change for 2 seconds, a speed=0 is assumed.
          */
-        controllerstatus.speed = 0.0f;
+        controllerstatus.speed_by_posdiff = 0.0f;
         controllerstatus.pos_diff = 0.0f;
         last_pos = controllerstatus.pos;
     }
-    /*
-    else if (activesettings.pos_source != 1)
+
+    //
+    // If the encoder is used, then there is a more accurate way to calculate the speed, that is measuring the time using
+    // the hardware interrupt (input capture) of the encoder. This has a higher precision than 0.02 seconds.
+    //
+    // Speed is the number of signals per 0.02 (=Ta) secs.
+    // Hence refactor Ta to milliseconds to match the HAL_GetTick() millisecond time scale.
+    // The encoder is set to by an X4 type and increases on falling and raising flanks
+    // whereas the interrupt fires on one pin and rising flank - hence times 4.
+    //
+    if (activesettings.pos_source != 1)
     {
-        last_pos = controllerstatus.pos;
-        if (possensorduration == 0)
+        /*
+         * In case the position did not change for 2 seconds, a speed=0 is assumed.
+         */
+        if (possensorduration == 0 || HAL_GetTick() - last_possensortick > 2000L)
         {
             //
             // Failsafe for below's division.
             //
-            controllerstatus.speed = 0.0f;
-            controllerstatus.pos_diff = 0.0f;
+            controllerstatus.speed_by_time = 0.0f;
         }
         else
         {
-            //
-            // If the encoder is used, then there is a more accurate way to calculate the speed, that is measuring the time using
-            // the hardware interrupt (input capture) of the encoder. This has a higher precision than 0.02 seconds.
-            //
-            // Speed is the number of signals per 0.02 (=Ta) secs.
-            // Hence refactor Ta to milliseconds to match the HAL_GetTick() millisecond time scale.
-            // The encoder is set to by an X4 type and increases on falling and raising flanks
-            // whereas the interrupt fires on one pin and rising flank only - hence times 4.
-            //
-            controllerstatus.speed = CONTROLLERLOOPTIME_FLOAT * 1000.0f * 4.0f / ((float) possensorduration);
+            controllerstatus.speed_by_time = CONTROLLERLOOPTIME_FLOAT * 1000.0f * 4.0f / ((float) possensorduration);
         }
     }
-    */
 }
 
 void initController(void)
@@ -356,15 +357,12 @@ float getStickPositionRaw()
  * current speed with the stick_max_accel as deceleration, the stick is slowly moved into neutral. The endpoint limiter
  * is obviously engaged in OPERATIONAL mode only, otherwise the end points could not be set to further outside.
  *
- * \param pos float Current position
- * \param brakedistance float Brake distance at current speed
  * \return stick_requested_value float
  *
  */
-float stickCycle(float brakedistance)
+float stickCycle()
 {
     float stickpercent = getStickPositionRaw();
-
 
     // output = ( (1 - factor) x input^3 ) + ( factor x input )     with input and output between -1 and +1
     float value = ((1.0f - (float) activesettings.expo_factor) * stickpercent * stickpercent * stickpercent) + (activesettings.expo_factor * stickpercent);
@@ -403,6 +401,19 @@ float stickCycle(float brakedistance)
 
         if (controllerstatus.safemode == OPERATIONAL && activesettings.mode != MODE_PASSTHROUGH && activesettings.mode != MODE_LIMITER)
         {
+            float time_to_stop = abs_d(value/controllerstatus.stick_max_accel);
+
+            float speed;
+            if (controllerstatus.speed_by_time != 0.0f)
+            {
+                speed = controllerstatus.speed_by_time;
+            }
+            else
+            {
+                speed = controllerstatus.speed_by_posdiff;
+            }
+
+            float brakedistance = speed * time_to_stop / 2.0f;
             /*
              * The current status is OPERATIONAL, hence the endpoints are honored.
              *
@@ -478,12 +489,9 @@ float stickCycle(float brakedistance)
                             {
                                 value = 0.0f;
                             }
-                            if (controllerstatus.endpointbrake == false)
+                            if (controllerstatus.endpointbrake == false || controllerstatus.debug_endpoint)
                             {
-                                PrintSerial_string("Endpoint brake on. Distance=", EndPoint_All);
-                                PrintSerial_float(semipermanentsettings.pos_end-controllerstatus.pos, EndPoint_All);
-                                PrintSerial_string(", calculated braking distance=", EndPoint_All);
-                                PrintlnSerial_float(brakedistance, EndPoint_All);
+                                printBrakeMessage(value, semipermanentsettings.pos_end-controllerstatus.pos, brakedistance, speed, false);
                             }
                             controllerstatus.endpointbrake = true;
 
@@ -498,9 +506,9 @@ float stickCycle(float brakedistance)
                                 /*
                                  * We are in danger to overshoot the end point by max_position_error. Hence kick in the emergency brake.
                                  */
-                                if (controllerstatus.emergencybrake == false)
+                                if (controllerstatus.emergencybrake == false || controllerstatus.debug_endpoint)
                                 {
-                                    PrintlnSerial_string("Emergency brake on ", EndPoint_All);
+                                    printBrakeMessage(value, semipermanentsettings.pos_end-controllerstatus.pos, brakedistance, speed, true);
                                 }
                                 controllerstatus.emergencybrake = true;
                                 LED_WARN_ON;
@@ -544,12 +552,9 @@ float stickCycle(float brakedistance)
                             {
                                 value = 0.0f;
                             }
-                            if (controllerstatus.endpointbrake == false)
+                            if (controllerstatus.endpointbrake == false || controllerstatus.debug_endpoint)
                             {
-                                PrintSerial_string("Endpoint brake on. Distance=", EndPoint_All);
-                                PrintSerial_float(controllerstatus.pos - semipermanentsettings.pos_start, EndPoint_All);
-                                PrintSerial_string(", calculated braking distance=", EndPoint_All);
-                                PrintlnSerial_float(brakedistance, EndPoint_All);
+                                printBrakeMessage(value, controllerstatus.pos-semipermanentsettings.pos_start, brakedistance, speed, false);
                             }
                             controllerstatus.endpointbrake = true;
 
@@ -563,9 +568,9 @@ float stickCycle(float brakedistance)
                                 /*
                                  * We are in danger to overshoot the start point by max_position_error. Hence kick in the emergency brake.
                                  */
-                                if (controllerstatus.emergencybrake == false)
+                                if (controllerstatus.emergencybrake == false || controllerstatus.debug_endpoint)
                                 {
-                                    PrintlnSerial_string("Emergency brake on ", EndPoint_All);
+                                    printBrakeMessage(value, controllerstatus.pos-semipermanentsettings.pos_start, brakedistance, speed, true);
                                 }
                                 controllerstatus.emergencybrake = true;
                                 LED_WARN_ON;
@@ -586,9 +591,6 @@ float stickCycle(float brakedistance)
 
     }
     stick_last_value = value; // store the current effective stick position as value for the next cycle
-
-
-
 
 
 
@@ -869,10 +871,7 @@ void controllercycle()
      */
     setPos();
 
-    float time_to_stop = abs_d(getStick()/controllerstatus.stick_max_accel);
-
-    float distance_to_stop = controllerstatus.speed * time_to_stop / 2.0f;
-    float stick_filtered_value = stickCycle(distance_to_stop); // go through the stick position calculation with its limiters, max accel etc
+    float stick_filtered_value = stickCycle(); // go through the stick position calculation with its limiters, max accel etc
 
     /*
      * PPM output is rescaled to +-700 and adding the ESC's neutral range to get an immediate output.
@@ -987,4 +986,25 @@ void printControlLoop(int16_t input, float speed, float pos, float brakedistance
 
     PrintSerial_string("  Pos: ", endpoint);
     PrintlnSerial_float(pos, endpoint);
+}
+
+void printBrakeMessage(float value, float endpointdistance, float brakedistance, float speed, bool emergency)
+{
+    if (emergency)
+    {
+        PrintSerial_string("Emergency brake on. Distance=", EndPoint_All);
+    }
+    else
+    {
+        PrintSerial_string("Endpoint brake on. Distance=", EndPoint_All);
+    }
+    PrintSerial_float(endpointdistance, EndPoint_All);
+    PrintSerial_string(", calculated braking distance= abs(", EndPoint_All);
+    PrintSerial_float(value, EndPoint_All);
+    PrintSerial_string("[%] ) /", EndPoint_All);
+    PrintSerial_float(controllerstatus.stick_max_accel/CONTROLLERLOOPTIME_FLOAT, EndPoint_All);
+    PrintSerial_string("[%/s] *", EndPoint_All);
+    PrintSerial_float(speed/CONTROLLERLOOPTIME_FLOAT, EndPoint_All);
+    PrintSerial_string("[steps/s] / 2 =", EndPoint_All);
+    PrintlnSerial_float(brakedistance, EndPoint_All);
 }
