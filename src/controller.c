@@ -418,14 +418,14 @@ float stickCycle()
             float time_to_stop = abs_d(value/controllerstatus.stick_max_accel);
 
             float speed;
-            if (controllerstatus.speed_by_time != 0.0f)
+            /* if (controllerstatus.speed_by_time != 0.0f)
             {
                 speed = controllerstatus.speed_by_time;
             }
             else
-            {
+            { */
                 speed = controllerstatus.speed_by_posdiff;
-            }
+            /* } */
 
             float brakedistance = speed * time_to_stop / 2.0f;
             /*
@@ -783,26 +783,26 @@ void printBrakeMessage(float value, float brakedistance, float speed, uint8_t ty
 {
     if (type == 00)
     {
-        PrintSerial_string("Endpoint emergency brake on. ", EndPoint_All);
+        PrintSerial_string("Endpoint emergency ", EndPoint_All);
     }
     else if (type == 01)
     {
-        PrintSerial_string("Endpoint brake on. ", EndPoint_All);
+        PrintSerial_string("Endpoint brake on  ", EndPoint_All);
     }
     else if (type == 02)
     {
-        PrintSerial_string("Endpoint overshot. ", EndPoint_All);
+        PrintSerial_string("Endpoint overshot  ", EndPoint_All);
     } else if (type == 10)
     {
-        PrintSerial_string("Startpoint emergency brake on. ", EndPoint_All);
+        PrintSerial_string("Startpoint emergency ", EndPoint_All);
     }
     else if (type == 11)
     {
-        PrintSerial_string("Startpoint brake on. ", EndPoint_All);
+        PrintSerial_string("Startpoint brake on  ", EndPoint_All);
     }
     else if (type == 12)
     {
-        PrintSerial_string("Startpoint overshot. ", EndPoint_All);
+        PrintSerial_string("Startpoint overshot  ", EndPoint_All);
     }
     if (type < 10)
     {
