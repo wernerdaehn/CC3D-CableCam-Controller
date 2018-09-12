@@ -14,8 +14,7 @@ void printControlLoop(int16_t input, float speed, float pos, float brakedistance
 float stickCycle(void);
 float getStickPositionRaw(void);
 float abs_d(float v);
-float getGimbalDuty(uint8_t channel);
-void printBrakeMessage(float value, float brakedistance, float speed, uint8_t type, float pos, float startpoint, float endpoint);
+void printBrakeMessage(float value, float brakedistance, float speed, uint8_t type, Endpoints endpoint);
 void evalute_stick_programming_mode(float value);
 void evalute_stick_endpoint_switch(void);
 void evalute_stick_accel_dial(void);
@@ -29,8 +28,6 @@ void evalute_stick_play_switch(void);
  */
 float stick_last_value = 0.0f;
 float last_pos = 0.0f;
-uint32_t possensorduration = 0;
-uint32_t last_possensortick = 0;
 
 static float stickintegral = 0.0f;
 
@@ -86,19 +83,20 @@ void setPos(void)
      * Example: current time = 5; last_change_time = 0; position did change by 1; --->  speed = 1/5.
      *
      */
-    uint32_t current_cylce_counter = getCounter(); // Get the number of 20ms intervals
+    uint32_t current_cycle_counter = getCounter(); // Get the number of 20ms intervals
     if (controllerstatus.pos != last_pos)
     {
-        uint32_t time_diff = current_cylce_counter - controllerstatus.last_pos_change;
+        uint32_t time_diff = current_cycle_counter - controllerstatus.last_pos_change;
         controllerstatus.pos_diff = controllerstatus.pos - last_pos;
         controllerstatus.speed_by_posdiff = abs_d(controllerstatus.pos_diff / ((float) time_diff ));
-        controllerstatus.last_pos_change = current_cylce_counter;
+        controllerstatus.last_pos_change = current_cycle_counter;
+
         last_pos = controllerstatus.pos;
     }
-    else if (current_cylce_counter - controllerstatus.last_pos_change > 100L)
+    else if (current_cycle_counter - controllerstatus.last_pos_change > 25L)
     {
         /*
-         * In case the position did not change for 2 seconds, a speed=0 is assumed.
+         * In case the position did not change for 0.5 seconds, a speed=0 is assumed.
          */
         controllerstatus.speed_by_posdiff = 0.0f;
         controllerstatus.pos_diff = 0.0f;
@@ -116,10 +114,11 @@ void setPos(void)
     //
     if (activesettings.pos_source != 1)
     {
+        uint32_t timesincelastpostick = HAL_GetTick() - controllerstatus.last_possensortick;
         /*
-         * In case the position did not change for 2 seconds, a speed=0 is assumed.
+         * In case the position did not change for 0.5 seconds, a speed=0 is assumed.
          */
-        if (possensorduration == 0 || HAL_GetTick() - last_possensortick > 2000L)
+        if (controllerstatus.possensorduration == 0 || timesincelastpostick > 500L)
         {
             //
             // Failsafe for below's division.
@@ -128,7 +127,12 @@ void setPos(void)
         }
         else
         {
-            controllerstatus.speed_by_time = CONTROLLERLOOPTIME_FLOAT * 1000.0f * 4.0f / ((float) possensorduration);
+            if (timesincelastpostick > 300)
+            {
+                // The speed between ticks only works if the wheel is moving. Else the speed should continue to decline.
+                controllerstatus.possensorduration+= CONTROLLERLOOPTIME_MS;
+            }
+            controllerstatus.speed_by_time = CONTROLLERLOOPTIME_FLOAT * 1000.0f * 4.0f / ((float) controllerstatus.possensorduration);
         }
     }
 }
@@ -137,6 +141,8 @@ void initController(void)
 {
     controllerstatus.safemode = INVALID_RC;
     controllerstatus.play_running = FORCE_OFF;
+    controllerstatus.possensorduration = 0;
+    controllerstatus.last_possensortick = 0;
 }
 
 float abs_d(float v)
@@ -418,14 +424,16 @@ float stickCycle()
             float time_to_stop = abs_d(value/controllerstatus.stick_max_accel);
 
             float speed;
-            /* if (controllerstatus.speed_by_time != 0.0f)
+            speed = controllerstatus.speed_by_posdiff;
+
+            if (controllerstatus.speed_by_posdiff < 8.0f)
             {
                 speed = controllerstatus.speed_by_time;
             }
             else
-            { */
+            {
                 speed = controllerstatus.speed_by_posdiff;
-            /* } */
+            }
 
             float brakedistance = speed * time_to_stop / 2.0f;
             /*
@@ -473,7 +481,7 @@ float stickCycle()
                 controllerstatus.emergencybrake = false;
                 if (controllerstatus.debug_endpoint && value != 0.0f)
                 {
-                    printBrakeMessage(value, brakedistance, speed, 99, controllerstatus.pos, semipermanentsettings.pos_start, semipermanentsettings.pos_end);
+                    printBrakeMessage(value, brakedistance, speed, 99, controllerstatus.debugrequester);
                 }
             }
             else
@@ -500,7 +508,7 @@ float stickCycle()
                             stick_last_value = 0.0f;
                             if (controllerstatus.emergencybrake == false)
                             {
-                                printBrakeMessage(value, brakedistance, speed, 02, controllerstatus.pos, semipermanentsettings.pos_start, semipermanentsettings.pos_end);
+                                printBrakeMessage(value, brakedistance, speed, 02, EndPoint_All);
                             }
                             controllerstatus.emergencybrake = true;
                             return stick_last_value;
@@ -526,7 +534,7 @@ float stickCycle()
                                  */
                                 if (controllerstatus.emergencybrake == false || controllerstatus.debug_endpoint)
                                 {
-                                    printBrakeMessage(value, brakedistance, speed, 00, controllerstatus.pos, semipermanentsettings.pos_start, semipermanentsettings.pos_end);
+                                    printBrakeMessage(value, brakedistance, speed, 00, controllerstatus.debugrequester);
                                 }
                                 controllerstatus.emergencybrake = true;
                                 stick_last_value = value;
@@ -534,7 +542,7 @@ float stickCycle()
                             }
                             if (controllerstatus.endpointbrake == false || controllerstatus.debug_endpoint)
                             {
-                                printBrakeMessage(value, brakedistance, speed, 01, controllerstatus.pos, semipermanentsettings.pos_start, semipermanentsettings.pos_end);
+                                printBrakeMessage(value, brakedistance, speed, 01, controllerstatus.debugrequester);
                             }
                             controllerstatus.endpointbrake = true;
                         }
@@ -546,7 +554,7 @@ float stickCycle()
                         LED_WARN_OFF;
                         if (controllerstatus.debug_endpoint && value != 0.0f)
                         {
-                            printBrakeMessage(value, brakedistance, speed, 99, controllerstatus.pos, semipermanentsettings.pos_start, semipermanentsettings.pos_end);
+                            printBrakeMessage(value, brakedistance, speed, 99, controllerstatus.debugrequester);
                         }
                     }
 
@@ -571,7 +579,7 @@ float stickCycle()
                             stick_last_value = 0.0f;
                             if (controllerstatus.emergencybrake == false)
                             {
-                                printBrakeMessage(value, brakedistance, speed, 12, controllerstatus.pos, semipermanentsettings.pos_start, semipermanentsettings.pos_end);
+                                printBrakeMessage(value, brakedistance, speed, 12, EndPoint_All);
                             }
                             controllerstatus.emergencybrake = true;
                             return 0.0f;
@@ -595,7 +603,7 @@ float stickCycle()
                                  */
                                 if (controllerstatus.emergencybrake == false || controllerstatus.debug_endpoint)
                                 {
-                                    printBrakeMessage(value, brakedistance, speed, 10, controllerstatus.pos, semipermanentsettings.pos_start, semipermanentsettings.pos_end);
+                                    printBrakeMessage(value, brakedistance, speed, 10, controllerstatus.debugrequester);
                                 }
                                 controllerstatus.emergencybrake = true;
                                 stick_last_value = value;
@@ -603,7 +611,7 @@ float stickCycle()
                             }
                             if (controllerstatus.endpointbrake == false || controllerstatus.debug_endpoint)
                             {
-                                printBrakeMessage(value, brakedistance, speed, 11, controllerstatus.pos, semipermanentsettings.pos_start, semipermanentsettings.pos_end);
+                                printBrakeMessage(value, brakedistance, speed, 11, controllerstatus.debugrequester);
                             }
                             controllerstatus.endpointbrake = true;
                         }
@@ -615,7 +623,7 @@ float stickCycle()
                         LED_WARN_OFF;
                         if (controllerstatus.debug_endpoint && value != 0.0f)
                         {
-                            printBrakeMessage(value, brakedistance, speed, 99, controllerstatus.pos, semipermanentsettings.pos_start, semipermanentsettings.pos_end);
+                            printBrakeMessage(value, brakedistance, speed, 99, controllerstatus.debugrequester);
                         }
                     }
                 }
@@ -660,6 +668,9 @@ void controllercycle()
      *    ----------------------------------
      *      time_to_stop
      */
+    controllerstatus.tick_enter_previous = controllerstatus.tick_enter;
+    controllerstatus.tick_enter = HAL_GetTick();
+
     setPos();
 
     float stick_filtered_value = stickCycle(); // go through the stick position calculation with its limiters, max accel etc
@@ -718,6 +729,7 @@ void controllercycle()
         gimbalout[ch] = getGimbalDuty(ch);
     }
     setGimbalValues(gimbalout);
+    controllerstatus.tick_leave = HAL_GetTick();
 }
 
 float getGimbalDuty(uint8_t channel)
@@ -779,72 +791,71 @@ void printControlLoop(int16_t input, float speed, float pos, float brakedistance
     PrintlnSerial_float(pos, endpoint);
 }
 
-void printBrakeMessage(float value, float brakedistance, float speed, uint8_t type, float pos, float startpoint, float endpoint)
+void printBrakeMessage(float value, float brakedistance, float speed, uint8_t type, Endpoints endpoint)
 {
     if (type == 00)
     {
-        PrintSerial_string("Endpoint emergency ", EndPoint_All);
+        PrintSerial_string("Endpoint emergency   at", endpoint);
     }
     else if (type == 01)
     {
-        PrintSerial_string("Endpoint brake on  ", EndPoint_All);
+        PrintSerial_string("Endpoint brake on    at", endpoint);
     }
     else if (type == 02)
     {
-        PrintSerial_string("Endpoint overshot  ", EndPoint_All);
+        PrintSerial_string("Endpoint overshot    at", endpoint);
     } else if (type == 10)
     {
-        PrintSerial_string("Startpoint emergency ", EndPoint_All);
+        PrintSerial_string("Startpoint emergency at", endpoint);
     }
     else if (type == 11)
     {
-        PrintSerial_string("Startpoint brake on  ", EndPoint_All);
+        PrintSerial_string("Startpoint brake on  at", endpoint);
     }
     else if (type == 12)
     {
-        PrintSerial_string("Startpoint overshot  ", EndPoint_All);
+        PrintSerial_string("Startpoint overshot  at", endpoint);
     }
-    if (type < 10)
+    else if (type == 99)
     {
-        PrintSerial_string("pos + brakedistance=", EndPoint_All);
-        PrintSerial_float(pos, EndPoint_All);
-        PrintSerial_string(" +", EndPoint_All);
-        PrintSerial_float(brakedistance, EndPoint_All);
-        PrintSerial_string(" =", EndPoint_All);
-        PrintSerial_float(pos+brakedistance, EndPoint_All);
-        PrintSerial_string(" >", EndPoint_All);
-        PrintSerial_float(endpoint, EndPoint_All);
+        PrintSerial_string("Free moving          at", endpoint);
     }
-    else if (type <20)
+
+    PrintSerial_long(HAL_GetTick(), endpoint);
+
+    if (type < 10 || (type == 99 && value >= 0.0f))
     {
-        PrintSerial_string("pos - brakedistance=", EndPoint_All);
-        PrintSerial_float(pos, EndPoint_All);
-        PrintSerial_string(" -", EndPoint_All);
-        PrintSerial_float(brakedistance, EndPoint_All);
-        PrintSerial_string(" =", EndPoint_All);
-        PrintSerial_float(pos-brakedistance, EndPoint_All);
-        PrintSerial_string(" <", EndPoint_All);
-        PrintSerial_float(startpoint, EndPoint_All);
+        PrintSerial_string("; pos + brakedistance =", endpoint);
+        PrintSerial_float(controllerstatus.pos, endpoint);
+        PrintSerial_string(" +", endpoint);
+        PrintSerial_float(brakedistance, endpoint);
+        PrintSerial_string(" =", endpoint);
+        PrintSerial_float(controllerstatus.pos+brakedistance, endpoint);
+        PrintSerial_string(" >", endpoint);
+        PrintSerial_float(semipermanentsettings.pos_end, endpoint);
     }
-    else
+    else if (type < 20 || (type == 99 && value < 0.0f))
     {
-        PrintSerial_string("pos=", EndPoint_All);
-        PrintSerial_float(pos, EndPoint_All);
-        PrintSerial_string(" brakedistance=", EndPoint_All);
-        PrintSerial_float(brakedistance, EndPoint_All);
-        PrintSerial_string(" start=", EndPoint_All);
-        PrintSerial_float(startpoint, EndPoint_All);
-        PrintSerial_string(" end=", EndPoint_All);
-        PrintSerial_float(endpoint, EndPoint_All);
+        PrintSerial_string("; pos - brakedistance =", endpoint);
+        PrintSerial_float(controllerstatus.pos, endpoint);
+        PrintSerial_string(" -", endpoint);
+        PrintSerial_float(brakedistance, endpoint);
+        PrintSerial_string(" =", endpoint);
+        PrintSerial_float(controllerstatus.pos-brakedistance, endpoint);
+        PrintSerial_string(" <", endpoint);
+        PrintSerial_float(semipermanentsettings.pos_start, endpoint);
     }
-    PrintSerial_string(", braking distance= abs(", EndPoint_All);
-    PrintSerial_float(value, EndPoint_All);
-    PrintSerial_string("[%] ) /", EndPoint_All);
-    PrintSerial_float(controllerstatus.stick_max_accel/CONTROLLERLOOPTIME_FLOAT, EndPoint_All);
-    PrintSerial_string("[%/s] *", EndPoint_All);
-    PrintSerial_float(speed/CONTROLLERLOOPTIME_FLOAT, EndPoint_All);
-    PrintSerial_string("[steps/s] / 2 =", EndPoint_All);
-    PrintlnSerial_float(brakedistance, EndPoint_All);
+
+    PrintSerial_string(", brake distance= ", endpoint);
+    PrintSerial_float(value, endpoint);
+    PrintSerial_string("[%] /", endpoint);
+    PrintSerial_float(controllerstatus.stick_max_accel/CONTROLLERLOOPTIME_FLOAT, endpoint);
+    PrintSerial_string("[%/s] *", endpoint);
+    PrintSerial_float(speed/CONTROLLERLOOPTIME_FLOAT, endpoint);
+    PrintSerial_string("[steps/s] / 2; sp=", endpoint);
+    PrintSerial_float(controllerstatus.speed_by_posdiff, endpoint);
+    PrintSerial_string("; st=", endpoint);
+    PrintlnSerial_float(controllerstatus.speed_by_time, endpoint);
 }
 
 void evalute_stick_programming_mode(float value)

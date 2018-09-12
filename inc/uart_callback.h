@@ -3,9 +3,11 @@
 
 #include "stm32f4xx_hal.h"
 
-void uart_init(UART_HandleTypeDef *huart, uint8_t * rxbuffer, uint16_t rxbuffersize);
-void UARTX_IRQHandler(UART_HandleTypeDef *huart);
-uint16_t uart_bytesunread(UART_HandleTypeDef *huart, uint16_t lastreadpos);
+void UART3_init(void);
+uint16_t UART3_bytesunread(uint16_t lastreadpos);
 uint16_t UART3_ReceiveString(void);
+
+void UART3Append(uint8_t *ptr, uint32_t len);
+void UART3Flush(void);
 
 #endif /* UART_CALLBACK_H_INCLUDED */

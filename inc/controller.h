@@ -19,6 +19,7 @@ float getMaxSpeedPoti(void);
 float getModeSwitch(void);
 float getPlaySwitch(void);
 float getAuxInput(void);
+float getGimbalDuty(uint8_t channel);
 
 
 /*

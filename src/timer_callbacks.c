@@ -8,9 +8,7 @@
 static int8_t current_virtual_channel = 0;
 static uint16_t lastrising = 0;
 
-extern uint32_t possensorduration;
 uint32_t possensortick_old = 0;
-extern uint32_t last_possensortick;
 
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
@@ -106,8 +104,21 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
     }
     else if (htim->Instance == TIM5)
     {
-        last_possensortick = HAL_GetTick();
-        possensorduration = last_possensortick - possensortick_old;
-        possensortick_old = last_possensortick;
+        controllerstatus.last_possensortick = HAL_GetTick();
+        controllerstatus.possensorduration = controllerstatus.last_possensortick - possensortick_old;
+        /*
+         * Need to deal with the situation that the first pulse after a long stand still would have very high duration.
+         * Limit to a minimum speed
+         */
+        if (controllerstatus.possensorduration > 1000)
+        {
+            controllerstatus.possensorduration = 0;
+        }
+        possensortick_old = controllerstatus.last_possensortick;
     }
+    else if (htim->Instance == TIM8)
+    {
+        PrintlnSerial_string("TIM8", EndPoint_USB);
+    }
+
 }

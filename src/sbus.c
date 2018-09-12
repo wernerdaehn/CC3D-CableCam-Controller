@@ -41,7 +41,7 @@ extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart6;
 
 void setServoValues(void);
-uint16_t convertDutyIntoSBus(float channel_values[], uint8_t channel);
+uint16_t convertDutyIntoSBus(float duty, uint8_t channel);
 
 sbusFrame_t sbusFrame;
 sbusFrame_t sBusFrameGimbal;
@@ -80,19 +80,18 @@ void initSBusData(uint8_t receivertype)
 
 void setGimbalValues(float channel_values[])
 {
-    sBusFrameGimbal.frame.chan0 = convertDutyIntoSBus(channel_values, 0);
-    sBusFrameGimbal.frame.chan1 = convertDutyIntoSBus(channel_values, 1);
-    sBusFrameGimbal.frame.chan2 = convertDutyIntoSBus(channel_values, 2);
-    sBusFrameGimbal.frame.chan3 = convertDutyIntoSBus(channel_values, 3);
-    sBusFrameGimbal.frame.chan4 = convertDutyIntoSBus(channel_values, 4);
-    sBusFrameGimbal.frame.chan5 = convertDutyIntoSBus(channel_values, 5);
-    sBusFrameGimbal.frame.chan6 = convertDutyIntoSBus(channel_values, 6);
-    sBusFrameGimbal.frame.chan7 = convertDutyIntoSBus(channel_values, 7);
+    sBusFrameGimbal.frame.chan0 = convertDutyIntoSBus(channel_values[0],0);
+    sBusFrameGimbal.frame.chan1 = convertDutyIntoSBus(channel_values[1],1);
+    sBusFrameGimbal.frame.chan2 = convertDutyIntoSBus(channel_values[2],2);
+    sBusFrameGimbal.frame.chan3 = convertDutyIntoSBus(channel_values[3],3);
+    sBusFrameGimbal.frame.chan4 = convertDutyIntoSBus(channel_values[4],4);
+    sBusFrameGimbal.frame.chan5 = convertDutyIntoSBus(channel_values[5],5);
+    sBusFrameGimbal.frame.chan6 = convertDutyIntoSBus(channel_values[6],6);
+    sBusFrameGimbal.frame.chan7 = convertDutyIntoSBus(channel_values[7],7);
 }
 
-uint16_t convertDutyIntoSBus(float channel_values[], uint8_t channel)
+uint16_t convertDutyIntoSBus(float duty, uint8_t channel)
 {
-    float duty = channel_values[channel];
     if (isnan(duty))
     {
         return activesettings.rc_channel_sbus_out_default[channel];
@@ -403,9 +402,9 @@ void PrintSumPPMRawData(Endpoints endpoint)
 void SBusSendCycle()
 {
     uint32_t currenttick = HAL_GetTick();
-    if (currenttick - lastsbussend >= 15)
+    if (currenttick - lastsbussend >= 15) // && (huart6.gState && 0x01) == 0x00)
     {
-        HAL_UART_Transmit_IT(&huart6, &sBusFrameGimbal.bytes[0], SBUS_FRAME_SIZE);
+        HAL_UART_Transmit_DMA(&huart6, &sBusFrameGimbal.bytes[0], SBUS_FRAME_SIZE);
         lastsbussend = currenttick;
     }
 }

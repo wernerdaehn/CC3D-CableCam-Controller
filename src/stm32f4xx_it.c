@@ -37,6 +37,7 @@
 #include "uart_callback.h"
 #include "vesc.h"
 
+
 /* USER CODE BEGIN 0 */
 #include "sbus.h"
 
@@ -51,6 +52,12 @@ extern UART_HandleTypeDef huart6;
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim5;
 extern uint16_t d;
+extern DMA_HandleTypeDef hdma_usart2_tx;
+extern DMA_HandleTypeDef hdma_usart2_rx;
+extern DMA_HandleTypeDef hdma_usart3_tx;
+extern DMA_HandleTypeDef hdma_usart3_rx;
+extern DMA_HandleTypeDef hdma_usart6_tx;
+extern DMA_HandleTypeDef hdma_usart6_rx;
 
 /******************************************************************************/
 /*            Cortex-M4 Processor Interruption and Exception Handlers         */
@@ -146,7 +153,8 @@ void USART1_IRQHandler(void)
 */
 void USART2_IRQHandler(void)
 {
-    VESC_IRQHandler(&huart2);
+    // ESC
+    HAL_UART_IRQHandler(&huart2);
 }
 
 /**
@@ -154,7 +162,8 @@ void USART2_IRQHandler(void)
 */
 void USART3_IRQHandler(void)
 {
-    UARTX_IRQHandler(&huart3);
+    // Bluetooth
+    HAL_UART_IRQHandler(&huart3);
 }
 
 /**
@@ -162,6 +171,7 @@ void USART3_IRQHandler(void)
 */
 void USART6_IRQHandler(void)
 {
+    // SBus out
     HAL_UART_IRQHandler(&huart6);
 }
 
@@ -190,5 +200,44 @@ void TIM5_IRQHandler(void)
     HAL_TIM_IRQHandler(&htim5);
 }
 
+/**
+* @brief This function handles DMA1 stream1 global interrupt.
+*/
+void DMA1_Stream1_IRQHandler(void)
+{
+    HAL_DMA_IRQHandler(&hdma_usart3_rx);
+}
+
+/**
+* @brief This function handles DMA1 stream3 global interrupt.
+*/
+void DMA1_Stream3_IRQHandler(void)
+{
+    HAL_DMA_IRQHandler(&hdma_usart3_tx);
+}
+
+/**
+* @brief This function handles DMA1 stream5 global interrupt.
+*/
+void DMA1_Stream5_IRQHandler(void)
+{
+    HAL_DMA_IRQHandler(&hdma_usart2_rx);
+}
+
+/**
+* @brief This function handles DMA1 stream6 global interrupt.
+*/
+void DMA1_Stream6_IRQHandler(void)
+{
+    HAL_DMA_IRQHandler(&hdma_usart2_tx);
+}
+
+/**
+* @brief This function handles DMA2 stream6 global interrupt.
+*/
+void DMA2_Stream6_IRQHandler(void)
+{
+    HAL_DMA_IRQHandler(&hdma_usart6_tx);
+}
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -78,16 +78,20 @@ TIM_HandleTypeDef htim5;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
-
 UART_HandleTypeDef huart6;
 
+DMA_HandleTypeDef hdma_usart2_tx;
+DMA_HandleTypeDef hdma_usart2_rx;
+DMA_HandleTypeDef hdma_usart3_tx;
+DMA_HandleTypeDef hdma_usart3_rx;
+DMA_HandleTypeDef hdma_usart6_tx;
 
 /* Private variables ---------------------------------------------------------*/
 uint32_t lasttick;
-uint8_t uart3_rxbuffer[RXBUFFERSIZE];
 
 extern char usb_commandlinebuffer[RXBUFFERSIZE];
 extern char uart3_commandlinebuffer[RXBUFFERSIZE];
+extern bool uart2_tx_ready;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -95,13 +99,13 @@ static void MX_GPIO_Init(void);
 static void MX_RTC_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_SPI3_Init(void);
-static void MX_TIM3_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_USART6_UART_Init(void);
-static void MX_TIM5_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_TIM3_Init(void);
+static void MX_TIM5_Init(void);
 
 int main(void)
 {
@@ -121,17 +125,13 @@ int main(void)
     MX_SPI1_Init();
     MX_SPI3_Init();
     MX_TIM3_Init();
-    MX_USART3_UART_Init();
+    MX_TIM5_Init();
     MX_USB_DEVICE_Init();
     MX_USART2_UART_Init();
-    MX_TIM5_Init();
+    MX_USART3_UART_Init();
     MX_USART6_UART_Init();
 
-    /* Disable Half Transfer Interrupt */
-    /* __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT); */
-
     initProtocol();
-    VESC_init();
 
     /* Start encoder in interrupt mode so the counter value is changed and the time of a counter tick can be evaluated */
     HAL_TIM_Encoder_Start_IT(&htim5, TIM_CHANNEL_1 | TIM_CHANNEL_2);
@@ -159,7 +159,7 @@ int main(void)
     activesettings.esc_direction = 0;
     activesettings.max_position_error = 100.0f;
     activesettings.mode = MODE_PASSTHROUGH;
-    activesettings.receivertype = RECEIVER_TYPE_SUMPPM;
+    activesettings.receivertype = RECEIVER_TYPE_SBUS;
     activesettings.rc_channel_endpoint = 255;
     activesettings.rc_channel_programming = 255;
     activesettings.rc_channel_speed = 0;
@@ -262,9 +262,10 @@ int main(void)
 
     initController();
 
-    HAL_UART_Receive_IT(&huart2, getRequestValuePacketFrameAddress(), VESC_RXBUFFER_SIZE);
+    // HAL_UART_Receive_IT(&huart2, getRequestValuePacketFrameAddress(), VESC_RXBUFFER_SIZE);
 
-    uart_init(&huart3, uart3_rxbuffer, RXBUFFERSIZE);
+    UART3_init();
+    VESC_init();
 
     while (1)
     {
@@ -278,13 +279,13 @@ int main(void)
             lasttick = HAL_GetTick();
             tickCounter();
 
-            USBPeriodElapsed();
             if (is1Hz())
             {
-                /*
-                 * Every second trigger the VESC status
-                 */
-                VESC_request_values();
+                if (HAL_UART_GetState(&huart2) == HAL_UART_STATE_READY)
+                {
+                    PrintlnSerial_string("Restarting ESC receive", EndPoint_USB);
+                    VESC_init();
+                }
             }
             if (is1Hz() && controllerstatus.safemode == OPERATIONAL)
             {
@@ -315,7 +316,11 @@ int main(void)
                 LED_WARN_OFF;
             }
             controllercycle();
+
+            USBPeriodElapsed();
+            UART3Flush();
         }
+
         if( USB_ReceiveString() > 0 )
         {
             serialCom(EndPoint_USB, usb_commandlinebuffer);
@@ -325,6 +330,8 @@ int main(void)
             serialCom(EndPoint_UART3, uart3_commandlinebuffer);
         }
         SBusSendCycle();
+        UART2Flush();
+        UART2_Receive();
         eeprom_cycle();
     }
 }
@@ -501,7 +508,17 @@ static void MX_TIM3_Init(void)
         _Error_Handler(__FILE__, __LINE__);
     }
 
-    HAL_TIM_MspPostInit(&htim3);
+    GPIO_InitTypeDef GPIO_InitStruct;
+    /**TIM3 GPIO Configuration
+    PB0     ------> TIM3_CH3
+    PB1     ------> TIM3_CH4
+    */
+    GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF2_TIM3;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
 
 /* TIM5 init function */
@@ -516,12 +533,10 @@ static void MX_TIM5_Init(void)
     htim5.Init.Period = 4294967295;
     htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     sConfig.EncoderMode = TIM_ENCODERMODE_TI12;
-    // sConfig.IC1Polarity = TIM_ICPOLARITY_BOTHEDGE;
     sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
     sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
     sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
     sConfig.IC1Filter = 4;
-    // sConfig.IC2Polarity = TIM_ICPOLARITY_BOTHEDGE;
     sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
     sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
     sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
@@ -531,14 +546,13 @@ static void MX_TIM5_Init(void)
         _Error_Handler(__FILE__, __LINE__);
     }
 
-    sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+    sMasterConfig.MasterOutputTrigger = TIM_TRGO_OC1;
     sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
     if (HAL_TIMEx_MasterConfigSynchronization(&htim5, &sMasterConfig) != HAL_OK)
     {
         _Error_Handler(__FILE__, __LINE__);
     }
 }
-
 
 /* TIM1 init function */
 static void MX_TIM1_Init(void)
@@ -642,7 +656,7 @@ static void MX_USART2_UART_Init(void)
 
 /* USART3 init function
  *
- * used vor the bluetooth communication
+ * used for the bluetooth communication
  */
 static void MX_USART3_UART_Init(void)
 {
@@ -658,6 +672,7 @@ static void MX_USART3_UART_Init(void)
     {
         _Error_Handler(__FILE__, __LINE__);
     }
+    // __HAL_UART_ENABLE_IT(&huart3, UART_IT_IDLE);
 }
 
 /* USART6 init function */
@@ -755,8 +770,51 @@ void initPPMReceiver()
     initSBusData(RECEIVER_TYPE_SUMPPM);  // In case it is a servo only, the Timer Interrupt will recognize that and change the value
 }
 
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART2)
+    {
+        uart2_tx_ready = true;
+    }
+}
 
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART2)
+    {
+        // UART2_Receive();
+    }
+}
 
+void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
+{
+    UNUSED(huart);
+}
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+    PrintSerial_string("Error Callback for ", EndPoint_USB);
+    if (huart->Instance == USART1)
+    {
+        PrintSerial_string("UART1:", EndPoint_USB);
+    }
+    else if (huart->Instance == USART2)
+    {
+        PrintSerial_string("UART2:", EndPoint_USB);
+    }
+    else if (huart->Instance == USART3)
+    {
+        PrintSerial_string("UART3:", EndPoint_USB);
+    }
+    else if (huart->Instance == USART6)
+    {
+        PrintSerial_string("UART6:", EndPoint_USB);
+    }
+    PrintSerial_int(HAL_UART_GetState(huart), EndPoint_USB);
+    PrintSerial_int(HAL_UART_GetError(huart), EndPoint_USB);
+    PrintSerial_long(huart->hdmarx->ErrorCode, EndPoint_USB);
+    PrintlnSerial_long(huart->hdmatx->ErrorCode, EndPoint_USB);
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
@@ -768,14 +826,23 @@ void _Error_Handler(const char * file, int line)
     /* In case of an error set ESC outputs to idle */
     TIM3->CCR3 = activesettings.esc_neutral_pos;
 
-    uint8_t buffer[4096];
+    /* uint8_t buffer[4096];
     memcpy(&buffer[0], &line, 2);
     memcpy(&buffer[2], file, strlen(file)+1);
 
-    eeprom_write_sector_safe(buffer, 4096, 5);
+    eeprom_write_sector_safe(buffer, 4096, 5); */
 
     while(1)
     {
+        uint32_t ltick = HAL_GetTick();
+        if (HAL_GetTick() - ltick > 1000)
+        {
+            PrintSerial_int(line, EndPoint_USB);
+            PrintlnSerial_string(file, EndPoint_USB);
+            USBPeriodElapsed();
+            ltick = HAL_GetTick();
+            LED_STATUS_TOGGLE;
+        }
     }
 
 }

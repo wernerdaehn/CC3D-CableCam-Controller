@@ -12,15 +12,18 @@
 void VESC_init(void);
 void VESC_Output(float esc_output);
 void VESC_set_rpm(int32_t erpm);
-void VESC_set_handbrake_current(int32_t brake_current);
-void VESC_set_currentbrake_current(int32_t brake_current);
+// void VESC_set_handbrake_current(int32_t brake_current);
+// void VESC_set_currentbrake_current(int32_t brake_current);
 void VESC_request_values(void);
-void VESC_IRQHandler(UART_HandleTypeDef *huart);
 uint8_t* getRequestValuePacketFrameAddress(void);
 float vesc_get_float(uint16_t uartfield, float scale);
 double vesc_get_double(uint32_t uartfield, double scale);
 int32_t vesc_get_long(uint32_t uartfield);
 int16_t vesc_get_int(uint16_t uartfield);
+uint16_t UART2_Receive(void);
+
+void UART2Append(uint8_t *ptr, uint32_t len);
+void UART2Flush(void);
 
 
 typedef enum {
@@ -37,6 +40,7 @@ typedef enum {
 // Example:
 //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62
 // 02 3a 04 01 1a 00 f3 00 00 01 ba 00 00 00 66 00 00 00 00 ff ff fe 46 fe f8 ff ff e0 2c 00 71 00 00 00 2e 00 00 00 00 00 00 02 12 00 00 00 00 ff ff e0 bb 00 00 3c 2f 00 09 69 58 d0 cc 6f 03
+// 02 3b 04 01 4c 01 1b ff ff ff df 00 00 00 00 00 00 00 1c ff ff ff df 00 00 00 00 00 00 00 e1 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ff ff ff fe 00 00 00 04 00 05 94 38 f8 00 8a b0 03
 // getvalues_s size = 1*1 + 4*2 + 11*4 = 1 + 8 + 44 = 53
 // 0x3a = 58
 // The struct is using uint's at this point in time because they bytes have not been swapped big/little endian.
@@ -56,7 +60,7 @@ struct getvalues_s {
     uint32_t         watt_hours_charged_10000;   // 0x00000000 (43-46)
     uint32_t         tachometer;                 // 0xffffe0bb (47-50)
     uint32_t         tachometer_abs;             // 0x00003c2f (51-54)
-    vesc_fault_code fault_code;                 // 00
+    vesc_fault_code  fault_code;                 // 00
     // more unknown data
 } __attribute__ ((__packed__));
 

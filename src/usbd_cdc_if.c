@@ -76,8 +76,6 @@
 /* USER CODE BEGIN PRIVATE_DEFINES */
 /* Define size for the receive and transmit buffer over CDC */
 /* It's up to user to redefine and/or remove those define */
-#define APP_RX_DATA_SIZE  2048
-#define APP_TX_DATA_SIZE  2048
 
 /* USER CODE END PRIVATE_DEFINES */
 /**
@@ -119,12 +117,13 @@ uint32_t last_string_start_pos = 0;
 uint8_t usb_rxbuffer_overflow = 0;
 
 uint8_t UserRxBuffer[APP_RX_DATA_SIZE];/* Received Data over USB are stored in this buffer */
-uint8_t UserTxBuffer[APP_TX_DATA_SIZE];/* Received Data over UART (CDC interface) are stored in this buffer */
+uint8_t UserTxBuffer[APP_TX_DATA_SIZE];
 uint32_t BuffLength;
 
 uint32_t bytes_sent = 0;
 uint32_t bytes_written = 0;
 /* USER CODE END PRIVATE_VARIABLES */
+
 
 /**
   * @}
@@ -347,7 +346,7 @@ static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
          * Or the packet fits into the middle of the ring buffer, hence is just copied there.
          */
         current_pos = usb_bytes_received % RXBUFFERSIZE;
-        if (len1 > RXBUFFERSIZE - current_pos)
+        if (len1 > ((uint16_t) (RXBUFFERSIZE - current_pos)))
         {
             memcpy(&rxbuffer[current_pos], Buf, RXBUFFERSIZE - current_pos);
             memcpy(&rxbuffer[0], &Buf[RXBUFFERSIZE - current_pos], len1 + current_pos - RXBUFFERSIZE);
@@ -512,8 +511,8 @@ void USBPeriodElapsed()
 
             if(USBD_CDC_TransmitPacket(&hUsbDeviceFS) == USBD_OK)
             {
+                bytes_sent += buffsize;
             }
-            bytes_sent += buffsize;
         }
     }
 }

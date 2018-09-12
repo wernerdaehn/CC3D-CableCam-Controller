@@ -163,6 +163,7 @@ extern settings2_t semipermanentsettings;
 typedef struct
 {
     char boottext_eeprom[81];
+    Endpoints debugrequester;
     SAFE_MODE_t safemode;
     int16_t cyclemonitor_position;
     bool accel_limiter;
@@ -191,6 +192,11 @@ typedef struct
     uint32_t dsbus_parity_errors;
     uint32_t dsbus_noise_errors;
     uint32_t dsbus_overrun_errors;
+    uint32_t tick_enter;
+    uint32_t tick_leave;
+    uint32_t tick_enter_previous;
+    uint32_t possensorduration;
+    uint32_t last_possensortick;
 } controllerstatus_t;
 
 extern controllerstatus_t controllerstatus;

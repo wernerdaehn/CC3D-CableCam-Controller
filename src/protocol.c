@@ -373,7 +373,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         writeProtocolFloat(activesettings.stick_max_accel_safemode/CONTROLLERLOOPTIME_FLOAT, endpoint);
         writeProtocolOK(endpoint);
         PrintSerial_string("Current value: ", endpoint);
-        PrintlnSerial_float(controllerstatus.stick_max_accel, endpoint);
+        PrintlnSerial_float(controllerstatus.stick_max_accel/CONTROLLERLOOPTIME_FLOAT, endpoint);
         break;
     }
     case PROTOCOL_MAX_ERROR_DIST:
@@ -790,6 +790,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
     case PROTOCOL_DEBUG:
     {
         char c;
+        controllerstatus.debugrequester = endpoint;
         argument_index = sscanf(&commandlinebuffer[2], "%1s", &c);
         if (argument_index == 1)
         {
@@ -1448,6 +1449,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
     case PROTOCOL_BOOT:
     {
         /*** Jump to System Memory (ST Bootloader) ************************************/
+        PrintlnSerial_string("Enter boot loader", endpoint);
         JumpToBootloader();
         // Does never return
     }
@@ -1608,8 +1610,6 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("Possible commands are", endpoint);
     PrintlnSerial(endpoint);
 
-    USBPeriodElapsed();
-
     PrintlnSerial_string("$1                                      start a guided setup to set the most important input channels", endpoint);
     PrintlnSerial_string("$a [<float> <float>]                    set or print maximum allowed acceleration in normal and programming mode [%/sec]", endpoint);
     PrintlnSerial_string("$A [<int>]                              set or print AUX output neutral pos and +- neutral range and the +-max range", endpoint);
@@ -1624,7 +1624,6 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("                                                  ...Max Accel, Max Speed, Mode, Aux, Playswitch", endpoint);
     PrintlnSerial_string("$I [<int>]                              set or print input source 0..SumPPM", endpoint);
     PrintlnSerial_string("                                                                  1..SBus", endpoint);
-    USBPeriodElapsed();
     PrintlnSerial_string("$j <char> [<int>]                       set or print the channel assignment for a given function. Chars can be...", endpoint);
     PrintlnSerial_string("                                        v...speed channel", endpoint);
     PrintlnSerial_string("                                        m...Modeswitch channel", endpoint);
@@ -1637,8 +1636,6 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("$m [<int>]                              set or print the mode 1..passthrough", endpoint);
     PrintlnSerial_string("                                                              2..passthrough with speed limits", endpoint);
     PrintlnSerial_string("                                                              3..passthrough with speed limits & end points", endpoint);
-
-    USBPeriodElapsed();
 
     PrintlnSerial_string("$n [<int> <int> <int>]                  set or print receiver neutral pos and +-neutral range and +-max range", endpoint);
     PrintlnSerial_string("$N [<int> <int> <int>]                  set or print ESC output neutral pos and +-neutral range and the +-max range", endpoint);
@@ -1711,10 +1708,7 @@ void printActiveSettings(Endpoints endpoint)
     }
     PrintlnSerial(endpoint);
 
-    USBPeriodElapsed();
-
-
-    // ------- Ramp
+     // ------- Ramp
     PrintlnSerial_string("Ramp filter:", endpoint);
 
     PrintSerial_string("The stick changes from 0% to 100% in", endpoint);
@@ -1743,9 +1737,7 @@ void printActiveSettings(Endpoints endpoint)
     }
     PrintlnSerial(endpoint);
 
-    USBPeriodElapsed();
-
-    // ------- States
+     // ------- States
     if (controllerstatus.play_running == ON)
     {
         PrintSerial_string("Play program requested ", endpoint);
@@ -1895,23 +1887,14 @@ void printCurrentSBusOut(Endpoints endpoint)
     PrintlnSerial_string("Gimbal Out:", endpoint);
     for (int i=0; i<8; i++)
     {
-        int16_t found_channel_input = -1;
-        for (int j=0; j<SBUS_MAX_CHANNEL; j++)
-        {
-            if (activesettings.rc_channel_sbus_out_mapping[j] == i)
-            {
-                found_channel_input = j;
-                break;
-            }
-        }
-        if (found_channel_input == -1)
+        if (activesettings.rc_channel_sbus_out_mapping[i] > SBUS_MAX_CHANNEL)
         {
             PrintSerial_string("                    ", endpoint);
         }
         else
         {
             PrintSerial_string("input channel", endpoint);
-            PrintSerial_int(found_channel_input+1, endpoint);
+            PrintSerial_int(activesettings.rc_channel_sbus_out_mapping[i]+1, endpoint);
             PrintSerial_string(" ==> ", endpoint);
         }
         PrintSerial_string("\t SBus out channel", endpoint);
@@ -1927,6 +1910,7 @@ void printCurrentSBusOut(Endpoints endpoint)
             case 5: PrintlnSerial_int(sBusFrameGimbal.frame.chan5, endpoint); break;
             case 6: PrintlnSerial_int(sBusFrameGimbal.frame.chan6, endpoint); break;
             case 7: PrintlnSerial_int(sBusFrameGimbal.frame.chan7, endpoint); break;
+            default: PrintlnSerial_int(activesettings.rc_channel_sbus_out_default[i], endpoint); break;
         }
     }
 }

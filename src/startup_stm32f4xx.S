@@ -177,7 +177,34 @@ __isr_vector:
     .align 2
     .globl    Reset_Handler
     .type    Reset_Handler, %function
+Reboot_Loader:
+    // Device specific, if in doubt RTFM, here F2/F4
+
+    LDR     R0, =0x40023844 // RCC_APB2ENR
+    LDR     R1, =0x00004000 // ENABLE SYSCFG CLOCK
+    STR     R1, [R0, #0]
+    LDR     R0, =0x40013800 // SYSCFG_MEMRMP
+    LDR     R1, =0x00000001 // MAP ROM AT ZERO
+    STR     R1, [R0, #0]
+    LDR     R0, =0x1FFF0000 // ROM BASE
+    LDR     SP,[R0, #0]     // SP @ +0
+    LDR     R0,[R0, #4]     // PC @ +4
+    BX      R0
+     .pool // sourcer32@gmail.com
+    .size Reboot_Loader, . - Reboot_Loader
+
+    .align 2
+    .thumb_func
+    .globl    Reset_Handler
+    .type    Reset_Handler, %function
 Reset_Handler:
+
+    LDR     R0, =0x2001FFF0 // End of SRAM for your CPU
+    LDR     R1, =0xDEADBEEF
+    LDR     R2, [R0, #0]
+    STR     R0, [R0, #0] // Invalidate
+    CMP     R2, R1
+    BEQ     Reboot_Loader
 /*     Loop to copy data from read only memory to RAM. The ranges
  *      of copy from/to are specified by following symbols evaluated in
  *      linker script.

@@ -2,100 +2,42 @@
 #include "uart_callback.h"
 #include "usbd_cdc_if.h"
 #include "protocol.h"
+#include "stm32f4xx_it.h"
 
+uint8_t uart3_rxbuffer[RXBUFFERSIZE];
 char uart3_commandlinebuffer[RXBUFFERSIZE];
 int16_t uart3_commandlinebuffer_pos = 0;
 uint16_t uart3_bytes_scanned = 0;
-uint8_t uart3_rxbuffer_overflow = 0;
+uint16_t uart3_received_pos = 0;
 
+uint32_t uart3_bytes_sent = 0;
+uint32_t uart3_bytes_written = 0;
+uint8_t uart3TxBuffer[APP_TX_DATA_SIZE];
 
 extern UART_HandleTypeDef huart3;
-extern UART_HandleTypeDef huart2;
 
-void uart_init(UART_HandleTypeDef *huart, uint8_t * rxbuffer, uint16_t rxbuffersize)
+void UART3_init()
 {
-    HAL_UART_Receive_IT(huart, rxbuffer, rxbuffersize);
-}
-
-void UARTX_IRQHandler(UART_HandleTypeDef *huart)
-{
-    uint32_t isrflags   = READ_REG(huart->Instance->SR);
-    uint32_t cr1its     = READ_REG(huart->Instance->CR1);
-    uint32_t cr3its     = READ_REG(huart->Instance->CR3);
-    uint32_t errorflags = 0x00U;
-
-    uint8_t byteReceived = (uint8_t)(huart->Instance->DR & (uint16_t)0x00FF);
-
-    /* If no error occurs */
-    errorflags = (isrflags & (uint32_t)(USART_SR_PE | USART_SR_FE | USART_SR_ORE | USART_SR_NE));
-    if(errorflags == RESET)
+    if(HAL_UART_Receive_DMA(&huart3, uart3_rxbuffer, RXBUFFERSIZE) != HAL_OK)
     {
-        /* UART in mode Receiver -------------------------------------------------*/
-        if(((isrflags & USART_SR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET))
-        {
-            if (controllerstatus.vesc_config)
-            {
-                // In this mode send all received chars from bluetooth to the VESC
-                HAL_UART_Transmit(&huart2, (uint8_t *) &byteReceived, 1, 10);
-            }
-            else
-            {
-                if (controllerstatus.bluetooth_passthrough)
-                {
-                    PrintSerial_char(byteReceived, EndPoint_USB);
-                }
-                huart->pRxBuffPtr[huart->RxXferCount % huart->RxXferSize] = byteReceived;
-                huart->RxXferCount++;
-            }
-        }
+        Error_Handler();
     }
-    else
-    {
-        /* UART parity error interrupt occurred ----------------------------------*/
-        if(((isrflags & USART_SR_PE) != RESET) && ((cr1its & USART_CR1_PEIE) != RESET))
-        {
-            huart->ErrorCode |= HAL_UART_ERROR_PE;
-            __HAL_UART_CLEAR_PEFLAG(huart);
-        }
-
-        /* UART noise error interrupt occurred -----------------------------------*/
-        if(((isrflags & USART_SR_NE) != RESET) && ((cr3its & USART_CR3_EIE) != RESET))
-        {
-            huart->ErrorCode |= HAL_UART_ERROR_NE;
-            __HAL_UART_CLEAR_NEFLAG(huart);
-        }
-
-        /* UART frame error interrupt occurred -----------------------------------*/
-        if(((isrflags & USART_SR_FE) != RESET) && ((cr3its & USART_CR3_EIE) != RESET))
-        {
-            huart->ErrorCode |= HAL_UART_ERROR_FE;
-            __HAL_UART_CLEAR_FEFLAG(huart);
-        }
-
-        /* UART Over-Run interrupt occurred --------------------------------------*/
-        if(((isrflags & USART_SR_ORE) != RESET) && ((cr3its & USART_CR3_EIE) != RESET))
-        {
-            huart->ErrorCode |= HAL_UART_ERROR_ORE;
-            __HAL_UART_CLEAR_OREFLAG(huart);
-        }
-
-    } /* End if some error occurs */
 }
 
-uint16_t uart_bytesunread(UART_HandleTypeDef *huart, uint16_t lastreadpos)
+uint16_t UART3_bytesunread(uint16_t lastreadpos)
 {
-    if (lastreadpos == huart->RxXferCount)
+    if (lastreadpos == huart3.RxXferCount)
     {
         return 0;
     }
-    else if (lastreadpos > huart->RxXferCount)
+    else if (lastreadpos > huart3.RxXferCount)
     {
         // Overflow of the RxXferCount int16
-        return UINT16_MAX - lastreadpos + huart->RxXferCount;
+        return UINT16_MAX - lastreadpos + huart3.RxXferCount;
     }
     else
     {
-        return huart->RxXferCount - lastreadpos;
+        return huart3.RxXferCount - lastreadpos;
     }
 }
 
@@ -118,71 +60,95 @@ uint16_t uart_bytesunread(UART_HandleTypeDef *huart, uint16_t lastreadpos)
  */
 uint16_t UART3_ReceiveString()
 {
-    /*
-    * Go through all characters and locate the next \n. If one is found
-    * copy the entire text from the start position to the position of the next found \n
-    * character into the commandlinebuffer.
-    */
-    while (uart3_bytes_scanned < huart3.RxXferCount)
+    uint16_t currentreceivepos = huart3.RxXferSize - __HAL_DMA_GET_COUNTER(huart3.hdmarx);
+    if (currentreceivepos != uart3_received_pos)
     {
-        uint8_t c = huart3.pRxBuffPtr[uart3_bytes_scanned % huart3.RxXferSize];
-        uart3_bytes_scanned++;
-        HAL_UART_Transmit(&huart3, (uint8_t *) &c, 1, 1000);
-        if (c == '\n' || c == '\r')
+        huart3.RxXferCount += currentreceivepos - uart3_received_pos;
+        uart3_received_pos = currentreceivepos;
+
+
+        /*
+        * Go through all characters and locate the next \n. If one is found
+        * copy the entire text from the start position to the position of the next found \n
+        * character into the commandlinebuffer.
+        */
+        while (uart3_bytes_scanned < huart3.RxXferCount)
         {
-            if (uart3_commandlinebuffer_pos < RXBUFFERSIZE-1)   // in case the string does not fit into the commandlinebuffer, the entire line is ignored
+            uint8_t c = huart3.pRxBuffPtr[uart3_bytes_scanned % huart3.RxXferSize];
+            uart3_bytes_scanned++;
+            PrintSerial_char(c, EndPoint_UART3);
+            if (uart3_commandlinebuffer_pos < RXBUFFERSIZE-1)
             {
-                uart3_commandlinebuffer[uart3_commandlinebuffer_pos++] = c;
-                uart3_commandlinebuffer_pos = 0;
-                return 1;
+                if (c == '\n' || c == '\r')
+                {
+                    uart3_commandlinebuffer[uart3_commandlinebuffer_pos++] = c;
+                    uart3_commandlinebuffer[uart3_commandlinebuffer_pos++] = 0;
+                    uart3_commandlinebuffer_pos = 0;
+                    return 1;
+                }
+                else if (c == 0x08) // backspace char
+                {
+                    /*
+                     *                      commandlinebuffer_pos
+                     *                               |
+                     * ....... 0x65 0x66 0x67 0x68 0x08
+                     * User deleted char 0x68, hence instead of moving the commandlinebuffer_pos one ahead, it is
+                     * moved backwards by one step.
+                     */
+                    uart3_commandlinebuffer_pos--;
+                    if (uart3_commandlinebuffer_pos < 0)
+                    {
+                        // Obviously extra backspace chars have to be ignored
+                        uart3_commandlinebuffer_pos = 0;
+                    }
+                }
+                else
+                {
+                    uart3_commandlinebuffer[uart3_commandlinebuffer_pos++] = c;
+                }
             }
-            uart3_commandlinebuffer_pos = 0;
-        }
-        else if (c == 0x08) // backspace char
-        {
-            /*
-             *                      commandlinebuffer_pos
-             *                               |
-             * ....... 0x65 0x66 0x67 0x68 0x08
-             * User deleted char 0x68, hence instead of moving the commandlinebuffer_pos one ahead, it is
-             * moved backwards by one step.
-             */
-            uart3_commandlinebuffer_pos--;
-            if (uart3_commandlinebuffer_pos < 0)
+            else
             {
-                // Obviously extra backspace chars have to be ignored
-                uart3_commandlinebuffer_pos = 0;
+                uart3_commandlinebuffer_pos = 0; // in case the string does not fit into the commandlinebuffer, the entire line is ignored
             }
         }
-        else
-        {
-            if (uart3_commandlinebuffer_pos < RXBUFFERSIZE)
-            {
-                uart3_commandlinebuffer[uart3_commandlinebuffer_pos++] = c;
-            }
-        }
-    }
-    // No newline char was found
-    if (uart3_rxbuffer_overflow == 1)
-    {
-        uart3_bytes_scanned = huart3.RxXferCount;
-        uart3_rxbuffer_overflow = 0;
     }
     return 0;
 }
 
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+void UART3Append(uint8_t *ptr, uint32_t len)
 {
-    UNUSED(huart);
+    uint32_t rel_pos = uart3_bytes_written % APP_TX_DATA_SIZE;
+    if (rel_pos + len > APP_TX_DATA_SIZE)
+    {
+        uint32_t l = APP_TX_DATA_SIZE - rel_pos;
+        memcpy(&uart3TxBuffer[rel_pos], ptr, l);
+        memcpy(uart3TxBuffer, &ptr[l], len - l);
+    }
+    else
+    {
+        memcpy(&uart3TxBuffer[rel_pos], ptr, len);
+    }
+    uart3_bytes_written += len;
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+void UART3Flush()
 {
-    UNUSED(huart);
+    if(uart3_bytes_written != uart3_bytes_sent)
+    {
+        if ((huart3.gState & 0x01) == 0x00)
+        {
+            uint32_t buffptr = uart3_bytes_sent % APP_TX_DATA_SIZE;
+            uint32_t buffsize = uart3_bytes_written - uart3_bytes_sent;
+            if (buffptr + buffsize > APP_TX_DATA_SIZE)
+            {
+                buffsize = APP_TX_DATA_SIZE - buffptr;
+            }
+            HAL_UART_Transmit_DMA(&huart3, &uart3TxBuffer[buffptr], buffsize);
+            uart3_bytes_sent += buffsize;
+        }
+    }
 }
 
-void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
-{
-    UNUSED(huart);
-}
+
 
