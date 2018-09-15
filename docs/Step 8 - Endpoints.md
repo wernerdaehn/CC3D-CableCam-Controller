@@ -12,7 +12,7 @@ To change the end points, the programming mode is entered again and the CableCam
 The logic for the end point limiter is a bit tricky. 
 Based on the stick position and the acceleration limit, the time to zero is calculated. For example, if the stick is at position +100% and the acceleration is 0.2, it takes 5 seconds to stop (=1.00 * 1/0.2). At a stick position of 50% half the time (=0.5 * 1/0.2). 
 
-From the hall sensor the controller knows the current speed, the time to stop from the stick level, hence the distance to stop can be calculated: s = v * t / 2 [(velocity-time graph)](http://www.bbc.co.uk/education/guides/z3bqtfr/revision/5). Example: s = 200steps/s * 10s / 2 = 1000steps. (One step is one increment on the position sensor)
+From the position sensor the controller knows the current speed, the time to stop from the stick level, hence the distance to stop can be calculated: s = v * t / 2 [(velocity-time graph)](http://www.bbc.co.uk/education/guides/z3bqtfr/revision/5). Example: s = 200steps/s * 10s / 2 = 1000steps. (One step is one increment of the position sensor)
 
 This calculation is made in absolute numbers and the endpoint to be considered depends on the stick direction. Moving away from an endpoint is okay, it should limit moving into an endpoint.
 
@@ -29,6 +29,8 @@ In a perfect world, the speed signal is reduced linear and the CableCam stops ex
 
 Above works well if the ESC supports Closed Loop operations and the acceleration is set to a value the ESC can handle easily. The speed signal is constantly lowered, a fraction of a second later the ESC does achieve the desired speed and the end point will be overshot with very little excess speed and stop. Little excess speed hopefully, else it stops abrupt at this point.
 
+To allow this little excess speed to be reduced gracefully there is an offset (\$o) values. The internal calculation tries to stop at the endpoints but moved inward by the offset. And only once the actual endpoint is overshot, the controller puts the speed to zero for an immediate stop.
+
 On the other hand, if the acceleration setting is "stop from 100km/h to zero in one second", this will likely not work. That would be a deceleration of 2g. Therefore it is important to set the values to something that is realistic. Given the capabilities of the ESCs, the accelerations and decelerations are much higher than even sports cars can achieve. A deceleration of 1g is no problem. But this does not provide nice and smooth shots.
 
 On the negative side, as soon as the emergency brake kicks is, there is a significant change in brake force. For closed loop ESCs the emergency brake should never engage, hence increasing \$g from 100 to something higher might make sense. For all other ESCs the emergency brake is part of the normal brake process and a value of 100 worked out well.
@@ -37,10 +39,12 @@ On the negative side, as soon as the emergency brake kicks is, there is a signif
 
 | Command           | Allowed values | Description                                                  |
 | ----------------- | -------------- | ------------------------------------------------------------ |
-| \$r               |                | Print the ESC motor direction                                |
-| \$r \<direction\> | 1, 0, -1       | Set the ESC motor direction. Does the pos sensor report larger values when the RC speed signal increase? Then +1. |
-| \$g               |                | Print the max allowed positional error before the emergency brake kicks in |
-| \$g \<steps\>     | \>0            | Set the max allowed position error                           |
+| r               |                | Print the ESC motor direction                                |
+| r \<direction\> | 1, 0, -1       | Set the ESC motor direction. Does the pos sensor report larger values when the RC speed signal increase? Then +1. |
+| g               |                | Print the max allowed positional error before the emergency brake kicks in |
+| g \<steps\>     | \>0            | Set the max allowed position error                           |
+| \$o |  | Print the end point offset |
+| \$o <steps> | 0...1000 | Set the end point offset. This is the mathematical point the controller will try to stop at. The cablecam's inertia will cause to overshoot that point slightly. |
 
 
 

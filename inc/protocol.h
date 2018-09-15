@@ -24,6 +24,7 @@
 #define PROTOCOL_MODE             'm'
 #define PROTOCOL_NEUTRAL          'n'	// 3 int neutral microseconds, +-neutral range microseconds, +- 100% throttle
 #define PROTOCOL_ESC_NEUTRAL      'N'	// 3 int neutral microseconds, +-neutral range microseconds, +- 100% throttle
+#define PROTOCOL_OFFSET_ENDPOINT  'o'   // 1 float argument
 #define PROTOCOL_POS              'p'
 #define PROTOCOL_PLAY             'P'   // 1 int argument, play=1 or don't play
 #define PROTOCOL_ROTATION_DIR     'r'   // 1 int argument
@@ -137,6 +138,7 @@ typedef struct
     uint8_t noop_padding_2[2]; // Needed to align the structure to 32bit
     uint16_t rc_channel_sbus_out_default[8];
     uint32_t play_reverse_waiting_time;
+    float offset_endpoint;
 } settings_t;
 
 
@@ -184,14 +186,20 @@ typedef struct
     uint32_t last_pos_change;
     float speed_by_posdiff;
     float speed_by_time;
-    uint8_t dsbus[SBUS_FRAME_SIZE];
-    uint32_t dsbus_pause;
-    uint32_t dsbus_valid;
-    uint32_t dsbus_errors;
-    uint32_t dsbus_frame_errors;
-    uint32_t dsbus_parity_errors;
-    uint32_t dsbus_noise_errors;
-    uint32_t dsbus_overrun_errors;
+    uint32_t duart_pause[7];
+    uint32_t duart_valid[7];
+    uint32_t duart_last_data[7];
+    uint32_t duart_errors[7];
+    uint32_t duart_frame_errors[7];
+    uint32_t duart_parity_errors[7];
+    uint32_t duart_noise_errors[7];
+    uint32_t duart_overrun_errors[7];
+    uint32_t duart_dma_errors[7];
+    uint32_t duart_last_packet_length[7];
+    uint32_t dvesc_packetlength_error;
+    uint32_t dvesc_crc_error;
+    uint32_t dvesc_startbyte_error;
+    uint32_t dvesc_endbyte_error;
     uint32_t tick_enter;
     uint32_t tick_leave;
     uint32_t tick_enter_previous;

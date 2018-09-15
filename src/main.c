@@ -80,6 +80,7 @@ UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
 UART_HandleTypeDef huart6;
 
+DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart2_tx;
 DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_usart3_tx;
@@ -90,7 +91,7 @@ DMA_HandleTypeDef hdma_usart6_tx;
 uint32_t lasttick;
 
 extern char usb_commandlinebuffer[RXBUFFERSIZE];
-extern char uart3_commandlinebuffer[RXBUFFERSIZE];
+extern char uart3_commandlinebuffer[UART_CYCLIC_RXBUFFER_SIZE];
 extern bool uart2_tx_ready;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -155,7 +156,7 @@ int main(void)
         Error_Handler();
     }
 
-    strcpy(activesettings.version, "20180722");
+    strcpy(activesettings.version, "20180915");
     activesettings.esc_direction = 0;
     activesettings.max_position_error = 100.0f;
     activesettings.mode = MODE_PASSTHROUGH;
@@ -190,6 +191,7 @@ int main(void)
     activesettings.aux_neutral_pos = 1500;
     activesettings.aux_neutral_range = 0;
     activesettings.pos_source = 0;
+    activesettings.offset_endpoint = 20.0f;
     for (int i=0; i<8; i++)
     {
         activesettings.rc_channel_sbus_out_mapping[i] = 255;
@@ -262,8 +264,6 @@ int main(void)
 
     initController();
 
-    // HAL_UART_Receive_IT(&huart2, getRequestValuePacketFrameAddress(), VESC_RXBUFFER_SIZE);
-
     UART3_init();
     VESC_init();
 
@@ -281,10 +281,17 @@ int main(void)
 
             if (is1Hz())
             {
-                if (HAL_UART_GetState(&huart2) == HAL_UART_STATE_READY)
+                if (huart2.RxState != HAL_UART_STATE_BUSY_RX)
                 {
-                    PrintlnSerial_string("Restarting ESC receive", EndPoint_USB);
                     VESC_init();
+                }
+                if (huart3.RxState != HAL_UART_STATE_BUSY_RX)
+                {
+                    UART3_init();
+                }
+                if (huart1.RxState != HAL_UART_STATE_BUSY_RX && activesettings.receivertype == RECEIVER_TYPE_SBUS)
+                {
+                    UART1_init();
                 }
             }
             if (is1Hz() && controllerstatus.safemode == OPERATIONAL)
@@ -331,6 +338,7 @@ int main(void)
         }
         SBusSendCycle();
         UART2Flush();
+        UART1_Receive();
         UART2_Receive();
         eeprom_cycle();
     }
@@ -745,12 +753,14 @@ void initSBusReceiver()
 
     MX_USART1_UART_Init();
 
+
     /* Turn on interrupt for uart1/sbus */
-    HAL_UART_Receive_IT(&huart1, getSBUSFrameAddress(), SBUS_FRAME_SIZE);
+    // HAL_UART_Receive_IT(&huart1, getSBUSFrameAddress(), SBUS_FRAME_SIZE);
 
     /* Turn on SBUS Inverter */
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
 
+    UART1_init();
     initSBusData(RECEIVER_TYPE_SBUS);
 }
 
@@ -772,18 +782,12 @@ void initPPMReceiver()
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
-    if (huart->Instance == USART2)
-    {
-        uart2_tx_ready = true;
-    }
+    UNUSED(huart);
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-    if (huart->Instance == USART2)
-    {
-        // UART2_Receive();
-    }
+    UNUSED(huart);
 }
 
 void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
@@ -793,27 +797,35 @@ void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
-    PrintSerial_string("Error Callback for ", EndPoint_USB);
+    int8_t uartno = -1;
     if (huart->Instance == USART1)
     {
-        PrintSerial_string("UART1:", EndPoint_USB);
+        uartno = 1;
     }
     else if (huart->Instance == USART2)
     {
-        PrintSerial_string("UART2:", EndPoint_USB);
+        uartno = 2;
     }
     else if (huart->Instance == USART3)
     {
-        PrintSerial_string("UART3:", EndPoint_USB);
+        uartno = 3;
     }
     else if (huart->Instance == USART6)
     {
-        PrintSerial_string("UART6:", EndPoint_USB);
+        uartno = 6;
     }
-    PrintSerial_int(HAL_UART_GetState(huart), EndPoint_USB);
-    PrintSerial_int(HAL_UART_GetError(huart), EndPoint_USB);
-    PrintSerial_long(huart->hdmarx->ErrorCode, EndPoint_USB);
-    PrintlnSerial_long(huart->hdmatx->ErrorCode, EndPoint_USB);
+    if (uartno != -1)
+    {
+        switch (HAL_UART_GetError(huart))
+        {
+        case HAL_UART_ERROR_PE: controllerstatus.duart_parity_errors[uartno]++; break;
+        case HAL_UART_ERROR_NE: controllerstatus.duart_noise_errors[uartno]++; break;
+        case HAL_UART_ERROR_FE: controllerstatus.duart_frame_errors[uartno]++; break;
+        case HAL_UART_ERROR_ORE: controllerstatus.duart_overrun_errors[uartno]++; break;
+        case HAL_UART_ERROR_DMA: controllerstatus.duart_dma_errors[uartno]++; break;
+        }
+        controllerstatus.duart_errors[uartno]++;
+    }
 }
 
 /**

@@ -70,6 +70,8 @@ extern UART_HandleTypeDef huart3;
 extern TIM_HandleTypeDef htim1;
 extern getvalues_t vescvalues;
 extern sbusFrame_t sBusFrameGimbal;
+extern sbusFrame_t sbusFrame;
+extern uint8_t vesc_rxbuffer[UART_CYCLIC_RXBUFFER_SIZE];
 
 static uint8_t checksum_response;
 
@@ -93,6 +95,7 @@ uint8_t check_for_no_input_change(sbusData_t * rcmin, sbusData_t * rcmax, Endpoi
 uint8_t check_for_multiple_channels_changed(sbusData_t * rcmin, sbusData_t * rcmax, uint8_t *channel, Endpoints endpoint);
 void getDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, sbusData_t * rcavg, uint32_t timeout, Endpoints endpoint);
 void printChannelDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, Endpoints endpoint);
+void printPacketDebug(const char * label, uint8_t uartno, uint8_t * packetbuffer, Endpoints endpoint);
 
 void printCurrentRCInput(Endpoints endpoint);
 void printCurrentSBusOut(Endpoints endpoint);
@@ -249,7 +252,7 @@ void serialCom(Endpoints endpoint, char commandlinebuffer[])
     uint8_t checksum;
     uint8_t checksum_received;
 
-    while (pos < RXBUFFERSIZE)
+    while (pos < UART_CYCLIC_RXBUFFER_SIZE)
     {
         c = commandlinebuffer[pos++];
 
@@ -802,28 +805,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                 PrintlnSerial_string(getONOffLabel(controllerstatus.bluetooth_passthrough), endpoint);
                 break;
             case 'B':
-                PrintSerial_string("Bluetooth UART's last error code flag says: ", endpoint);
-                if (huart3.ErrorCode &= HAL_UART_ERROR_PE)
-                {
-                    PrintlnSerial_string("Parity error", endpoint);
-                }
-                else if (huart3.ErrorCode &= HAL_UART_ERROR_NE)
-                {
-                    PrintlnSerial_string("Noise error", endpoint);
-                }
-                else if (huart3.ErrorCode &= HAL_UART_ERROR_FE)
-                {
-                    PrintlnSerial_string("Frame error", endpoint);
-                }
-                else if (huart3.ErrorCode &= HAL_UART_ERROR_ORE)
-                {
-                    PrintlnSerial_string("Buffer Overrun", endpoint);
-                }
-                else
-                {
-                    PrintlnSerial_string("no errors", endpoint);
-                }
-                huart3.ErrorCode = 0;
+                printPacketDebug("Bluetooth UART:", 3, 0L, endpoint);
                 break;
             case 'e':
                 {
@@ -836,11 +818,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                     }
                     else
                     {
-                        uint8_t * tempsettingspointer = (uint8_t *) &tmp;
-                        for (size_t pos=0; pos<sizeof(tmp); pos++)
-                        {
-                            writeProtocolHex(tempsettingspointer[pos], endpoint);
-                        }
+                        PrintlnSerial_hexstring((uint8_t *) &tmp, sizeof(tmp), endpoint);
                     }
                     break;
                 }
@@ -853,24 +831,18 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                 PrintlnSerial_string(getONOffLabel(controllerstatus.debug_endpoint), endpoint);
                 break;
             case 's':
-                PrintSerial_string("SBUS packets:", endpoint);
-                PrintSerial_int(controllerstatus.dsbus_pause, endpoint);
-                PrintSerial_string(", valid:", endpoint);
-                PrintSerial_int(controllerstatus.dsbus_valid, endpoint);
-                PrintSerial_string(", errors:", endpoint);
-                PrintSerial_int(controllerstatus.dsbus_errors, endpoint);
-                PrintSerial_string(" (frame errors:", endpoint);
-                PrintSerial_int(controllerstatus.dsbus_frame_errors, endpoint);
-                PrintSerial_string(", parity errors:", endpoint);
-                PrintSerial_int(controllerstatus.dsbus_parity_errors, endpoint);
-                PrintSerial_string(", noise errors:", endpoint);
-                PrintSerial_int(controllerstatus.dsbus_noise_errors, endpoint);
-                PrintSerial_string(", overrun errors:", endpoint);
-                PrintSerial_int(controllerstatus.dsbus_overrun_errors, endpoint);
-                PrintlnSerial_string(")", endpoint);
-
-                PrintSerial_string("Last packet:", endpoint);
-                PrintlnSerial_hexstring(controllerstatus.dsbus, SBUS_FRAME_SIZE, endpoint);
+                printPacketDebug("SBUS packets:", 1, sbusFrame.bytes, endpoint);
+                break;
+            case 'v':
+                printPacketDebug("ESC packets:", 2, vesc_rxbuffer, endpoint);
+                PrintSerial_string("ESC start byte errors:", endpoint);
+                PrintlnSerial_long(controllerstatus.dvesc_startbyte_error, endpoint);
+                PrintSerial_string("ESC end byte errors:", endpoint);
+                PrintlnSerial_long(controllerstatus.dvesc_endbyte_error, endpoint);
+                PrintSerial_string("ESC crc errors:", endpoint);
+                PrintlnSerial_long(controllerstatus.dvesc_crc_error, endpoint);
+                PrintSerial_string("ESC packet length errors:", endpoint);
+                PrintlnSerial_long(controllerstatus.dvesc_packetlength_error, endpoint);
                 break;
             case 'V':
                 controllerstatus.vesc_config = !controllerstatus.vesc_config;
@@ -899,7 +871,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             settings_t tempsettings;
             tempsettingspointer = (uint8_t *) &tempsettings;
             // Move forward to the first non-blank character after the command
-            while (pos < strlen(commandlinebuffer) && pos < RXBUFFERSIZE-1 && commandlinebuffer[pos] == ' ')
+            while (pos < strlen(commandlinebuffer) && pos < UART_CYCLIC_RXBUFFER_SIZE-1 && commandlinebuffer[pos] == ' ')
             {
                 pos++;
             }
@@ -908,7 +880,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
              * Two chars are one byte
              */
             uint16_t activesettingsoffset = 0;
-            while (pos < strlen(commandlinebuffer)-1 && pos < RXBUFFERSIZE-1 && activesettingsoffset < sizeof(activesettings))
+            while (pos < strlen(commandlinebuffer)-1 && pos < UART_CYCLIC_RXBUFFER_SIZE-1 && activesettingsoffset < sizeof(activesettings))
             {
                 int b1 = hexDigitToInt(commandlinebuffer[pos++]);
                 int b2 = hexDigitToInt(commandlinebuffer[pos++]);
@@ -1453,6 +1425,32 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         JumpToBootloader();
         // Does never return
     }
+    case PROTOCOL_OFFSET_ENDPOINT:
+    {
+        float d;
+        argument_index = sscanf(&commandlinebuffer[2], "%f", &d);
+        if (argument_index == 1)
+        {
+            if (d >= 0.0f && d <= 1000.0f)
+            {
+                activesettings.offset_endpoint = d;
+            }
+            else
+            {
+                writeProtocolError(ERROR_INVALID_VALUE, endpoint);
+                return;
+            }
+        }
+        else if (argument_index != EOF)
+        {
+            writeProtocolError(ERROR_NUMBER_OF_ARGUMENTS, endpoint);
+            return;
+        }
+        writeProtocolHead(PROTOCOL_OFFSET_ENDPOINT, endpoint);
+        writeProtocolFloat(activesettings.offset_endpoint, endpoint);
+        writeProtocolOK(endpoint);
+        break;
+    }
     default:  // we do not know how to handle the (valid) message, indicate error MSP $M!
         writeProtocolError(ERROR_UNKNOWN_COMMAND, endpoint);
         break;
@@ -1639,6 +1637,7 @@ void printHelp(Endpoints endpoint)
 
     PrintlnSerial_string("$n [<int> <int> <int>]                  set or print receiver neutral pos and +-neutral range and +-max range", endpoint);
     PrintlnSerial_string("$N [<int> <int> <int>]                  set or print ESC output neutral pos and +-neutral range and the +-max range", endpoint);
+    PrintlnSerial_string("$o [<float>]                            set or print end point offset for the calculated endpoint", endpoint);
     PrintlnSerial_string("$p [<int> <int>]                        print or set start/end positions", endpoint);
     PrintlnSerial_string("$P <int>                                turn the Play command (automatic movement) on (1) or off (0) for the next 2 seconds. Send frequently.", endpoint);
     PrintlnSerial_string("$r [<float>]                            set or print rotation direction of the ESC output, either +1 or -1", endpoint);
@@ -1927,4 +1926,30 @@ const char * getONOffLabel(bool test)
     }
 }
 
+void printPacketDebug(const char * label, uint8_t uartno, uint8_t * packetbuffer, Endpoints endpoint)
+{
+    PrintSerial_string(label, endpoint);
+    PrintSerial_int(controllerstatus.duart_pause[uartno], endpoint);
+    PrintSerial_string(", valid:", endpoint);
+    PrintSerial_int(controllerstatus.duart_valid[uartno], endpoint);
+    PrintSerial_string(", errors:", endpoint);
+    PrintSerial_int(controllerstatus.duart_errors[uartno], endpoint);
+    PrintSerial_string(" (frame errors:", endpoint);
+    PrintSerial_int(controllerstatus.duart_frame_errors[uartno], endpoint);
+    PrintSerial_string(", parity errors:", endpoint);
+    PrintSerial_int(controllerstatus.duart_parity_errors[uartno], endpoint);
+    PrintSerial_string(", noise errors:", endpoint);
+    PrintSerial_int(controllerstatus.duart_noise_errors[uartno], endpoint);
+    PrintSerial_string(", overrun errors:", endpoint);
+    PrintSerial_int(controllerstatus.duart_overrun_errors[uartno], endpoint);
+    PrintSerial_string(", dma errors:", endpoint);
+    PrintSerial_int(controllerstatus.duart_dma_errors[uartno], endpoint);
+    PrintlnSerial_string(")", endpoint);
+
+    if (packetbuffer != 0L)
+    {
+        PrintSerial_string("Last packet:", endpoint);
+        PrintlnSerial_hexstring(packetbuffer, controllerstatus.duart_last_packet_length[uartno], endpoint);
+    }
+}
 

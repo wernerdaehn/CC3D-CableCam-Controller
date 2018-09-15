@@ -1,9 +1,7 @@
 #ifndef VESC_H_INCLUDED
 #define VESC_H_INCLUDED
 #include "stm32f4xx_hal.h"
-
-
-#define VESC_RXBUFFER_SIZE 512
+#include "config.h"
 
 
 #define GETVALUES_SIZE 53
@@ -22,6 +20,7 @@ int32_t vesc_get_long(uint32_t uartfield);
 int16_t vesc_get_int(uint16_t uartfield);
 uint16_t UART2_Receive(void);
 
+void UART2SendPacket(uint8_t *ptr, uint32_t len);
 void UART2Append(uint8_t *ptr, uint32_t len);
 void UART2Flush(void);
 

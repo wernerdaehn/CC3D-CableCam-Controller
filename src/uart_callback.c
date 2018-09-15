@@ -3,9 +3,11 @@
 #include "usbd_cdc_if.h"
 #include "protocol.h"
 #include "stm32f4xx_it.h"
+#include "config.h"
+#include "vesc.h"
 
-uint8_t uart3_rxbuffer[RXBUFFERSIZE];
-char uart3_commandlinebuffer[RXBUFFERSIZE];
+uint8_t uart3_rxbuffer[UART_CYCLIC_RXBUFFER_SIZE];
+char uart3_commandlinebuffer[UART_CYCLIC_RXBUFFER_SIZE];
 int16_t uart3_commandlinebuffer_pos = 0;
 uint16_t uart3_bytes_scanned = 0;
 uint16_t uart3_received_pos = 0;
@@ -18,7 +20,7 @@ extern UART_HandleTypeDef huart3;
 
 void UART3_init()
 {
-    if(HAL_UART_Receive_DMA(&huart3, uart3_rxbuffer, RXBUFFERSIZE) != HAL_OK)
+    if(HAL_UART_Receive_DMA(&huart3, uart3_rxbuffer, UART_CYCLIC_RXBUFFER_SIZE) != HAL_OK)
     {
         Error_Handler();
     }
@@ -64,54 +66,73 @@ uint16_t UART3_ReceiveString()
     if (currentreceivepos != uart3_received_pos)
     {
         huart3.RxXferCount += currentreceivepos - uart3_received_pos;
-        uart3_received_pos = currentreceivepos;
 
-
-        /*
-        * Go through all characters and locate the next \n. If one is found
-        * copy the entire text from the start position to the position of the next found \n
-        * character into the commandlinebuffer.
-        */
-        while (uart3_bytes_scanned < huart3.RxXferCount)
+        if (controllerstatus.vesc_config)
         {
-            uint8_t c = huart3.pRxBuffPtr[uart3_bytes_scanned % huart3.RxXferSize];
-            uart3_bytes_scanned++;
-            PrintSerial_char(c, EndPoint_UART3);
-            if (uart3_commandlinebuffer_pos < RXBUFFERSIZE-1)
+            // Send these bytes directly to the vesc
+            if (uart3_received_pos < currentreceivepos)
             {
-                if (c == '\n' || c == '\r')
+                UART2Append(&huart3.pRxBuffPtr[uart3_received_pos], currentreceivepos - uart3_received_pos);
+            }
+            else
+            {
+                UART2Append(&huart3.pRxBuffPtr[uart3_received_pos], huart3.RxXferSize - uart3_received_pos);
+                UART2Append(&huart3.pRxBuffPtr[0], currentreceivepos);
+            }
+        }
+        else
+        {
+            /*
+            * Go through all characters and locate the next \n. If one is found
+            * copy the entire text from the start position to the position of the next found \n
+            * character into the commandlinebuffer.
+            */
+            while (uart3_bytes_scanned < huart3.RxXferCount)
+            {
+                uint8_t c = huart3.pRxBuffPtr[uart3_bytes_scanned % huart3.RxXferSize];
+                uart3_bytes_scanned++;
+                PrintSerial_char(c, EndPoint_UART3);
+                if (controllerstatus.bluetooth_passthrough)
                 {
-                    uart3_commandlinebuffer[uart3_commandlinebuffer_pos++] = c;
-                    uart3_commandlinebuffer[uart3_commandlinebuffer_pos++] = 0;
-                    uart3_commandlinebuffer_pos = 0;
-                    return 1;
+                    PrintSerial_char(c, EndPoint_USB);
                 }
-                else if (c == 0x08) // backspace char
+                if (uart3_commandlinebuffer_pos < UART_CYCLIC_RXBUFFER_SIZE-1)
                 {
-                    /*
-                     *                      commandlinebuffer_pos
-                     *                               |
-                     * ....... 0x65 0x66 0x67 0x68 0x08
-                     * User deleted char 0x68, hence instead of moving the commandlinebuffer_pos one ahead, it is
-                     * moved backwards by one step.
-                     */
-                    uart3_commandlinebuffer_pos--;
-                    if (uart3_commandlinebuffer_pos < 0)
+                    if (c == '\n' || c == '\r')
                     {
-                        // Obviously extra backspace chars have to be ignored
+                        uart3_commandlinebuffer[uart3_commandlinebuffer_pos++] = c;
+                        uart3_commandlinebuffer[uart3_commandlinebuffer_pos++] = 0;
                         uart3_commandlinebuffer_pos = 0;
+                        return 1;
+                    }
+                    else if (c == 0x08) // backspace char
+                    {
+                        /*
+                         *                      commandlinebuffer_pos
+                         *                               |
+                         * ....... 0x65 0x66 0x67 0x68 0x08
+                         * User deleted char 0x68, hence instead of moving the commandlinebuffer_pos one ahead, it is
+                         * moved backwards by one step.
+                         */
+                        uart3_commandlinebuffer_pos--;
+                        if (uart3_commandlinebuffer_pos < 0)
+                        {
+                            // Obviously extra backspace chars have to be ignored
+                            uart3_commandlinebuffer_pos = 0;
+                        }
+                    }
+                    else
+                    {
+                        uart3_commandlinebuffer[uart3_commandlinebuffer_pos++] = c;
                     }
                 }
                 else
                 {
-                    uart3_commandlinebuffer[uart3_commandlinebuffer_pos++] = c;
+                    uart3_commandlinebuffer_pos = 0; // in case the string does not fit into the commandlinebuffer, the entire line is ignored
                 }
             }
-            else
-            {
-                uart3_commandlinebuffer_pos = 0; // in case the string does not fit into the commandlinebuffer, the entire line is ignored
-            }
         }
+        uart3_received_pos = currentreceivepos;
     }
     return 0;
 }

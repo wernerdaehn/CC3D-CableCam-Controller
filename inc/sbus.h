@@ -62,7 +62,7 @@ typedef struct {
 
 extern sbusData_t sbusdata;
 
-
+void UART1_init(void);
 void SBUS_IRQHandler(UART_HandleTypeDef *huart);
 void printSBUSChannels(Endpoints endpoint);
 float getDuty(uint8_t channel);
@@ -74,5 +74,6 @@ void setGimbalValues(float channel_values[]);
 void SBusSendCycle(void);
 void setNextDuty(uint16_t v);
 void PrintSumPPMRawData(Endpoints endpoint);
+uint16_t UART1_Receive(void);
 
 #endif

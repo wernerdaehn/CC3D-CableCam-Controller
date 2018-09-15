@@ -46,11 +46,23 @@ uint16_t convertDutyIntoSBus(float duty, uint8_t channel);
 sbusFrame_t sbusFrame;
 sbusFrame_t sBusFrameGimbal;
 uint32_t lastsbussend = 0;
+uint16_t uart1_received_pos = 0;
+uint16_t uart1_packet_start_pos = 0;
+
+uint8_t uart1_rxbuffer[UART_CYCLIC_RXBUFFER_SIZE];
 
 uint16_t dutyarray[64];
 uint16_t duty_pos = 0;
 
 sbusData_t sbusdata;
+
+void UART1_init()
+{
+    if(HAL_UART_Receive_DMA(&huart1, uart1_rxbuffer, UART_CYCLIC_RXBUFFER_SIZE) != HAL_OK)
+    {
+        Error_Handler();
+    }
+}
 
 void initSBusData(uint8_t receivertype)
 {
@@ -69,13 +81,13 @@ void initSBusData(uint8_t receivertype)
     sBusFrameGimbal.frame.syncByte = SBUS_FRAME_BEGIN_BYTE;
     sBusFrameGimbal.frame.endByte = SBUS_FRAME_END_BYTE;
 
-    controllerstatus.dsbus_pause = 0;
-    controllerstatus.dsbus_valid = 0;
-    controllerstatus.dsbus_errors = 0;
-    controllerstatus.dsbus_frame_errors = 0;
-    controllerstatus.dsbus_parity_errors = 0;
-    controllerstatus.dsbus_noise_errors = 0;
-    controllerstatus.dsbus_overrun_errors = 0;
+    controllerstatus.duart_pause[1] = 0;
+    controllerstatus.duart_valid[1] = 0;
+    controllerstatus.duart_errors[1] = 0;
+    controllerstatus.duart_frame_errors[1] = 0;
+    controllerstatus.duart_parity_errors[1] = 0;
+    controllerstatus.duart_noise_errors[1] = 0;
+    controllerstatus.duart_overrun_errors[1] = 0;
 }
 
 void setGimbalValues(float channel_values[])
@@ -239,107 +251,6 @@ uint8_t* getSBUSFrameGimbalAddress(void)
     return &sBusFrameGimbal.bytes[0];
 }
 
-void SBUS_IRQHandler(UART_HandleTypeDef *huart)
-{
-    uint32_t isrflags   = READ_REG(huart->Instance->SR);
-    uint32_t cr1its     = READ_REG(huart->Instance->CR1);
-    uint32_t cr3its     = READ_REG(huart->Instance->CR3);
-    uint32_t errorflags = 0x00U;
-
-    uint8_t byteReceived = (uint8_t)(huart->Instance->DR & (uint16_t)0x00FF);
-
-    /* If no error occurs */
-    errorflags = (isrflags & (uint32_t)(USART_SR_PE | USART_SR_FE | USART_SR_ORE | USART_SR_NE));
-    if(errorflags == RESET)
-    {
-        /* UART in mode Receiver -------------------------------------------------*/
-        if(((isrflags & USART_SR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET))
-        {
-            uint32_t now = HAL_GetTick();
-            uint32_t sbusFrameTime = now - sbusdata.sbusFrameStartTime;
-
-            if (sbusFrameTime > SBUS_TIME_NEEDED_PER_FRAME)
-            {
-                huart->pRxBuffPtr = &sbusFrame.bytes[0];
-                huart->RxXferCount = SBUS_FRAME_SIZE;
-                sbusdata.sbusFrameStartTime = now;
-                controllerstatus.dsbus_pause++;
-                memcpy(controllerstatus.dsbus, sbusFrame.bytes, SBUS_FRAME_SIZE);
-            }
-
-            if (huart->RxXferCount > 0)
-            {
-                *huart->pRxBuffPtr = byteReceived;
-
-                if (huart->RxXferCount == SBUS_FRAME_SIZE && *huart->pRxBuffPtr != SBUS_FRAME_BEGIN_BYTE)
-                {
-                    /* It is a first byte and it is not a valid start-byte, so we are in the middle of a frame.
-                    	 Hence do not forward the pointer but wait for a valid start byte.
-                    */
-                }
-                else
-                {
-                    huart->RxXferCount--;
-                    huart->pRxBuffPtr += 1U;
-                    if (huart->RxXferCount == 0)
-                    {
-                        /* Last byte of the frame */
-                        setServoValues();
-                        huart->pRxBuffPtr = &sbusFrame.bytes[0];
-                        huart->RxXferCount = SBUS_FRAME_SIZE;
-                        controllerstatus.dsbus_valid++;
-                    }
-                }
-            } // else overflow happened
-        }
-    }
-    else
-    {
-        uint8_t haserror = 0;
-        /* UART parity error interrupt occurred ----------------------------------*/
-        if(((isrflags & USART_SR_PE) != RESET) && ((cr1its & USART_CR1_PEIE) != RESET))
-        {
-            huart->ErrorCode |= HAL_UART_ERROR_PE;
-            __HAL_UART_CLEAR_PEFLAG(huart);
-            controllerstatus.dsbus_parity_errors++;
-            haserror = 1;
-        }
-
-        /* UART noise error interrupt occurred -----------------------------------*/
-        if(((isrflags & USART_SR_NE) != RESET) && ((cr3its & USART_CR3_EIE) != RESET))
-        {
-            huart->ErrorCode |= HAL_UART_ERROR_NE;
-            __HAL_UART_CLEAR_NEFLAG(huart);
-            sbusdata.counter_noise_errors++;
-            haserror = 1;
-        }
-
-        /* UART frame error interrupt occurred -----------------------------------*/
-        if(((isrflags & USART_SR_FE) != RESET) && ((cr3its & USART_CR3_EIE) != RESET))
-        {
-            huart->ErrorCode |= HAL_UART_ERROR_FE;
-            __HAL_UART_CLEAR_FEFLAG(huart);
-            controllerstatus.dsbus_frame_errors++;
-            haserror = 1;
-        }
-
-        /* UART Over-Run interrupt occurred --------------------------------------*/
-        if(((isrflags & USART_SR_ORE) != RESET) && ((cr3its & USART_CR3_EIE) != RESET))
-        {
-            huart->ErrorCode |= HAL_UART_ERROR_ORE;
-            __HAL_UART_CLEAR_OREFLAG(huart);
-            controllerstatus.dsbus_overrun_errors++;
-            haserror = 1;
-        }
-        if (haserror != 0)
-        {
-            controllerstatus.dsbus_errors++;
-        }
-
-    } /* End if some error occurs */
-
-}
-
 void setNextDuty(uint16_t v)
 {
     dutyarray[duty_pos++] = v;
@@ -407,5 +318,46 @@ void SBusSendCycle()
         HAL_UART_Transmit_DMA(&huart6, &sBusFrameGimbal.bytes[0], SBUS_FRAME_SIZE);
         lastsbussend = currenttick;
     }
+}
+
+uint16_t UART1_Receive()
+{
+    uint16_t currentreceivepos = huart1.RxXferSize - __HAL_DMA_GET_COUNTER(huart1.hdmarx);
+    uint32_t now = HAL_GetTick();
+
+    if (currentreceivepos != uart1_received_pos)
+    {
+        controllerstatus.duart_last_data[1] = now;
+        uart1_received_pos = currentreceivepos;
+    }
+    else if (now < controllerstatus.duart_last_data[1] + 5)
+    {
+        // minimum packet send time is 5ms plus 15ms pause. It is requested every 200ms
+    }
+    else // no data within 20ms must be the packet end or no new data
+    {
+        if (uart1_packet_start_pos != currentreceivepos)
+        {
+            controllerstatus.duart_pause[1]++;
+            uint16_t packetlength = mod16(currentreceivepos - uart1_packet_start_pos, huart1.RxXferSize);
+            controllerstatus.duart_last_packet_length[1] = packetlength;
+            if (uart1_packet_start_pos + SBUS_FRAME_SIZE < huart1.RxXferSize)
+            {
+                memcpy(sbusFrame.bytes, &uart1_rxbuffer[uart1_packet_start_pos], SBUS_FRAME_SIZE);
+            }
+            else
+            {
+                memcpy(&sbusFrame.bytes[0], &uart1_rxbuffer[uart1_packet_start_pos], huart1.RxXferSize-uart1_packet_start_pos);
+                memcpy(&sbusFrame.bytes[huart1.RxXferSize-uart1_packet_start_pos], &uart1_rxbuffer[0], SBUS_FRAME_SIZE-(huart1.RxXferSize-uart1_packet_start_pos));
+            }
+            if (sbusFrame.bytes[0] == SBUS_FRAME_BEGIN_BYTE && packetlength == SBUS_FRAME_SIZE && sbusFrame.bytes[SBUS_FRAME_SIZE-1] == SBUS_FRAME_END_BYTE)
+            {
+                setServoValues();
+                controllerstatus.duart_valid[1]++;
+            }
+            uart1_packet_start_pos = currentreceivepos;
+        }
+    }
+    return 0;
 }
 
