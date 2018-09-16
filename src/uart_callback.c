@@ -79,6 +79,7 @@ uint16_t UART3_ReceiveString()
                 UART2Append(&huart3.pRxBuffPtr[uart3_received_pos], huart3.RxXferSize - uart3_received_pos);
                 UART2Append(&huart3.pRxBuffPtr[0], currentreceivepos);
             }
+            uart3_received_pos = currentreceivepos;
         }
         else
         {
@@ -87,6 +88,7 @@ uint16_t UART3_ReceiveString()
             * copy the entire text from the start position to the position of the next found \n
             * character into the commandlinebuffer.
             */
+            uart3_received_pos = currentreceivepos;
             while (uart3_bytes_scanned < huart3.RxXferCount)
             {
                 uint8_t c = huart3.pRxBuffPtr[uart3_bytes_scanned % huart3.RxXferSize];
@@ -132,7 +134,6 @@ uint16_t UART3_ReceiveString()
                 }
             }
         }
-        uart3_received_pos = currentreceivepos;
     }
     return 0;
 }

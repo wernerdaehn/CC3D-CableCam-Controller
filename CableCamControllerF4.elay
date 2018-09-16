@@ -151,7 +151,7 @@
 			<Cursor1 position="11435" topLine="477" />
 		</Cursor>
 	</File>
-	<File name="src\bluetooth.c" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\bluetooth.c" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="4446" topLine="74" />
 		</Cursor>
@@ -166,9 +166,9 @@
 			<Cursor1 position="28" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\controller.c" open="1" top="1" tabpos="7" split="0" active="1" splitpos="0" zoom_1="-1" zoom_2="0">
+	<File name="src\controller.c" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="-1" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="37406" topLine="725" />
+			<Cursor1 position="37406" topLine="713" />
 		</Cursor>
 		<Folding>
 			<Collapse line="896" />
@@ -183,56 +183,56 @@
 			<Cursor1 position="2285" topLine="61" />
 		</Cursor>
 	</File>
-	<File name="src\main.c" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\main.c" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="13487" topLine="281" />
+			<Cursor1 position="13487" topLine="265" />
 		</Cursor>
 	</File>
-	<File name="src\protocol.c" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="1" zoom_2="0">
+	<File name="src\protocol.c" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="1" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="64211" topLine="646" />
+			<Cursor1 position="77999" topLine="93" />
 		</Cursor>
 		<Folding>
-			<Collapse line="352" />
-			<Collapse line="382" />
-			<Collapse line="408" />
-			<Collapse line="444" />
-			<Collapse line="451" />
-			<Collapse line="456" />
-			<Collapse line="475" />
-			<Collapse line="480" />
-			<Collapse line="491" />
-			<Collapse line="500" />
-			<Collapse line="567" />
-			<Collapse line="599" />
-			<Collapse line="630" />
-			<Collapse line="661" />
-			<Collapse line="687" />
-			<Collapse line="715" />
-			<Collapse line="758" />
-			<Collapse line="786" />
-			<Collapse line="865" />
-			<Collapse line="918" />
-			<Collapse line="944" />
-			<Collapse line="959" />
-			<Collapse line="988" />
-			<Collapse line="1050" />
-			<Collapse line="1179" />
-			<Collapse line="1192" />
-			<Collapse line="1217" />
-			<Collapse line="1225" />
-			<Collapse line="1244" />
-			<Collapse line="1257" />
-			<Collapse line="1341" />
-			<Collapse line="1351" />
+			<Collapse line="356" />
+			<Collapse line="386" />
+			<Collapse line="412" />
+			<Collapse line="448" />
+			<Collapse line="455" />
+			<Collapse line="460" />
+			<Collapse line="479" />
+			<Collapse line="484" />
+			<Collapse line="495" />
+			<Collapse line="504" />
+			<Collapse line="571" />
+			<Collapse line="603" />
+			<Collapse line="634" />
+			<Collapse line="665" />
+			<Collapse line="691" />
+			<Collapse line="719" />
+			<Collapse line="762" />
+			<Collapse line="790" />
+			<Collapse line="869" />
+			<Collapse line="922" />
+			<Collapse line="948" />
+			<Collapse line="963" />
+			<Collapse line="992" />
+			<Collapse line="1054" />
+			<Collapse line="1183" />
+			<Collapse line="1196" />
+			<Collapse line="1221" />
+			<Collapse line="1229" />
+			<Collapse line="1248" />
+			<Collapse line="1261" />
+			<Collapse line="1345" />
 			<Collapse line="1355" />
-			<Collapse line="1370" />
-			<Collapse line="1376" />
+			<Collapse line="1359" />
+			<Collapse line="1374" />
 			<Collapse line="1380" />
-			<Collapse line="1396" />
-			<Collapse line="1414" />
-			<Collapse line="1421" />
-			<Collapse line="1428" />
+			<Collapse line="1384" />
+			<Collapse line="1400" />
+			<Collapse line="1418" />
+			<Collapse line="1425" />
+			<Collapse line="1432" />
 		</Folding>
 	</File>
 	<File name="src\sbus.c" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -270,7 +270,7 @@
 			<Cursor1 position="18535" topLine="460" />
 		</Cursor>
 	</File>
-	<File name="src\systembootloader.c" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\systembootloader.c" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="195" topLine="0" />
 		</Cursor>
@@ -280,9 +280,9 @@
 			<Cursor1 position="5387" topLine="67" />
 		</Cursor>
 	</File>
-	<File name="src\uart_callback.c" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\uart_callback.c" open="1" top="1" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="806" topLine="0" />
+			<Cursor1 position="3476" topLine="90" />
 		</Cursor>
 	</File>
 	<File name="src\usb_device.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -305,7 +305,7 @@
 			<Cursor1 position="8001" topLine="196" />
 		</Cursor>
 	</File>
-	<File name="src\vesc.c" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\vesc.c" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="11940" topLine="272" />
 		</Cursor>

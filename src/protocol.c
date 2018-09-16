@@ -65,7 +65,10 @@ settings_t activesettings;
 settings2_t semipermanentsettings;
 
 controllerstatus_t controllerstatus;
+extern UART_HandleTypeDef huart1;
+extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
+extern UART_HandleTypeDef huart6;
 
 extern TIM_HandleTypeDef htim1;
 extern getvalues_t vescvalues;
@@ -96,6 +99,7 @@ uint8_t check_for_multiple_channels_changed(sbusData_t * rcmin, sbusData_t * rcm
 void getDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, sbusData_t * rcavg, uint32_t timeout, Endpoints endpoint);
 void printChannelDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, Endpoints endpoint);
 void printPacketDebug(const char * label, uint8_t uartno, uint8_t * packetbuffer, Endpoints endpoint);
+void printUartState(UART_HandleTypeDef *huart, Endpoints endpoint);
 
 void printCurrentRCInput(Endpoints endpoint);
 void printCurrentSBusOut(Endpoints endpoint);
@@ -1951,5 +1955,28 @@ void printPacketDebug(const char * label, uint8_t uartno, uint8_t * packetbuffer
         PrintSerial_string("Last packet:", endpoint);
         PrintlnSerial_hexstring(packetbuffer, controllerstatus.duart_last_packet_length[uartno], endpoint);
     }
+    else
+    {
+        PrintlnSerial(endpoint);
+    }
+    switch (uartno)
+    {
+    case 1: printUartState(&huart1, endpoint); break;
+    case 2: printUartState(&huart2, endpoint); break;
+    case 3: printUartState(&huart3, endpoint); break;
+    case 6: printUartState(&huart6, endpoint); break;
+    }
+}
+
+void printUartState(UART_HandleTypeDef *huart, Endpoints endpoint)
+{
+    PrintSerial_string("Uart gState:", endpoint);
+    PrintSerial_hexchar(huart->gState, endpoint);
+    PrintSerial_string("; Uart RxState:", endpoint);
+    PrintSerial_hexchar(huart->RxState, endpoint);
+    PrintSerial_string("; Uart hdmarxState:", endpoint);
+    PrintSerial_hexchar(huart->hdmarx->State, endpoint);
+    PrintSerial_string("; Uart hdmaTxState:", endpoint);
+    PrintSerial_hexchar(huart->hdmatx->State, endpoint);
 }
 
