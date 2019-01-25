@@ -20,7 +20,9 @@ float getModeSwitch(void);
 float getPlaySwitch(void);
 float getAuxInput(void);
 float getGimbalDuty(uint8_t channel);
-
+void ESC_Output(float value);
+void ESC_Init(void);
+void ESC_Receive(void);
 
 /*
  * This is the Play state machine. Valid changes are:

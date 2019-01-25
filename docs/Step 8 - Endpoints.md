@@ -20,16 +20,16 @@ If the brake distance in relationship to the current positions shows that the en
 
 There are two failsafes implemented in addition:
 
-1. If the calculation shows the end point will be overshot by more than \$g steps, then it does engage an emergency brake. It outputs a speed signal of neutral. This causes the ESC to brake as hard as it can.
+1. If the calculation shows the end point will be overshot by more than \$g percent, then it does engage an emergency brake. It outputs a speed signal of neutral. This causes the ESC to brake as hard as it can.
 2. Once the end point is overshot the output signal is put into neutral as well to force a stop as quickly as possible.
 
 Both failsafes have positive and negative effects.
 
-In a perfect world, the speed signal is reduced linear and the CableCam stops exactly at the end point. In reality however the inertia, latency and how good the ESC can be controlled put physical limits.
+In a perfect world, the speed signal is reduced linear and the CableCam stops exactly at the end point. In reality however the inertia, latency and how good the ESC can be controlled have physical limits.
 
 Above works well if the ESC supports Closed Loop operations and the acceleration is set to a value the ESC can handle easily. The speed signal is constantly lowered, a fraction of a second later the ESC does achieve the desired speed and the end point will be overshot with very little excess speed and stop. Little excess speed hopefully, else it stops abrupt at this point.
 
-To allow this little excess speed to be reduced gracefully there is an offset (\$o) values. The internal calculation tries to stop at the endpoints but moved inward by the offset. And only once the actual endpoint is overshot, the controller puts the speed to zero for an immediate stop.
+To allow this little excess speed to be reduced gracefully there is an offset (\$o) value. The internal calculation tries to stop at the endpoints but moved inward by the offset. And only once the actual endpoint is overshot, the controller puts the speed to zero for an immediate stop.
 
 On the other hand, if the acceleration setting is "stop from 100km/h to zero in one second", this will likely not work. That would be a deceleration of 2g. Therefore it is important to set the values to something that is realistic. Given the capabilities of the ESCs, the accelerations and decelerations are much higher than even sports cars can achieve. A deceleration of 1g is no problem. But this does not provide nice and smooth shots.
 
@@ -39,10 +39,10 @@ On the negative side, as soon as the emergency brake kicks is, there is a signif
 
 | Command           | Allowed values | Description                                                  |
 | ----------------- | -------------- | ------------------------------------------------------------ |
-| r               |                | Print the ESC motor direction                                |
-| r \<direction\> | 1, 0, -1       | Set the ESC motor direction. Does the pos sensor report larger values when the RC speed signal increase? Then +1. |
-| g               |                | Print the max allowed positional error before the emergency brake kicks in |
-| g \<steps\>     | \>0            | Set the max allowed position error                           |
+| \$r             |                | Print the ESC motor direction                                |
+| \$r \<direction\> | 1, 0, -1       | Set the ESC motor direction. Does the pos sensor report larger values when the RC speed signal increase? Then +1. |
+| \$g             |                | Print the max allowed positional error before the emergency brake kicks in |
+| \$g \<percent\> | \>0            | Set the max allowed position error in percent of the brake distance. If the calculated brake distance is 1000 steps, \$g set to 0.1 (=10%), then the emergency brake kicks in if the distance to the endpoint is below 900 steps. |
 | \$o |  | Print the end point offset |
 | \$o <steps> | 0...1000 | Set the end point offset. This is the mathematical point the controller will try to stop at. The cablecam's inertia will cause to overshoot that point slightly. |
 
@@ -52,6 +52,6 @@ On the negative side, as soon as the emergency brake kicks is, there is a signif
 
 For the endpoints to work properly, the \$r setting is important. Once an endpoint has been overshot, moving the CableCam back into the safe area is allowed, driving deeper into the forbidden area is not. Therefore it is important for the controller to know what the receiver input means for the ESC, driving into the one or the other direction.
 
-To simplify the setup, the default is \$r 0 meaning the controller should watch the cablecam during the end point setting and set \$r itself. It does that by calculating the integral of all speed signals starting with the first position. If the end position is higher than the start position and the ESC signal was positive, then \$r 1 is set. A stick >0% means increasing the position. Hence the controller knows that at the start point a stick >0% drives the CableCam back into the safe zone, at the end point a value <0% drives it back into the safe zone.
+To simplify the setup, the default is \$r 0 meaning the controller should watch the cablecam during the end point setting and set \$r itself. It does that by calculating the integral of all speed signals starting with the first position. If the end position is higher than the start position and the ESC signal was positive, then \$r 1 is set. A stick \>0% means increasing the position. Hence the controller knows that at the start point a stick \>0% drives the CableCam back into the safe zone, at the end point a value <0% drives it back into the safe zone.
 
 Might be a good idea to save that setting afterwards.

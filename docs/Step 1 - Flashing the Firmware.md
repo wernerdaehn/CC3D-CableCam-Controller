@@ -19,3 +19,11 @@ _Note: All drivers used are included in a standard Windows 10 installation._
 
 
 Just to clarify. This is a new firmware. All the previous installed code is removed by that procedure from the board, no software bootloader, no previous firmware. So connecting this board to CC3D Revo software like the Ground Station will no longer work. You would need above method to reinstall the software bootloader of OpenPilot.
+
+
+
+## Updating the firmware
+
+Once the firmware is installed, there is a second way to bring the controller into the DFU mode, other than pressing the boot button while powering up the device: the \$_ command. 
+
+This command disables the USB communication and then reboots the device in DFU mode. 

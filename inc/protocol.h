@@ -5,16 +5,18 @@
 #include "controller.h"
 #include "stdbool.h"
 #include "sbus.h"
+#include "odrive.h"
 
 #define PROTOCOL_MAX_ACCEL        'a'   // 1 float argument
 #define PROTOCOL_AUX_NEUTRAL      'A'	// 3 int neutral microseconds, +-neutral range microseconds, +- 100% throttle
 #define PROTOCOL_BINARY           'b'   // Hidden command to print the binary active settings or play them back (Useful to quickly transfer settings)
 #define PROTOCOL_BLUETOOTH        'B'   // no argument
 #define PROTOCOL_VESC_BRAKE       'c'
+#define PROTOCOL_ESC              'C'   // 1 int argument, see ESC_ defines
 #define PROTOCOL_DEBUG            'd'   // one char to identify what debug to print out
 #define PROTOCOL_INPUT_GIMBAL_DEFAULT     'D'   // up to 8 int arguments, the gimbal channel default output via SBus TX
-#define PROTOCOL_VESC_MAX_ERPM    'e'   // 1 int argument, the maximum eRPM value set in the VESC. Goal is that 100% throttle = this eRPM value
-#define PROTOCOL_VESC_STATUS      'E'   // no argument
+#define PROTOCOL_ESC_MAX_SPEED    'e'   // 1 int argument, the maximum eRPM value set in the VESC. Goal is that 100% throttle = this eRPM value
+#define PROTOCOL_ESC_STATUS      'E'   // no argument
 #define PROTOCOL_MAX_ERROR_DIST   'g'   // 1 float argument
 #define PROTOCOL_INPUT_GIMBAL     'G'   // up to 8 int arguments, the gimbal channel assignments used for output via SBus TX
 #define PROTOCOL_HELP		      'h'	// help
@@ -48,7 +50,11 @@
 
 #define RECEIVER_TYPE_SUMPPM    0
 #define RECEIVER_TYPE_SBUS      1
-#define RECEIVER_TYPE_SERVO      2
+#define RECEIVER_TYPE_SERVO     2
+
+#define ESC_RC_ONLY             0
+#define ESC_VESC                2
+#define ESC_ODRIVE              3
 
 /** \brief Controller-Mode State Machine
  *
@@ -114,7 +120,7 @@ typedef struct
     int16_t esc_neutral_pos;
     int16_t esc_neutral_range;
     int16_t esc_value_range;
-    int32_t vesc_max_erpm;
+    int32_t esc_max_speed;
     float expo_factor;
     float stick_max_accel;
     float stick_max_speed;
@@ -131,7 +137,7 @@ typedef struct
     uint8_t rc_channel_sbus_out_mapping[8];
     uint16_t structure_length;
     uint8_t pos_source;
-    uint8_t noop_padding_1; // Needed to align the structure to 32bit
+    uint8_t esc_type;
     int16_t aux_neutral_pos;
     int16_t aux_neutral_range;
     int16_t aux_value_range;
@@ -178,7 +184,6 @@ typedef struct
     uint32_t play_endpoint_reached_at; // Used to calculate the pause before running into the other direction
     float stick_max_accel;
     float stick_max_speed;
-    bool vesc_config;
     bool bluetooth_passthrough;
     bool debug_endpoint;
     float pos;
@@ -205,6 +210,7 @@ typedef struct
     uint32_t tick_enter_previous;
     uint32_t possensorduration;
     uint32_t last_possensortick;
+    ODRIVE_STATE_t odrivestate;
 } controllerstatus_t;
 
 extern controllerstatus_t controllerstatus;

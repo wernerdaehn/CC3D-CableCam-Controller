@@ -158,7 +158,7 @@ int main(void)
 
     strcpy(activesettings.version, "20180915");
     activesettings.esc_direction = 0;
-    activesettings.max_position_error = 100.0f;
+    activesettings.max_position_error = 0.1f;
     activesettings.mode = MODE_PASSTHROUGH;
     activesettings.receivertype = RECEIVER_TYPE_SBUS;
     activesettings.rc_channel_endpoint = 255;
@@ -177,7 +177,7 @@ int main(void)
     activesettings.esc_neutral_pos = 1500;
     activesettings.esc_neutral_range = 30;
     activesettings.stick_value_range = 800;
-    activesettings.vesc_max_erpm = 50000;
+    activesettings.esc_max_speed = 50000;
     activesettings.expo_factor = 0.1f;
     activesettings.vesc_brake_handbrake_max = 60;
     activesettings.vesc_brake_handbrake_min = 10;
@@ -192,6 +192,7 @@ int main(void)
     activesettings.aux_neutral_range = 0;
     activesettings.pos_source = 0;
     activesettings.offset_endpoint = 20.0f;
+    activesettings.esc_type = ESC_ODRIVE;
     for (int i=0; i<8; i++)
     {
         activesettings.rc_channel_sbus_out_mapping[i] = 255;
@@ -232,6 +233,12 @@ int main(void)
         strcpy(controllerstatus.boottext_eeprom, "eeprom does not contain valid default - keeping the system defaults");
     }
 
+    // On 2018.09.30 the value got repurposed, it means a percent value now so should be between 0.0 and 1.0 for 0% and 100%. Before it meant a distance.
+    if (activesettings.max_position_error >= 100.0f)
+    {
+        activesettings.max_position_error = activesettings.max_position_error / 1000.0f;
+    }
+
     /*
      * Read the semi-permanent settings from EEPROM and if they are invalid, reset to default.
      */
@@ -252,6 +259,11 @@ int main(void)
     }
     semipermanentsettings.structure_length = sizeof(semipermanentsettings);
 
+    if (activesettings.esc_type != ESC_RC_ONLY && activesettings.esc_type != ESC_ODRIVE)
+    {
+        activesettings.esc_type = ESC_VESC;
+    }
+
 
     if (activesettings.receivertype == RECEIVER_TYPE_SBUS)
     {
@@ -262,10 +274,11 @@ int main(void)
         initPPMReceiver();
     }
 
+
     initController();
 
     UART3_init();
-    VESC_init();
+    ESC_Init();
 
     while (1)
     {
@@ -283,7 +296,7 @@ int main(void)
             {
                 if (huart2.RxState != HAL_UART_STATE_BUSY_RX)
                 {
-                    VESC_init();
+                    ESC_Init();
                 }
                 if (huart3.RxState != HAL_UART_STATE_BUSY_RX)
                 {
@@ -336,10 +349,13 @@ int main(void)
         {
             serialCom(EndPoint_UART3, uart3_commandlinebuffer);
         }
-        SBusSendCycle();
-        UART2Flush();
-        UART1_Receive();
-        UART2_Receive();
+
+        if (activesettings.receivertype == RECEIVER_TYPE_SBUS)
+        {
+            SBusSendCycle();
+            UART1_Receive();
+        }
+        ESC_Receive();
         eeprom_cycle();
     }
 }

@@ -9,7 +9,7 @@
 
 uint16_t crc16(uint8_t *buf, uint16_t len);
 
-uint8_t uart2TxBuffer[UART_CYCLIC_RXBUFFER_SIZE];
+uint8_t vescTxBuffer[UART_CYCLIC_RXBUFFER_SIZE];
 
 // CRC Table
 const unsigned short crc16_tab[] = { 0x0000, 0x1021, 0x2042, 0x3063, 0x4084,
@@ -49,16 +49,14 @@ sendhandbrake_t handbrakepacket;
 requestvalues_t requestvaluespacket;
 sendcurrentbrake_t currentbrakepacket;
 
-uint16_t uart2_received_pos = 0;
-uint16_t uart2_packet_start_pos = 0;
-uint32_t uart2_bytes_written = 0;
-uint32_t uart2_bytes_sent = 0;
+uint16_t vesc_received_pos = 0;
+uint16_t vesc_packet_start_pos = 0;
 uint32_t vescvalues_requested_at = 0;
 
 // Receiving packets
 getvalues_t vescvalues;
 
-uint8_t uart2_rxbuffer[UART_CYCLIC_RXBUFFER_SIZE];
+uint8_t vesc_cyclic_rxbuffer[UART_CYCLIC_RXBUFFER_SIZE];
 uint8_t vesc_rxbuffer[UART_CYCLIC_RXBUFFER_SIZE];
 uint32_t vesc_last_data_timestamp = 0;
 
@@ -88,7 +86,7 @@ void VESC_init()
     currentbrakepacket.frame.command = COMM_SET_CURRENT_BRAKE;
     currentbrakepacket.frame.stop = 0x03;
 
-    if(HAL_UART_Receive_DMA(&huart2, uart2_rxbuffer, UART_CYCLIC_RXBUFFER_SIZE) != HAL_OK)
+    if(HAL_UART_Receive_DMA(&huart2, vesc_cyclic_rxbuffer, UART_CYCLIC_RXBUFFER_SIZE) != HAL_OK)
     {
         Error_Handler();
     }
@@ -96,7 +94,7 @@ void VESC_init()
 
 uint8_t* getRequestValuePacketFrameAddress(void)
 {
-    return uart2_rxbuffer;
+    return vesc_cyclic_rxbuffer;
 }
 
 float vesc_get_float(uint16_t uartfield, float scale)
@@ -124,70 +122,41 @@ int16_t vesc_get_int(uint16_t uartfield)
 
 void VESC_Output(float esc_output)
 {
-    if (!controllerstatus.vesc_config) // No VESC Output when Bluetooth has control about the VESC
+   if (isnan(esc_output))
     {
-        if (isnan(esc_output))
+        VESC_set_rpm(0);
+    }
+    else
+    {
+        int32_t vesc_erpm;
+        if (activesettings.mode == MODE_PASSTHROUGH)
         {
-            VESC_set_rpm(0);
+            vesc_erpm = (int32_t) ((esc_output * ((float) activesettings.esc_max_speed)));
         }
         else
         {
-            int32_t vesc_erpm;
-            if (activesettings.mode == MODE_PASSTHROUGH)
-            {
-                vesc_erpm = (int32_t) ((esc_output * ((float) activesettings.vesc_max_erpm)));
-            }
-            else
-            {
-                // controllerstatus.stick_max_speed reduces the vesc erpm by this factor at stick=100%
-                vesc_erpm = (int32_t) ((esc_output * controllerstatus.stick_max_speed * ((float) activesettings.vesc_max_erpm)));
-            }
-            VESC_set_rpm(vesc_erpm);
+            // controllerstatus.stick_max_speed reduces the vesc erpm by this factor at stick=100%
+            vesc_erpm = (int32_t) ((esc_output * controllerstatus.stick_max_speed * ((float) activesettings.esc_max_speed)));
         }
+        VESC_set_rpm(vesc_erpm);
     }
 }
 
 void VESC_set_rpm(int32_t erpm)
 {
-    if (!controllerstatus.vesc_config) // No VESC Output when Bluetooth has control about the VESC
+    if (is5Hz())
     {
-        if (is5Hz())
-        {
-            UART2SendPacket(requestvaluespacket.bytes, sizeof(requestvaluespacket.bytes));
-            vescvalues_requested_at = HAL_GetTick();
-        }
-        else
-        {
-            rpmpacket.frame.speed = __REV(erpm);
-            rpmpacket.frame.crc = __REV16(crc16(&rpmpacket.bytes[2], rpmpacket.frame.length));
-            UART2SendPacket((uint8_t *)&rpmpacket.frame, sizeof(rpmpacket.bytes));
-        }
+        VESCSendPacket(requestvaluespacket.bytes, sizeof(requestvaluespacket.bytes));
+        vescvalues_requested_at = HAL_GetTick();
+    }
+    else
+    {
+        rpmpacket.frame.speed = __REV(erpm);
+        rpmpacket.frame.crc = __REV16(crc16(&rpmpacket.bytes[2], rpmpacket.frame.length));
+        VESCSendPacket((uint8_t *)&rpmpacket.frame, sizeof(rpmpacket.bytes));
     }
 }
 
-/*
-void VESC_set_handbrake_current(int32_t brake_current)
-{
-    if (!controllerstatus.vesc_config) // No VESC Output when Bluetooth has control about the VESC
-    {
-        handbrakepacket.frame.brakecurrent_1000 = __REV(brake_current*1000);
-        handbrakepacket.frame.crc = __REV16(crc16(&handbrakepacket.bytes[2], handbrakepacket.frame.length));
-
-        UART2SendPacket(handbrakepacket.bytes, sizeof(handbrakepacket.bytes));
-    }
-}
-
-void VESC_set_currentbrake_current(int32_t brake_current)
-{
-    if (!controllerstatus.vesc_config) // No VESC Output when Bluetooth has control about the VESC
-    {
-        currentbrakepacket.frame.brakecurrent_1000 = __REV(brake_current*1000);
-        currentbrakepacket.frame.crc = __REV16(crc16(&currentbrakepacket.bytes[2], currentbrakepacket.frame.length));
-
-        UART2SendPacket(currentbrakepacket.bytes, sizeof(currentbrakepacket.bytes));
-    }
-}
-*/
 
 uint16_t crc16(uint8_t *buf, uint16_t len) {
 	uint16_t i;
@@ -198,31 +167,15 @@ uint16_t crc16(uint8_t *buf, uint16_t len) {
 	return cksum;
 }
 
-uint16_t UART2_Receive()
+uint16_t VESCReceive()
 {
     uint16_t currentreceivepos = huart2.RxXferSize - __HAL_DMA_GET_COUNTER(huart2.hdmarx);
     uint32_t now = HAL_GetTick();
 
-    if (currentreceivepos != uart2_received_pos)
+    if (currentreceivepos != vesc_received_pos)
     {
         vesc_last_data_timestamp = now;
-        if (controllerstatus.vesc_config)
-        {
-            if (uart2_received_pos < currentreceivepos)
-            {
-                UART3Append(&vesc_rxbuffer[uart2_received_pos], currentreceivepos - uart2_received_pos);
-            }
-            else
-            {
-                UART3Append(&vesc_rxbuffer[uart2_received_pos], huart2.RxXferSize - uart2_received_pos);
-                UART3Append(&vesc_rxbuffer[0], currentreceivepos);
-            }
-        }
-        uart2_received_pos = currentreceivepos;
-    }
-    else if (controllerstatus.vesc_config)
-    {
-        // no processing in case of vesc passthrough. Would not hurt but....
+        vesc_received_pos = currentreceivepos;
     }
     else if (now < vesc_last_data_timestamp + 5)
     {
@@ -230,21 +183,21 @@ uint16_t UART2_Receive()
     }
     else // no data within 20ms must be the packet end or no new data
     {
-        if (uart2_packet_start_pos != currentreceivepos)
+        if (vesc_packet_start_pos != currentreceivepos)
         {
             controllerstatus.duart_pause[2]++;
             vescvalues_requested_at = 0;
-            uint16_t packetlength = mod16(currentreceivepos - uart2_packet_start_pos, huart2.RxXferSize);
+            uint16_t packetlength = mod16(currentreceivepos - vesc_packet_start_pos, huart2.RxXferSize);
             controllerstatus.duart_last_packet_length[2] = packetlength;
 
-            if (uart2_packet_start_pos < currentreceivepos)
+            if (vesc_packet_start_pos < currentreceivepos)
             {
-                memcpy(&vesc_rxbuffer[0], &uart2_rxbuffer[uart2_packet_start_pos], packetlength);
+                memcpy(&vesc_rxbuffer[0], &vesc_cyclic_rxbuffer[vesc_packet_start_pos], packetlength);
             }
             else
             {
-                memcpy(&vesc_rxbuffer[0], &uart2_rxbuffer[uart2_packet_start_pos], huart2.RxXferSize-uart2_packet_start_pos);
-                memcpy(&vesc_rxbuffer[huart2.RxXferSize-uart2_packet_start_pos], &uart2_rxbuffer[0], currentreceivepos);
+                memcpy(&vesc_rxbuffer[0], &vesc_cyclic_rxbuffer[vesc_packet_start_pos], huart2.RxXferSize-vesc_packet_start_pos);
+                memcpy(&vesc_rxbuffer[huart2.RxXferSize-vesc_packet_start_pos], &vesc_cyclic_rxbuffer[0], currentreceivepos);
             }
 
             if (vesc_rxbuffer[0] == 0x02)
@@ -286,7 +239,7 @@ uint16_t UART2_Receive()
             {
                 controllerstatus.dvesc_startbyte_error++;
             }
-            uart2_packet_start_pos = currentreceivepos;
+            vesc_packet_start_pos = currentreceivepos;
         }
     }
     return 0;
@@ -295,44 +248,11 @@ uint16_t UART2_Receive()
 /*
  * VESC supports sending single packets only, makes no sense using a cyclic send buffer
  */
-void UART2SendPacket(uint8_t *ptr, uint32_t len)
+void VESCSendPacket(uint8_t *ptr, uint32_t len)
 {
     // TX start without checking if the previous TX did complete for safety reasons. Since this is called at fixed intervals, data was transmitted already for sure
-    memcpy(uart2TxBuffer, ptr, len);
-    HAL_UART_Transmit_DMA(&huart2, uart2TxBuffer, len);
+    memcpy(vescTxBuffer, ptr, len);
+    HAL_UART_Transmit_DMA(&huart2, vescTxBuffer, len);
 }
 
-void UART2Append(uint8_t *ptr, uint32_t len)
-{
-    uint32_t rel_pos = uart2_bytes_written % UART_CYCLIC_RXBUFFER_SIZE;
-    if (rel_pos + len > UART_CYCLIC_RXBUFFER_SIZE)
-    {
-        uint32_t l = UART_CYCLIC_RXBUFFER_SIZE - rel_pos;
-        memcpy(&uart2TxBuffer[rel_pos], ptr, l);
-        memcpy(uart2TxBuffer, &ptr[l], len - l);
-    }
-    else
-    {
-        memcpy(&uart2TxBuffer[rel_pos], ptr, len);
-    }
-    uart2_bytes_written += len;
-}
-
-void UART2Flush()
-{
-    if(uart2_bytes_written != uart2_bytes_sent)
-    {
-        if ((huart2.gState & 0x01) == 0x00)
-        {
-            uint32_t buffptr = uart2_bytes_sent % UART_CYCLIC_RXBUFFER_SIZE;
-            uint32_t buffsize = uart2_bytes_written - uart2_bytes_sent;
-            if (buffptr + buffsize > UART_CYCLIC_RXBUFFER_SIZE)
-            {
-                buffsize = UART_CYCLIC_RXBUFFER_SIZE - buffptr;
-            }
-            HAL_UART_Transmit_DMA(&huart2, &uart2TxBuffer[buffptr], buffsize);
-            uart2_bytes_sent += buffsize;
-        }
-    }
-}
 

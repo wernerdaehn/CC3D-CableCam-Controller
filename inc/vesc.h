@@ -18,11 +18,8 @@ float vesc_get_float(uint16_t uartfield, float scale);
 double vesc_get_double(uint32_t uartfield, double scale);
 int32_t vesc_get_long(uint32_t uartfield);
 int16_t vesc_get_int(uint16_t uartfield);
-uint16_t UART2_Receive(void);
-
-void UART2SendPacket(uint8_t *ptr, uint32_t len);
-void UART2Append(uint8_t *ptr, uint32_t len);
-void UART2Flush(void);
+uint16_t VESCReceive(void);
+void VESCSendPacket(uint8_t *ptr, uint32_t len);
 
 
 typedef enum {

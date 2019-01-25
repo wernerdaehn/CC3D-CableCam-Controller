@@ -7,6 +7,7 @@
 #include "vesc.h"
 #include "math.h"
 #include "eeprom.h"
+#include "odrive.h"
 
 extern getvalues_t vescvalues;
 
@@ -473,141 +474,127 @@ float stickCycle()
              */
 
             /*
-             * First check if the position is safe, both end points cannot be overshot at the current speed. In that case no braking calculation is needed.
+             * Which end point is in danger? The cablecam might be very close to the start point but is driving towards the other end point -> no problem.
              */
-            if (controllerstatus.pos + brakedistance < semipermanentsettings.pos_end-activesettings.offset_endpoint &&
-                controllerstatus.pos - brakedistance > semipermanentsettings.pos_start+activesettings.offset_endpoint)
+            if (value > 0.0f && controllerstatus.pos + brakedistance >= semipermanentsettings.pos_end-activesettings.offset_endpoint)
             {
-                controllerstatus.endpointbrake = false;
-                controllerstatus.emergencybrake = false;
-                if (controllerstatus.debug_endpoint && value != 0.0f)
+                /*
+                 * In case the CableCam will overshoot the end point reduce the speed to zero.
+                 * Only if the stick is in the reverse direction already, accept the value. Without that condition you cannot move the cablecam
+                 * back into the safe zone.
+                 */
+                LED_WARN_ON;
+                /*
+                 * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
+                 * As there is some elasticity between motor and actual position, add a value here.
+                 */
+                if (controllerstatus.pos >= semipermanentsettings.pos_end)
                 {
-                    printBrakeMessage(value, brakedistance, speed, 99, controllerstatus.debugrequester);
+                    stick_last_value = 0.0f;
+                    if (controllerstatus.emergencybrake == false)
+                    {
+                        printBrakeMessage(value, brakedistance, speed, 02, EndPoint_All);
+                    }
+                    controllerstatus.emergencybrake = true;
+                    return 0.0f;
+                }
+                else if (activesettings.max_position_error != 0.0f &&
+                        controllerstatus.pos + (brakedistance * (1.0f + activesettings.max_position_error)) >= semipermanentsettings.pos_end)
+                {
+                    /*
+                     * We are in danger to overshoot the end point by max_position_error. Hence kick in the emergency brake.
+                     */
+                    stick_last_value = value;
+                    if (controllerstatus.emergencybrake == false || controllerstatus.debug_endpoint)
+                    {
+                        printBrakeMessage(value, brakedistance, speed, 00, controllerstatus.debugrequester);
+                    }
+                    controllerstatus.emergencybrake = true;
+                    return 0.0f;
+                }
+                else
+                {
+                    value = stick_last_value - maxaccel; // reduce speed at full allowed acceleration
+                    if (value < 0.0f) // watch out to not get into reverse.
+                    {
+                        value = 0.0f;
+                    }
+
+                    /*
+                     * Failsafe: If, at the current speed the end point will be overshot significantly, ignore the ramp logic and request a full brake by setting speed=0.
+                     * Because at high speeds the calculation might not be that accurate, add a factor depending on the brake distance.
+                     *
+                     */
+
+                    if (controllerstatus.endpointbrake == false || controllerstatus.debug_endpoint)
+                    {
+                        printBrakeMessage(value, brakedistance, speed, 01, controllerstatus.debugrequester);
+                    }
+                    controllerstatus.endpointbrake = true;
+                }
+            }
+            else if (value < 0.0f && controllerstatus.pos - brakedistance <= semipermanentsettings.pos_start+activesettings.offset_endpoint)
+            {
+                /*
+                 * In case the CableCam will overshoot the start point reduce the speed to zero.
+                 * Only if the stick is in the reverse direction already, accept the value. Else you cannot maneuver
+                 * back into the safe zone.
+                 */
+                LED_WARN_ON;
+                /*
+                 * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
+                 */
+                if (controllerstatus.pos <= semipermanentsettings.pos_start)
+                {
+                    stick_last_value = 0.0f;
+                    if (controllerstatus.emergencybrake == false)
+                    {
+                        printBrakeMessage(value, brakedistance, speed, 12, EndPoint_All);
+                    }
+                    controllerstatus.emergencybrake = true;
+                    return 0.0f;
+                }
+                else if (activesettings.max_position_error != 0.0f &&
+                        controllerstatus.pos - (brakedistance * (1.0f + activesettings.max_position_error)) <= semipermanentsettings.pos_start)
+                {
+                    /*
+                     * We are in danger to overshoot the start point by max_position_error. Hence kick in the emergency brake.
+                     */
+                    stick_last_value = value;
+                    if (controllerstatus.emergencybrake == false || controllerstatus.debug_endpoint)
+                    {
+                        printBrakeMessage(value, brakedistance, speed, 10, controllerstatus.debugrequester);
+                    }
+                    controllerstatus.emergencybrake = true;
+                    return 0.0f;
+                }
+                else
+                {
+                    value = stick_last_value + maxaccel; // reduce speed at full allowed acceleration from a negative value up to zero
+                    if (value > 0.0f) // watch out to not get into reverse.
+                    {
+                        value = 0.0f;
+                    }
+                    /*
+                     * Failsafe: If, at the current speed the end point will be overshot significantly, ignore the ramp logic and request a full brake by setting speed=0.
+                     * Because at high speeds the calculation might not be that accurate, add a factor depending on the brake distance
+                     */
+
+                    if (controllerstatus.endpointbrake == false || controllerstatus.debug_endpoint)
+                    {
+                        printBrakeMessage(value, brakedistance, speed, 11, controllerstatus.debugrequester);
+                    }
+                    controllerstatus.endpointbrake = true;
                 }
             }
             else
             {
-                /*
-                 * Which end point is in danger? The cablecam might be very close to the start point but is driving towards the other end point -> no problem.
-                 */
-                if (value > 0.0f && controllerstatus.pos + brakedistance >= semipermanentsettings.pos_end-activesettings.offset_endpoint)
+                controllerstatus.endpointbrake = false;
+                controllerstatus.emergencybrake = false;
+                LED_WARN_OFF;
+                if (controllerstatus.debug_endpoint && value != 0.0f)
                 {
-                    /*
-                     * In case the CableCam will overshoot the end point reduce the speed to zero.
-                     * Only if the stick is in the reverse direction already, accept the value. Without that condition you cannot move the cablecam
-                     * back into the safe zone.
-                     */
-                    LED_WARN_ON;
-                    /*
-                     * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
-                     * As there is some elasticity between motor and actual position, add a value here.
-                     */
-                    if (controllerstatus.pos >= semipermanentsettings.pos_end)
-                    {
-                        stick_last_value = 0.0f;
-                        if (controllerstatus.emergencybrake == false)
-                        {
-                            printBrakeMessage(value, brakedistance, speed, 02, EndPoint_All);
-                        }
-                        controllerstatus.emergencybrake = true;
-                        return stick_last_value;
-                    }
-                    else
-                    {
-                        value = stick_last_value - maxaccel; // reduce speed at full allowed acceleration
-                        if (value < 0.0f) // watch out to not get into reverse.
-                        {
-                            value = 0.0f;
-                        }
-
-                        /*
-                         * Failsafe: If, at the current speed the end point will be overshot significantly, ignore the ramp logic and request a full brake by setting speed=0.
-                         * Because at high speeds the calculation might not be that accurate, add a factor depending on the brake distance.
-                         *
-                         */
-                        if (activesettings.max_position_error != 0.0f &&
-                            controllerstatus.pos + brakedistance >= semipermanentsettings.pos_end + activesettings.max_position_error)
-                        {
-                            /*
-                             * We are in danger to overshoot the end point by max_position_error. Hence kick in the emergency brake.
-                             */
-                            if (controllerstatus.emergencybrake == false || controllerstatus.debug_endpoint)
-                            {
-                                printBrakeMessage(value, brakedistance, speed, 00, controllerstatus.debugrequester);
-                            }
-                            controllerstatus.emergencybrake = true;
-                            stick_last_value = value;
-                            return 0.0f;
-                        }
-                        if (controllerstatus.endpointbrake == false || controllerstatus.debug_endpoint)
-                        {
-                            printBrakeMessage(value, brakedistance, speed, 01, controllerstatus.debugrequester);
-                        }
-                        controllerstatus.endpointbrake = true;
-                    }
-                }
-                else if (value < 0.0f && controllerstatus.pos - brakedistance <= semipermanentsettings.pos_start+activesettings.offset_endpoint)
-                {
-                    /*
-                     * In case the CableCam will overshoot the start point reduce the speed to zero.
-                     * Only if the stick is in the reverse direction already, accept the value. Else you cannot maneuver
-                     * back into the safe zone.
-                     */
-                    LED_WARN_ON;
-                    /*
-                     * Failsafe: In case the endpoint itself had been overshot and stick says to do so further, stop immediately.
-                     */
-                    if (controllerstatus.pos <= semipermanentsettings.pos_start)
-                    {
-                        stick_last_value = 0.0f;
-                        if (controllerstatus.emergencybrake == false)
-                        {
-                            printBrakeMessage(value, brakedistance, speed, 12, EndPoint_All);
-                        }
-                        controllerstatus.emergencybrake = true;
-                        return 0.0f;
-                    }
-                    else
-                    {
-                        value = stick_last_value + maxaccel; // reduce speed at full allowed acceleration from a negative value up to zero
-                        if (value > 0.0f) // watch out to not get into reverse.
-                        {
-                            value = 0.0f;
-                        }
-                        /*
-                         * Failsafe: If, at the current speed the end point will be overshot significantly, ignore the ramp logic and request a full brake by setting speed=0.
-                         * Because at high speeds the calculation might not be that accurate, add a factor depending on the brake distance
-                         */
-                        if (activesettings.max_position_error != 0.0f &&
-                            controllerstatus.pos - brakedistance <= semipermanentsettings.pos_start - activesettings.max_position_error)
-                        {
-                            /*
-                             * We are in danger to overshoot the start point by max_position_error. Hence kick in the emergency brake.
-                             */
-                            if (controllerstatus.emergencybrake == false || controllerstatus.debug_endpoint)
-                            {
-                                printBrakeMessage(value, brakedistance, speed, 10, controllerstatus.debugrequester);
-                            }
-                            controllerstatus.emergencybrake = true;
-                            stick_last_value = value;
-                            return 0.0f;
-                        }
-                        if (controllerstatus.endpointbrake == false || controllerstatus.debug_endpoint)
-                        {
-                            printBrakeMessage(value, brakedistance, speed, 11, controllerstatus.debugrequester);
-                        }
-                        controllerstatus.endpointbrake = true;
-                    }
-                }
-                else
-                {
-                    controllerstatus.endpointbrake = false;
-                    controllerstatus.emergencybrake = false;
-                    LED_WARN_OFF;
-                    if (controllerstatus.debug_endpoint && value != 0.0f)
-                    {
-                        printBrakeMessage(value, brakedistance, speed, 99, controllerstatus.debugrequester);
-                    }
+                    printBrakeMessage(value, brakedistance, speed, 99, controllerstatus.debugrequester);
                 }
             }
         }
@@ -689,7 +676,7 @@ void controllercycle()
     {
         TIM3->CCR3 = activesettings.esc_neutral_pos;
     }
-    VESC_Output(stick_filtered_value); // controllerstatus.stick_max_speed is handled inside
+    ESC_Output(stick_filtered_value); // controllerstatus.stick_max_speed is handled inside
 
 
     float aux = getAuxInput();
@@ -712,6 +699,42 @@ void controllercycle()
     }
     setGimbalValues(gimbalout);
     controllerstatus.tick_leave = HAL_GetTick();
+}
+
+void ESC_Output(float value)
+{
+    if (activesettings.esc_type == ESC_VESC)
+    {
+        VESC_Output(value);
+    }
+    else if (activesettings.esc_type == ESC_ODRIVE)
+    {
+        ODRIVE_Output(value);
+    }
+}
+
+void ESC_Init()
+{
+    if (activesettings.esc_type == ESC_VESC)
+    {
+        VESC_init();
+    }
+    else if (activesettings.esc_type == ESC_ODRIVE)
+    {
+        ODRIVE_init();
+    }
+}
+
+void ESC_Receive()
+{
+    if (activesettings.esc_type == ESC_VESC)
+    {
+        VESCReceive();
+    }
+    else if (activesettings.esc_type == ESC_ODRIVE)
+    {
+        ODRIVEReceive();
+    }
 }
 
 float getGimbalDuty(uint8_t channel)
