@@ -6,7 +6,6 @@
 #include "protocol.h"
 
 static int8_t current_virtual_channel = 0;
-static uint16_t lastrising = 0;
 
 uint32_t possensortick_old = 0;
 
@@ -38,68 +37,71 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
      * 7461   404   1107   405   1106   405   1108   404   1108   404   1108   405   1676   405   1107   404   1108   404
      * 7461   404   1107   405   1107   405   1110   405   1106   405   1106   405   1675   404   1107   405   1106   405
      * 7457   404   1107   405   1107
+     *
+     *
+     * 1095   398   597   399   1094   398   1094   399   1094   398   1094   399   1124   398   1179   398   1094   398
+     * 1094   398   597   398   597   398   597   398   597   398   597   398   597   398
+     * 4020   398   1094   399   596   399   1094   398   1095   398   1095   398   1094   399   1124   398   1180   398
+     * 1094   398   1095   398   597   398   596   399   596   399   596   398   597   399
+     *
+     *
+     * Duty & Pause Timing for SumPPM:
+     *                                        399   1105   398   1105   398   1105   399   1104   399   1617   399   8094
+     * 401   1104   399   1116   399   1104   399   1106   399   1105   398   1105   399   1105   399   1618   399   8093
+     * 401   1102   399   1116   399   1104   399   1106   398   1106   398   1105   399   1105   398   1617   399   8094
+     * 401   1102   399   1117   399   1104   398   1106   399   1105   398   1105   399   1105   398   1617
+     *
+     * Duty & Pause Timing for SumPPM:
+     *                           398   1105   398   1105   398   1104   399   1104   399   1105   398   591   398   9121
+     * 401   1102   398   1117   398   1105   399   1106   398   1105   398   1105   399   1104   399   591   398   9124
+     * 401   1102   398   1117   399   1105   398   1106   398   1105   399   1105   398   1105   398   591   399   9120
+     *
      */
     if (htim->Instance == TIM1)
     {
-        if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3)
+        if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3 || htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4) // changed to be rising/falling independent
         {
             /*
-             * The Channel3 Interrupt fires at the falling edge, thus we know the duty
+             * The channel3 or 4 interrupt fires at the falling edge, thus we know the duty
              * 3______________4               3___
              * |              |_______________|   ......
              */
 
-            // It is important to use a uint16 here as the timer returns a 16 value, although it is defined as 32 bit uint
-            uint16_t duty = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4) - lastrising;
+            // It is important to use a uint16 here as the timer returns a 16 bit value, although it is defined as 32 bit uint
+            uint16_t diff;
+            if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4)
+            {
+                diff = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4) - HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3);
+            }
+            else
+            {
+                diff = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3) - HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4);
+            }
             // uint16_t duty = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3) - HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4);
-            setNextDuty(duty);
+            setNextDuty(diff);
 
-            if (duty > 4000)   // a long duty signal is the packet-end of a sum ppm
+            if (diff > 10000)   // a very long signal is the packet-end of a servo
+            {
+                current_virtual_channel = 0; // Hence the next duty signal will be for the first channel
+                sbusdata.sbusLastValidFrame = HAL_GetTick(); // and we got a valid frame, so set the timestamp to now
+                sbusdata.counter_sbus_valid_data++;
+                sbusdata.receivertype = RECEIVER_TYPE_SERVO;
+            }
+            else if (diff > 3500)   // a long duty signal is the packet-end of a sum ppm
             {
                 current_virtual_channel = 0; // Hence the next duty signal will be for the first channel
                 sbusdata.sbusLastValidFrame = HAL_GetTick(); // and we got a valid frame, so set the timestamp to now
                 sbusdata.counter_sbus_valid_data++;
                 sbusdata.receivertype = RECEIVER_TYPE_SUMPPM;
             }
-            else     // everything else is the duty signal
+            else if (diff < 550) // a sumppm pause
             {
-                if (current_virtual_channel < SBUS_MAX_CHANNEL) // What if the SumPPM sends more than 16 values? Ignore those.
-                {
-                    sbusdata.servovalues[current_virtual_channel].duty = duty; // any other duty signal sets the input value
-                }
-            }
 
-            /*
-             * 3______________4               3______________4
-             * |              |_______________|              |___________
-             */
-            uint16_t pause = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3) - HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4);
-            // uint16_t pause = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4) - lastrising;
-            setNextDuty(pause);
-            if (pause < 700)   // a pause of length less than 700us is a sum-ppm channel-pause
-            {
-                current_virtual_channel++;
             }
-            else if (pause > 10000)     // no sum ppm
+            else if (current_virtual_channel < SBUS_MAX_CHANNEL) // What if the SumPPM sends more than 16 values? Ignore those.
             {
-                current_virtual_channel = 0;
-                sbusdata.sbusLastValidFrame = HAL_GetTick();
-                sbusdata.counter_sbus_valid_data++;
-                if (sbusdata.receivertype != RECEIVER_TYPE_SERVO)
-                {
-                    /*
-                     * Set all values to zero except for the first channel. This makes sure changes in the receiver type setting
-                     * or the receiver itself do not leave a value over. Obviously that has to be done only if the receiver type changed.
-                     */
-                    for (int i=1; i<SBUS_MAX_CHANNEL; i++)
-                    {
-                        sbusdata.servovalues[i].duty = 0;
-                    }
-                }
-                sbusdata.receivertype = RECEIVER_TYPE_SERVO;
+                sbusdata.servovalues[current_virtual_channel++].duty = diff; // any other signal sets the input value
             }
-
-            lastrising = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3);
         }
     }
     else if (htim->Instance == TIM5)
@@ -115,10 +117,6 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
             controllerstatus.possensorduration = 0;
         }
         possensortick_old = controllerstatus.last_possensortick;
-    }
-    else if (htim->Instance == TIM8)
-    {
-        PrintlnSerial_string("TIM8", EndPoint_USB);
     }
 
 }

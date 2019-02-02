@@ -61,12 +61,12 @@
 			<Cursor1 position="3567" topLine="14" />
 		</Cursor>
 	</File>
-	<File name="inc\odrive.h" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="inc\odrive.h" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="284" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="inc\protocol.h" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="inc\protocol.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="901" topLine="2" />
 		</Cursor>
@@ -171,7 +171,7 @@
 			<Cursor1 position="30" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\controller.c" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="-1" zoom_2="0">
+	<File name="src\controller.c" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="-1" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="218" topLine="0" />
 		</Cursor>
@@ -188,19 +188,19 @@
 			<Cursor1 position="2285" topLine="61" />
 		</Cursor>
 	</File>
-	<File name="src\main.c" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\main.c" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="6840" topLine="149" />
+			<Cursor1 position="14142" topLine="278" />
 		</Cursor>
 	</File>
-	<File name="src\odrive.c" open="1" top="1" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\odrive.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="4795" topLine="121" />
 		</Cursor>
 	</File>
-	<File name="src\protocol.c" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="1" zoom_2="0">
+	<File name="src\protocol.c" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="1" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="24332" topLine="380" />
+			<Cursor1 position="24332" topLine="388" />
 		</Cursor>
 		<Folding>
 			<Collapse line="356" />
@@ -227,6 +227,8 @@
 			<Collapse line="955" />
 			<Collapse line="970" />
 			<Collapse line="999" />
+			<Collapse line="1096" />
+			<Collapse line="1225" />
 			<Collapse line="1238" />
 			<Collapse line="1271" />
 			<Collapse line="1303" />
@@ -283,9 +285,9 @@
 			<Cursor1 position="652" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\timer_callbacks.c" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\timer_callbacks.c" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="5387" topLine="67" />
+			<Cursor1 position="5387" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="src\uart_callback.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
