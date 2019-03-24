@@ -703,7 +703,8 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                 writeProtocolHead(PROTOCOL_ESC_MAX_SPEED, endpoint);
                 if (activesettings.esc_type == ESC_ODRIVE)
                 {
-                    if (activesettings.esc_max_speed >= p) // The odrive has programmed the theoretical maximum speed and this value is read at startup
+                    // The odrive has programmed the theoretical maximum speed and this value is read at startup into the controllerstatus
+                    if (controllerstatus.esc_max_speed >= p) // all values less than the odrive's value are fine
                     {
                         activesettings.esc_max_speed = p;
                     }
@@ -1068,17 +1069,20 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             case ODRIVE_UNKNOWN:
                 writeProtocolText("no response yet", endpoint);
                 break;
+            case ODRIVE_MOTOR_TO_BE_CALIBRATED:
+                writeProtocolText("motor not calibrated yet", endpoint);
+                break;
             case ODRIVE_MOTOR_CALIBRATED:
-                writeProtocolText("motor is calibrated, waiting for encoder calibration", endpoint);
+                writeProtocolText("waiting for encoder calibration", endpoint);
                 break;
             case ODRIVE_ENCODER_CALIBRATED:
-                writeProtocolText("encoder is calibrated, checking if axis0.controller.config.control_mode = 2 (velocity)", endpoint);
+                writeProtocolText("checking if axis0.controller.config.control_mode = 2 (velocity)", endpoint);
                 break;
             case ODRIVE_SPEED_MODE:
-                writeProtocolText("axis0.controller.config.control_mode = 2 (velocity), checking axis0.motor.armed_state = 3", endpoint);
+                writeProtocolText("checking if axis0.motor.armed_state = 3", endpoint);
                 break;
             case ODRIVE_CLOSED_LOOP:
-                writeProtocolText("axis0.motor.armed_state = 3 (closed loop)", endpoint);
+                writeProtocolText("reading max speed setting from odrive", endpoint);
                 break;
             case ODRIVE_OPERATIONAL:
                 writeProtocolText("fully operational", endpoint);
@@ -1133,8 +1137,9 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                     PrintlnSerial_int(activesettings.stick_value_range, endpoint);
 
 
-                    PrintlnSerial_string("Programming switch:", endpoint);
-                    PrintlnSerial_string("You have 15 seconds to flip the programming switch", endpoint);
+                    PrintlnSerial(endpoint);
+                    PrintlnSerial(endpoint);
+                    PrintlnSerial_string("Programming switch: You have 15 seconds to flip the programming switch", endpoint);
                     getDutyValues(&rcmin, &rcmax, &rcneutral, 10000, endpoint);
                     if (check_for_multiple_channels_changed(&rcmin, &rcmax, &channel, endpoint))
                     {
@@ -1149,9 +1154,9 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                     }
 
 
-
-                    PrintlnSerial_string("Endpoint tip switch:", endpoint);
-                    PrintlnSerial_string("You have 15 seconds to click the endpoint tip switch", endpoint);
+                    PrintlnSerial(endpoint);
+                    PrintlnSerial(endpoint);
+                    PrintlnSerial_string("Endpoint tip switch: You have 15 seconds to click the endpoint tip switch", endpoint);
                     getDutyValues(&rcmin, &rcmax, &rcneutral, 10000, endpoint);
                     if (check_for_multiple_channels_changed(&rcmin, &rcmax, &channel, endpoint))
                     {
@@ -1166,8 +1171,9 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                     }
 
 
-                    PrintlnSerial_string("Max Accel dial:", endpoint);
-                    PrintlnSerial_string("You have 15 seconds to move the max accel dial", endpoint);
+                    PrintlnSerial(endpoint);
+                    PrintlnSerial(endpoint);
+                    PrintlnSerial_string("Max Accel dial: You have 15 seconds to move the max accel dial", endpoint);
                     getDutyValues(&rcmin, &rcmax, &rcneutral, 10000, endpoint);
                     if (check_for_multiple_channels_changed(&rcmin, &rcmax, &channel, endpoint))
                     {
@@ -1182,8 +1188,9 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                     }
 
 
-                    PrintlnSerial_string("Max speed dial:", endpoint);
-                    PrintlnSerial_string("You have 15 seconds to move the max speed dial", endpoint);
+                    PrintlnSerial(endpoint);
+                    PrintlnSerial(endpoint);
+                    PrintlnSerial_string("Max speed dial: You have 15 seconds to move the max speed dial", endpoint);
                     getDutyValues(&rcmin, &rcmax, &rcneutral, 10000, endpoint);
                     if (check_for_multiple_channels_changed(&rcmin, &rcmax, &channel, endpoint))
                     {
@@ -1198,8 +1205,9 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                     }
 
 
-                    PrintlnSerial_string("Mode switch:", endpoint);
-                    PrintlnSerial_string("You have 15 seconds to move the tristate mode switch", endpoint);
+                    PrintlnSerial(endpoint);
+                    PrintlnSerial(endpoint);
+                    PrintlnSerial_string("Mode switch: You have 15 seconds to move the tristate mode switch", endpoint);
                     getDutyValues(&rcmin, &rcmax, &rcneutral, 10000, endpoint);
                     if (check_for_multiple_channels_changed(&rcmin, &rcmax, &channel, endpoint))
                     {
@@ -1215,6 +1223,13 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
 
                 }
             }
+            printCurrentRCInput(endpoint);
+        }
+        else
+        {
+            PrintlnSerial_string("No channel identified", endpoint);
+            PrintlnSerial(endpoint);
+            PrintlnSerial(endpoint);
         }
         PrintlnSerial_string("...enabling RC Inputs", endpoint);
         PrintlnSerial_string("Don't forget saving the values to make them permanent ($w command)", endpoint);
@@ -1563,6 +1578,7 @@ uint8_t check_for_neutral_is_in_the_middle(sbusData_t * rcavg, sbusData_t * rcne
 
 uint8_t check_for_no_input_change(sbusData_t * rcmin, sbusData_t * rcmax, Endpoints endpoint)
 {
+    uint8_t no_channels_with_changes = 0;
     for (int i=0; i<SBUS_MAX_CHANNEL; i++)
     {
         if (rcmax->servovalues[i].duty - rcmin->servovalues[i].duty > 200)
@@ -1572,12 +1588,19 @@ uint8_t check_for_no_input_change(sbusData_t * rcmin, sbusData_t * rcmax, Endpoi
             PrintSerial_string(" has a min/max of ", endpoint);
             PrintSerial_int(rcmin->servovalues[i].duty, endpoint);
             PrintSerial_string("/", endpoint);
-            PrintSerial_int(rcmax->servovalues[i].duty, endpoint);
-            PrintlnSerial_string(" but should be constant. Please try again, keeping all in idle for the first 20 seconds.", endpoint);
-            return 0;
+            PrintlnSerial_int(rcmax->servovalues[i].duty, endpoint);
+            no_channels_with_changes++;
         }
     }
-    return 1;
+    if (no_channels_with_changes != 0)
+    {
+        PrintlnSerial_string("At least one channel got moved by more than 200us. Try again.", endpoint);
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
 }
 
 uint8_t check_for_multiple_channels_changed(sbusData_t * rcmin, sbusData_t * rcmax, uint8_t *channel, Endpoints endpoint)
@@ -1601,6 +1624,10 @@ uint8_t check_for_multiple_channels_changed(sbusData_t * rcmin, sbusData_t * rcm
     if (no_channels_with_changes == 1)
     {
         return 1;
+    }
+    else if (no_channels_with_changes == 0)
+    {
+        return 0;
     }
     else
     {
@@ -1656,19 +1683,14 @@ void printChannelDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, Endpoints en
             PrintSerial_string(", ", endpoint);
         }
 
-        // Highlight all changed channels for better readability
-        if (rcmax->servovalues[i].duty - rcmin->servovalues[i].duty > 200)
-        {
-            PrintSerial_string("***", endpoint);
-        }
         PrintSerial_char('#', endpoint);
         PrintSerial_int(i+1, endpoint);
         PrintSerial_char(':', endpoint);
         PrintSerial_int(sbusdata.servovalues[i].duty, endpoint);
-
+        // Highlight all changed channels for better readability
         if (rcmax->servovalues[i].duty - rcmin->servovalues[i].duty > 200)
         {
-            PrintSerial_string("***", endpoint);
+            PrintSerial_string("+-", endpoint);
         }
     }
     USBPeriodElapsed();
@@ -1719,6 +1741,7 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("$v [<float> <float>]                    set or print the maximum output % when stick is at 100% (=1.0) in normal and programming mode", endpoint);
     PrintlnSerial_string("$V                                      print firmware version", endpoint);
     PrintlnSerial_string("$w                                      write settings to eeprom", endpoint);
+    PrintlnSerial_string("$W                                      erase eeprom", endpoint);
     PrintlnSerial_string("$x [<float>]                            expo factor 1.0 means linear, everything between 1 and 0 is a exponential input", endpoint);
     PrintlnSerial_string("$Z [<int>]                              set or print the encoder source 0..external encoder, 1..VESC Tacho", endpoint);
 
@@ -2035,6 +2058,7 @@ void printPacketDebug(const char * label, uint8_t uartno, uint8_t * packetbuffer
     case 3: printUartState(&huart3, endpoint); break;
     case 6: printUartState(&huart6, endpoint); break;
     }
+    PrintlnSerial(endpoint);
 }
 
 void printUartState(UART_HandleTypeDef *huart, Endpoints endpoint)

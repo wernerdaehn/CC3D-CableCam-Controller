@@ -8,6 +8,7 @@
 static int8_t current_virtual_channel = 0;
 
 uint32_t possensortick_old = 0;
+uint16_t servovalues[SBUS_MAX_CHANNEL];
 
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
@@ -77,22 +78,32 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
             {
                 diff = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3) - HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4);
             }
-            // uint16_t duty = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3) - HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4);
             setNextDuty(diff);
 
             if (diff > 10000)   // a very long signal is the packet-end of a servo
             {
+                if (current_virtual_channel == 1)
+                {
+                    sbusdata.servovalues[0].duty = servovalues[0];
+                    sbusdata.sbusLastValidFrame = HAL_GetTick(); // and we got a valid frame, so set the timestamp to now
+                    sbusdata.counter_sbus_valid_data++;
+                    sbusdata.receivertype = RECEIVER_TYPE_SERVO;
+                }
                 current_virtual_channel = 0; // Hence the next duty signal will be for the first channel
-                sbusdata.sbusLastValidFrame = HAL_GetTick(); // and we got a valid frame, so set the timestamp to now
-                sbusdata.counter_sbus_valid_data++;
-                sbusdata.receivertype = RECEIVER_TYPE_SERVO;
             }
-            else if (diff > 3500)   // a long duty signal is the packet-end of a sum ppm
+            else if (diff > 3500)   // a long signal is the packet-end of a sum ppm
             {
+                if (current_virtual_channel == 8 || current_virtual_channel == 16)
+                {
+                    for (uint16_t i = 0; i < current_virtual_channel; i++)
+                    {
+                        sbusdata.servovalues[i].duty = servovalues[i];
+                    }
+                    sbusdata.sbusLastValidFrame = HAL_GetTick(); // and we got a valid frame, so set the timestamp to now
+                    sbusdata.counter_sbus_valid_data++;
+                    sbusdata.receivertype = RECEIVER_TYPE_SUMPPM;
+                }
                 current_virtual_channel = 0; // Hence the next duty signal will be for the first channel
-                sbusdata.sbusLastValidFrame = HAL_GetTick(); // and we got a valid frame, so set the timestamp to now
-                sbusdata.counter_sbus_valid_data++;
-                sbusdata.receivertype = RECEIVER_TYPE_SUMPPM;
             }
             else if (diff < 550) // a sumppm pause
             {
@@ -100,7 +111,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
             }
             else if (current_virtual_channel < SBUS_MAX_CHANNEL) // What if the SumPPM sends more than 16 values? Ignore those.
             {
-                sbusdata.servovalues[current_virtual_channel++].duty = diff; // any other signal sets the input value
+                servovalues[current_virtual_channel++] = diff;
             }
         }
     }

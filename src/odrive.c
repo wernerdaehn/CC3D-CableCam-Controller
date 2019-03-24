@@ -41,12 +41,17 @@ void ODRIVE_Output(float esc_output)
 {
     switch (controllerstatus.odrivestate)
     {
+    case ODRIVE_MOTOR_TO_BE_CALIBRATED:
     case ODRIVE_UNKNOWN:
         if (ODRIVE_Request_Value(ODRIVE_REQUESTED_MOTOR_CALIBRATED))
         {
             if (odrive_rxbuffer[0] == '1')
             {
                 controllerstatus.odrivestate = ODRIVE_MOTOR_CALIBRATED;
+            }
+            else if (odrive_rxbuffer[0] == '0')
+            {
+                controllerstatus.odrivestate = ODRIVE_MOTOR_TO_BE_CALIBRATED;
             }
         }
         break;
@@ -88,6 +93,7 @@ void ODRIVE_Output(float esc_output)
                 {
                     activesettings.esc_max_speed = p;
                 }
+                controllerstatus.esc_max_speed = p; // controllerstatus contains the read value
             }
             controllerstatus.odrivestate = ODRIVE_OPERATIONAL;
         }
@@ -117,6 +123,14 @@ void ODRIVE_Output(float esc_output)
 void ODRIVE_set_rpm(int32_t odrive_speed)
 {
     char buf[40];
+    if (odrive_speed > activesettings.esc_max_speed)
+    {
+        odrive_speed = activesettings.esc_max_speed;
+    }
+    else if (odrive_speed < -activesettings.esc_max_speed)
+    {
+        odrive_speed = -activesettings.esc_max_speed;
+    }
     uint32_t len = snprintf(buf, sizeof(buf), "v 0 %ld 0\n", odrive_speed);
     if (len > 0)
     {

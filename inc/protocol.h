@@ -210,6 +210,7 @@ typedef struct
     uint32_t tick_enter_previous;
     uint32_t possensorduration;
     uint32_t last_possensortick;
+    int32_t esc_max_speed;
     ODRIVE_STATE_t odrivestate;
 } controllerstatus_t;
 
