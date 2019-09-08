@@ -63,6 +63,7 @@
 
 void initSBusReceiver(void);
 void initPPMReceiver(void);
+void deInitAll(void);
 
 void _Error_Handler(const char *, int);
 

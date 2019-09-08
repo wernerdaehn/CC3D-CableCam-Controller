@@ -14,7 +14,7 @@
  */
 void JumpToBootloader(void) {
     *((unsigned long *)0x2001FFF0) = 0xDEADBEEF; // End of RAM
-
+    deInitAll();
     USBD_Stop(&hUsbDeviceFS);
     USBD_DeInit(&hUsbDeviceFS);
     HAL_Delay(5000); // Wait for 5 seconds so that it looks to Windows as if the USB cable has been unplugged.

@@ -7,3 +7,4 @@ void tickCounter(void);
 uint8_t is1Hz(void);
 uint8_t is5Hz(void);
 uint8_t is5s(void);
+uint8_t is60s(void);

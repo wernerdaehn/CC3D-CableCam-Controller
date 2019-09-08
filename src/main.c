@@ -759,7 +759,13 @@ static void MX_GPIO_Init(void)
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
 
-
+void deInitAll()
+{
+    HAL_UART_DeInit(&huart1);
+    HAL_UART_DeInit(&huart2);
+    HAL_UART_DeInit(&huart3);
+    HAL_UART_DeInit(&huart6);
+}
 
 
 void initSBusReceiver()

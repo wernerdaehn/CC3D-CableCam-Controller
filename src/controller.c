@@ -22,7 +22,7 @@ void evalute_stick_accel_dial(void);
 void evalute_stick_speed_dial(void);
 void evalute_stick_mode_switch(void);
 void evalute_stick_play_switch(void);
-
+void set_next_targetpos(float v0, float accel);
 
 /*
  * Preserve the previous filtered stick value to calculate the acceleration
@@ -55,8 +55,22 @@ void setPos(void)
      */
     if (activesettings.pos_source == 1)
     {
-        // The pos sensor value comes from the VESC internal tachometer
-        v = vesc_get_long(vescvalues.frame.tachometer); // Convert uint to int
+        if (activesettings.esc_type == ESC_VESC)
+        {
+            // The pos sensor value comes from the VESC internal tachometer
+            v = vesc_get_long(vescvalues.frame.tachometer); // Convert uint to int
+        }
+        else
+        {
+            if (activesettings.pos_source == 1)
+            {
+                v = controllerstatus.target_pos;
+            }
+            else
+            {
+                v = controllerstatus.odrive_pos;
+            }
+        }
     }
     else
     {
@@ -398,26 +412,23 @@ float stickCycle()
 
         float diff = value - stick_last_value;
 
-        // First handle the controller status state machine to print out a warning
-        if (diff > maxaccel || diff < -maxaccel)
-        {
-            controllerstatus.accel_limiter = true;
-        }
-        else
-        {
-            controllerstatus.accel_limiter = false;
-        }
-
         // Now limit to max accel
         if (diff > maxaccel)
         {
             // Example: last time: +0.20; now stick: +1.00 --> diff: +0.80; max change is 0.01 per cycle --> new value: +0.20+0.01=+0.21 as the limiter kicks in
             value = stick_last_value + maxaccel;
+            controllerstatus.accel_limiter = true;
         }
         else if (diff < -maxaccel)
         {
             // Example: last time: +1.00; now stick: +0.20 --> diff: -0.80; max change is 0.01 per cycle --> new value: +1.00-0.01=+0.99 as the limiter kicks in
             value = stick_last_value - maxaccel;
+            controllerstatus.accel_limiter = true;
+        }
+        else
+        {
+            // Handle the controller status state machine to print out a warning
+            controllerstatus.accel_limiter = false;
         }
 
         if (controllerstatus.safemode == OPERATIONAL && activesettings.mode != MODE_PASSTHROUGH && activesettings.mode != MODE_LIMITER)
@@ -425,9 +436,13 @@ float stickCycle()
             float time_to_stop = abs_d(value/controllerstatus.stick_max_accel);
 
             float speed;
-            speed = controllerstatus.speed_by_posdiff;
 
-            if (controllerstatus.speed_by_posdiff < 8.0f && controllerstatus.speed_by_time != 0.0f) // There are cases where the speed_by_time might be zero, e.g. VESC pos sensor
+            if (activesettings.esc_type == ESC_ODRIVE && activesettings.pos_source == 1)
+            {
+                // In case of positional control, the speed is the desired speed of the stick and the cablecam has to adjust to that.
+                speed = abs_d(controllerstatus.v0);
+            }
+            else if (controllerstatus.speed_by_posdiff < 8.0f && controllerstatus.speed_by_time != 0.0f) // There are cases where the speed_by_time might be zero, e.g. VESC pos sensor
             {
                 speed = controllerstatus.speed_by_time;
             }
@@ -496,6 +511,8 @@ float stickCycle()
                         printBrakeMessage(value, brakedistance, speed, 02, EndPoint_All);
                     }
                     controllerstatus.emergencybrake = true;
+                    controllerstatus.target_pos = semipermanentsettings.pos_end;
+                    controllerstatus.v0 = 0.0f;
                     return 0.0f;
                 }
                 else if (activesettings.max_position_error != 0.0f &&
@@ -504,12 +521,14 @@ float stickCycle()
                     /*
                      * We are in danger to overshoot the end point by max_position_error. Hence kick in the emergency brake.
                      */
+                    value = stick_last_value - maxaccel;
                     stick_last_value = value;
                     if (controllerstatus.emergencybrake == false || controllerstatus.debug_endpoint)
                     {
                         printBrakeMessage(value, brakedistance, speed, 00, controllerstatus.debugrequester);
                     }
                     controllerstatus.emergencybrake = true;
+                    set_next_targetpos(value * ((float)activesettings.esc_max_speed), -maxaccel);
                     return 0.0f;
                 }
                 else
@@ -552,6 +571,8 @@ float stickCycle()
                         printBrakeMessage(value, brakedistance, speed, 12, EndPoint_All);
                     }
                     controllerstatus.emergencybrake = true;
+                    controllerstatus.target_pos = semipermanentsettings.pos_start;
+                    controllerstatus.v0 = 0.0f;
                     return 0.0f;
                 }
                 else if (activesettings.max_position_error != 0.0f &&
@@ -560,12 +581,14 @@ float stickCycle()
                     /*
                      * We are in danger to overshoot the start point by max_position_error. Hence kick in the emergency brake.
                      */
+                    value = stick_last_value + maxaccel;
                     stick_last_value = value;
                     if (controllerstatus.emergencybrake == false || controllerstatus.debug_endpoint)
                     {
                         printBrakeMessage(value, brakedistance, speed, 10, controllerstatus.debugrequester);
                     }
                     controllerstatus.emergencybrake = true;
+                    set_next_targetpos(value * ((float)activesettings.esc_max_speed), +maxaccel);
                     return 0.0f;
                 }
                 else
@@ -600,11 +623,30 @@ float stickCycle()
         }
 
     }
+    set_next_targetpos(value * ((float)activesettings.esc_max_speed), value-stick_last_value);
     stick_last_value = value; // store the current effective stick position as value for the next cycle
-
     return value;
 }
 
+void set_next_targetpos(float v0, float accel)
+{
+    controllerstatus.target_pos_prev = controllerstatus.target_pos;
+    controllerstatus.v0 = v0;
+    controllerstatus.target_pos += (v0+(accel/2));
+    if (controllerstatus.safemode == OPERATIONAL && activesettings.mode != MODE_PASSTHROUGH && activesettings.mode != MODE_LIMITER)
+    {
+        if (controllerstatus.target_pos < semipermanentsettings.pos_start)
+        {
+            controllerstatus.target_pos = semipermanentsettings.pos_start;
+            controllerstatus.v0 = 0.0f;
+        }
+        if (controllerstatus.target_pos > semipermanentsettings.pos_end)
+        {
+            controllerstatus.target_pos = semipermanentsettings.pos_end;
+            controllerstatus.v0 = 0.0f;
+        }
+    }
+ }
 
 // ******** Main Loop *********
 void controllercycle()
@@ -1056,7 +1098,7 @@ void evalute_stick_accel_dial(void)
          *
          * Example: poti reads +1 -> (1.0+1.0)/2 * max_accel_scale + 0.001 = max_accel_scale + 0.001
          */
-        controllerstatus.stick_max_accel = (1.0f + max_accel_poti)/2.0f * (max_accel_scale - 0.001f) + 0.001f;
+        controllerstatus.stick_max_accel = (1.0f + max_accel_poti)/2.0f * (max_accel_scale - 0.00001f) + 0.00001f;
     }
     else
     {

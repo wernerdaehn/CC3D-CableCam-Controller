@@ -52,3 +52,8 @@ uint8_t is5s()
 {
     return ((clockcounter % 500) == 0);
 }
+
+uint8_t is60s()
+{
+    return ((clockcounter % 6000) == 0);
+}

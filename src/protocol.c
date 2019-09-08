@@ -99,8 +99,6 @@ uint8_t check_for_no_input_change(sbusData_t * rcmin, sbusData_t * rcmax, Endpoi
 uint8_t check_for_multiple_channels_changed(sbusData_t * rcmin, sbusData_t * rcmax, uint8_t *channel, Endpoints endpoint);
 void getDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, sbusData_t * rcavg, uint32_t timeout, Endpoints endpoint);
 void printChannelDutyValues(sbusData_t * rcmin, sbusData_t * rcmax, Endpoints endpoint);
-void printPacketDebug(const char * label, uint8_t uartno, uint8_t * packetbuffer, Endpoints endpoint);
-void printUartState(UART_HandleTypeDef *huart, Endpoints endpoint);
 
 void printCurrentRCInput(Endpoints endpoint);
 void printCurrentSBusOut(Endpoints endpoint);
@@ -393,7 +391,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
             {
                 activesettings.max_position_error = d/100.0f;
             }
-            else if (d > 0.0f)
+            else if (d >= 0.0f)
             {
                 activesettings.max_position_error = d;
             }
@@ -444,6 +442,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         writeProtocolLong(semipermanentsettings.pos_start, endpoint);
         writeProtocolLong(semipermanentsettings.pos_end, endpoint);
         writeProtocolFloat(controllerstatus.pos, endpoint);
+        writeProtocolFloat(controllerstatus.target_pos, endpoint);
         writeProtocolFloat(controllerstatus.speed_by_posdiff/CONTROLLERLOOPTIME_FLOAT, endpoint);
         writeProtocolFloat(controllerstatus.speed_by_time/CONTROLLERLOOPTIME_FLOAT, endpoint);
         writeProtocolOK(endpoint);
@@ -698,7 +697,7 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         argument_index = sscanf(&commandlinebuffer[2], "%ld", &p);
         if (argument_index == 1)
         {
-            if (p > 500 && p <= 100000)
+            if (p > 500 && p <= 1000000)
             {
                 writeProtocolHead(PROTOCOL_ESC_MAX_SPEED, endpoint);
                 if (activesettings.esc_type == ESC_ODRIVE)
@@ -843,6 +842,20 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
                 }
             case 'p':
                 PrintSumPPMRawData(endpoint);
+                break;
+            case 'o':
+                {
+                    uint16_t pos = 4;
+                    uint16_t len = strlen(commandlinebuffer);
+                    // Move forward to the first non-blank character after the command
+                    while (pos < len && pos < UART_CYCLIC_RXBUFFER_SIZE-1 && commandlinebuffer[pos] == ' ')
+                    {
+                        pos++;
+                    }
+                    commandlinebuffer[len] = '\n';
+                    commandlinebuffer[len+1] = 0x00;
+                    ODRIVESendLine(&commandlinebuffer[pos]);
+                }
                 break;
             case 'P':
                 controllerstatus.debug_endpoint = !controllerstatus.debug_endpoint;
@@ -1062,33 +1075,47 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         }
         else if (activesettings.esc_type == ESC_ODRIVE)
         {
-            writeProtocolHead(PROTOCOL_ESC_STATUS, endpoint);
-            writeProtocolText("\r\nODrive state:", endpoint);
-            switch (controllerstatus.odrivestate)
+            int16_t p;
+            argument_index = sscanf(&commandlinebuffer[2], "%hd", &p);
+
+            if (argument_index == 1)
             {
-            case ODRIVE_UNKNOWN:
-                writeProtocolText("no response yet", endpoint);
-                break;
-            case ODRIVE_MOTOR_TO_BE_CALIBRATED:
-                writeProtocolText("motor not calibrated yet", endpoint);
-                break;
-            case ODRIVE_MOTOR_CALIBRATED:
-                writeProtocolText("waiting for encoder calibration", endpoint);
-                break;
-            case ODRIVE_ENCODER_CALIBRATED:
-                writeProtocolText("checking if axis0.controller.config.control_mode = 2 (velocity)", endpoint);
-                break;
-            case ODRIVE_SPEED_MODE:
-                writeProtocolText("checking if axis0.motor.armed_state = 3", endpoint);
-                break;
-            case ODRIVE_CLOSED_LOOP:
-                writeProtocolText("reading max speed setting from odrive", endpoint);
-                break;
-            case ODRIVE_OPERATIONAL:
-                writeProtocolText("fully operational", endpoint);
-                break;
+                controllerstatus.target_pos = controllerstatus.odrive_pos;
+                ODRIVESendLine("w axis0.error 0\n");
+                ODRIVESendLine("w axis0.requested_state 8\n"); // CLOSED_LOOP
+                PrintlnSerial_string("Resetting ODrive errors - be careful!", endpoint);
+            }
+            else
+            {
+                writeProtocolHead(PROTOCOL_ESC_STATUS, endpoint);
+                writeProtocolText("\r\nODrive state:", endpoint);
+                switch (controllerstatus.odrivestate)
+                {
+                case ODRIVE_UNKNOWN:
+                    writeProtocolText("no response yet", endpoint);
+                    break;
+                case ODRIVE_MOTOR_TO_BE_CALIBRATED:
+                    writeProtocolText("motor not calibrated yet", endpoint);
+                    break;
+                case ODRIVE_MOTOR_CALIBRATED:
+                    writeProtocolText("waiting for encoder calibration", endpoint);
+                    break;
+                case ODRIVE_ENCODER_CALIBRATED:
+                    writeProtocolText("checking if axis0.controller.config.control_mode = 2 (velocity)", endpoint);
+                    break;
+                case ODRIVE_SPEED_MODE:
+                    writeProtocolText("checking if axis0.motor.armed_state = 3", endpoint);
+                    break;
+                case ODRIVE_CLOSED_LOOP:
+                    writeProtocolText("reading max speed setting from odrive", endpoint);
+                    break;
+                case ODRIVE_OPERATIONAL:
+                    writeProtocolText("fully operational", endpoint);
+                    break;
+                }
             }
             writeProtocolOK(endpoint);
+            ODRIVE_Print_Errors(endpoint);
         }
         else
         {
@@ -1461,6 +1488,11 @@ void evaluateCommand(Endpoints endpoint, char commandlinebuffer[])
         if (argument_index == 1)
         {
             activesettings.pos_source = p;
+            if (p == 1 && activesettings.esc_type == ESC_ODRIVE)
+            {
+                ODRIVESendLine("w axis0.controller.config.control_mode 3\n");
+                controllerstatus.target_pos = controllerstatus.odrive_pos;
+            }
         }
         else if (argument_index != EOF)
         {
@@ -1710,7 +1742,7 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("$C [<int>]                              Configure the ESC type, 0..RC only, 2..VESC, 3..ODrive", endpoint);
     PrintlnSerial_string("$D [<int1> ... <int8>]                  set or print gimbal default values for each channel", endpoint);
     PrintlnSerial_string("$e [<long>]                             set or print maximum eRPMs as set in the VESC speed controller. 100% stick = this eRPM", endpoint);
-    PrintlnSerial_string("$E                                      print the status of the VESC ESC", endpoint);
+    PrintlnSerial_string("$E [0]                                  print the status of the ESC or delete all errors", endpoint);
     PrintlnSerial_string("$g [<float>]                            set or print the max positional error in % brake distance -> exceeding causes emergency stop", endpoint);
     PrintlnSerial_string("$G [<int1> ... <int8>]                  set or print gimbal channel mapping", endpoint);
     PrintlnSerial_string("$i [<int> ..... ]                       set or print input channels for Speed, Programmingswitch, Endpointswitch,...", endpoint);
@@ -1743,7 +1775,7 @@ void printHelp(Endpoints endpoint)
     PrintlnSerial_string("$w                                      write settings to eeprom", endpoint);
     PrintlnSerial_string("$W                                      erase eeprom", endpoint);
     PrintlnSerial_string("$x [<float>]                            expo factor 1.0 means linear, everything between 1 and 0 is a exponential input", endpoint);
-    PrintlnSerial_string("$Z [<int>]                              set or print the encoder source 0..external encoder, 1..VESC Tacho", endpoint);
+    PrintlnSerial_string("$Z [<int>]                              set or print the encoder source 0..external encoder, 1..VESC/oDrive Tacho", endpoint);
 
 }
 

@@ -28,6 +28,11 @@ void PrintSerial_string(const char * v, Endpoints endpoint)
     SendString(v, strlen(v), endpoint);
 }
 
+void PrintSerial_stringptr(const char * v, uint16_t len, Endpoints endpoint)
+{
+    SendString(v, len, endpoint);
+}
+
 void PrintSerial_long(int32_t v, Endpoints endpoint)
 {
     uint16_t l = snprintf(printbuf, sizeof(printbuf), " %ld", v);
@@ -91,6 +96,12 @@ void PrintlnSerial_char(char v, Endpoints endpoint)
 void PrintlnSerial_string(const char * v, Endpoints endpoint)
 {
     SendString(v, strlen(v), endpoint);
+    PrintlnSerial(endpoint);
+}
+
+void PrintlnSerial_stringptr(const char * v, uint16_t len, Endpoints endpoint)
+{
+    SendString(v, len, endpoint);
     PrintlnSerial(endpoint);
 }
 

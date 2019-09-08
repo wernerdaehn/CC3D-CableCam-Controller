@@ -212,6 +212,10 @@ typedef struct
     uint32_t last_possensortick;
     int32_t esc_max_speed;
     ODRIVE_STATE_t odrivestate;
+    float odrive_pos;
+    float target_pos;
+    float target_pos_prev;
+    float v0;
 } controllerstatus_t;
 
 extern controllerstatus_t controllerstatus;
@@ -220,6 +224,8 @@ void initProtocol(void);
 void serialCom(Endpoints endpoint, char commandlinebuffer[]);
 void printHelp(Endpoints endpoint);
 void printActiveSettings(Endpoints endpoint);
+void printPacketDebug(const char * label, uint8_t uartno, uint8_t * packetbuffer, Endpoints endpoint);
+void printUartState(UART_HandleTypeDef *huart, Endpoints endpoint);
 
 const char * getSafeModeLabel(void);
 const char * getCurrentModeLabel(uint8_t mode);
